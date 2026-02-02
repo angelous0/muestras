@@ -459,7 +459,10 @@ export default function BasesPage() {
         <div className="space-y-6 animate-fade-in" data-testid="bases-page">
             <div>
                 <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'Manrope' }}>Bases</h1>
-                <p className="text-slate-500 text-sm mt-1">Gestión de bases con patrones, imágenes, fichas y tizados</p>
+                <p className="text-slate-500 text-sm mt-1">
+                    Gestión de bases con patrones, imágenes, fichas y tizados
+                    <span className="ml-2 text-slate-400 text-xs">(Arrastra los bordes de las columnas para ajustar el ancho)</span>
+                </p>
             </div>
 
             {/* Toolbar */}
