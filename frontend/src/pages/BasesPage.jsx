@@ -601,7 +601,7 @@ export default function BasesPage() {
 
             {/* Form Dialog */}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
-                <DialogContent className="sm:max-w-md bg-white">
+                <DialogContent className="sm:max-w-lg bg-white">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
                             {selectedItem ? 'Editar Base' : 'Nueva Base'}
@@ -611,10 +611,14 @@ export default function BasesPage() {
                         <div className="space-y-2">
                             <Label>Muestra Base <span className="text-red-500">*</span></Label>
                             <Select value={formData.muestra_base_id || ''} onValueChange={(v) => handleChange('muestra_base_id', v)}>
-                                <SelectTrigger><SelectValue placeholder="Seleccionar muestra base" /></SelectTrigger>
-                                <SelectContent>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Seleccionar muestra base" className="truncate" />
+                                </SelectTrigger>
+                                <SelectContent className="max-w-lg">
                                     {muestrasBase.map(m => (
-                                        <SelectItem key={m.id} value={m.id}>{getMuestraBaseName(m.id)}</SelectItem>
+                                        <SelectItem key={m.id} value={m.id} className="max-w-[450px]">
+                                            <span className="truncate block max-w-[430px]">{getMuestraBaseName(m.id)}</span>
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -630,7 +634,7 @@ export default function BasesPage() {
                         <div className="space-y-2">
                             <Label>Hilo</Label>
                             <Select value={formData.hilo_id || ''} onValueChange={(v) => handleChange('hilo_id', v)}>
-                                <SelectTrigger><SelectValue placeholder="Seleccionar hilo" /></SelectTrigger>
+                                <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar hilo" /></SelectTrigger>
                                 <SelectContent>
                                     {hilos.map(h => (
                                         <SelectItem key={h.id} value={h.id}>{h.nombre}</SelectItem>
