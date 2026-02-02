@@ -620,6 +620,14 @@ export default function BasesPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
+                            <Label>Nombre</Label>
+                            <Input 
+                                value={formData.nombre || ''} 
+                                onChange={(e) => handleChange('nombre', e.target.value)}
+                                placeholder="Nombre de la base (opcional)"
+                            />
+                        </div>
+                        <div className="space-y-2">
                             <Label>Hilo</Label>
                             <Select value={formData.hilo_id || ''} onValueChange={(v) => handleChange('hilo_id', v)}>
                                 <SelectTrigger><SelectValue placeholder="Seleccionar hilo" /></SelectTrigger>
