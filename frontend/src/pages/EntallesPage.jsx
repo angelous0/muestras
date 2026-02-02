@@ -7,13 +7,11 @@ import { getEntalles, createEntalle, updateEntalle, deleteEntalle } from '../lib
 
 const formFields = [
     { key: 'nombre', label: 'Nombre', type: 'text', required: true, placeholder: 'Ej: Regular, Slim Fit, Oversize...' },
-    { key: 'descripcion', label: 'Descripción', type: 'textarea', placeholder: 'Descripción del entalle...' },
     { key: 'activo', label: 'Estado', type: 'switch', defaultValue: true },
 ];
 
 const tableColumns = [
     { key: 'nombre', label: 'Nombre' },
-    { key: 'descripcion', label: 'Descripción', render: (val) => val || '-' },
     { key: 'activo', label: 'Estado', render: (val) => <StatusBadge activo={val} /> },
 ];
 
@@ -123,6 +121,7 @@ export default function EntallesPage() {
                 emptyMessage="No hay entalles registrados"
                 addButtonText="Nuevo Entalle"
                 testIdPrefix="entalles"
+                showActionButtons={true}
             />
 
             <ItemFormDialog

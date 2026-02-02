@@ -17,7 +17,6 @@ import {
 import { 
     Search, 
     Plus, 
-    MoreHorizontal, 
     Pencil, 
     Trash2, 
     Filter,
@@ -37,7 +36,8 @@ export const DataTable = ({
     loading,
     emptyMessage = 'No hay registros',
     addButtonText = 'Agregar',
-    testIdPrefix = 'table'
+    testIdPrefix = 'table',
+    showActionButtons = false
 }) => {
     return (
         <div className="space-y-4">
@@ -124,7 +124,7 @@ export const DataTable = ({
                                     {col.label}
                                 </TableHead>
                             ))}
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4 w-20">
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4 w-32">
                                 Acciones
                             </TableHead>
                         </TableRow>
@@ -158,35 +158,65 @@ export const DataTable = ({
                                         </TableCell>
                                     ))}
                                     <TableCell className="py-3 px-4">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                        {showActionButtons ? (
+                                            <div className="flex gap-1">
                                                 <Button 
                                                     variant="ghost" 
-                                                    size="icon"
-                                                    className="h-8 w-8 hover:bg-slate-100"
-                                                    data-testid={`${testIdPrefix}-actions-${item.id}`}
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem 
+                                                    size="sm"
                                                     onClick={() => onEdit(item)}
+                                                    className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                                                     data-testid={`${testIdPrefix}-edit-${item.id}`}
                                                 >
-                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    <Pencil className="h-4 w-4 mr-1" />
                                                     Editar
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem 
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
                                                     onClick={() => onDelete(item)}
-                                                    className="text-red-600 focus:text-red-600"
+                                                    className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     data-testid={`${testIdPrefix}-delete-${item.id}`}
                                                 >
-                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    <Trash2 className="h-4 w-4 mr-1" />
                                                     Eliminar
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        className="h-8 w-8 hover:bg-slate-100"
+                                                        data-testid={`${testIdPrefix}-actions-${item.id}`}
+                                                    >
+                                                        <span className="sr-only">Acciones</span>
+                                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <circle cx="12" cy="12" r="1" />
+                                                            <circle cx="12" cy="5" r="1" />
+                                                            <circle cx="12" cy="19" r="1" />
+                                                        </svg>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem 
+                                                        onClick={() => onEdit(item)}
+                                                        data-testid={`${testIdPrefix}-edit-${item.id}`}
+                                                    >
+                                                        <Pencil className="h-4 w-4 mr-2" />
+                                                        Editar
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                        onClick={() => onDelete(item)}
+                                                        className="text-red-600 focus:text-red-600"
+                                                        data-testid={`${testIdPrefix}-delete-${item.id}`}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                        Eliminar
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))

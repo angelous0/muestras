@@ -7,13 +7,11 @@ import { getTiposProducto, createTipoProducto, updateTipoProducto, deleteTipoPro
 
 const formFields = [
     { key: 'nombre', label: 'Nombre', type: 'text', required: true, placeholder: 'Ej: Camiseta, Pantalón, Vestido...' },
-    { key: 'descripcion', label: 'Descripción', type: 'textarea', placeholder: 'Descripción del tipo de producto...' },
     { key: 'activo', label: 'Estado', type: 'switch', defaultValue: true },
 ];
 
 const tableColumns = [
     { key: 'nombre', label: 'Nombre' },
-    { key: 'descripcion', label: 'Descripción', render: (val) => val || '-' },
     { key: 'activo', label: 'Estado', render: (val) => <StatusBadge activo={val} /> },
 ];
 
@@ -123,6 +121,7 @@ export default function TiposProductoPage() {
                 emptyMessage="No hay tipos de producto registrados"
                 addButtonText="Nuevo Tipo"
                 testIdPrefix="tipos-producto"
+                showActionButtons={true}
             />
 
             <ItemFormDialog

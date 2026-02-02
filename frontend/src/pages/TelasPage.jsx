@@ -9,7 +9,6 @@ const formFields = [
     { key: 'nombre', label: 'Nombre', type: 'text', required: true, placeholder: 'Ej: Jersey, Piqué, French Terry...' },
     { key: 'composicion', label: 'Composición', type: 'text', placeholder: 'Ej: 100% Algodón, 95% Algodón 5% Elastano...' },
     { key: 'peso_gsm', label: 'Peso (GSM)', type: 'number', placeholder: 'Ej: 180', step: 1 },
-    { key: 'descripcion', label: 'Descripción', type: 'textarea', placeholder: 'Descripción de la tela...' },
     { key: 'activo', label: 'Estado', type: 'switch', defaultValue: true },
 ];
 
@@ -126,6 +125,7 @@ export default function TelasPage() {
                 emptyMessage="No hay telas registradas"
                 addButtonText="Nueva Tela"
                 testIdPrefix="telas"
+                showActionButtons={true}
             />
 
             <ItemFormDialog

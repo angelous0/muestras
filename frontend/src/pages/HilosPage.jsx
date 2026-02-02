@@ -9,7 +9,6 @@ const formFields = [
     { key: 'nombre', label: 'Nombre', type: 'text', required: true, placeholder: 'Ej: Hilo Polyester, Hilo Algodón...' },
     { key: 'color', label: 'Color', type: 'text', placeholder: 'Ej: Blanco, Negro, Rojo...' },
     { key: 'grosor', label: 'Grosor', type: 'text', placeholder: 'Ej: 40/2, 20/2...' },
-    { key: 'descripcion', label: 'Descripción', type: 'textarea', placeholder: 'Descripción del hilo...' },
     { key: 'activo', label: 'Estado', type: 'switch', defaultValue: true },
 ];
 
@@ -126,6 +125,7 @@ export default function HilosPage() {
                 emptyMessage="No hay hilos registrados"
                 addButtonText="Nuevo Hilo"
                 testIdPrefix="hilos"
+                showActionButtons={true}
             />
 
             <ItemFormDialog
