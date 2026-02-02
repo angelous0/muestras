@@ -477,6 +477,10 @@ async def actualizar_tipo_producto(tipo_id: str, tipo: TipoProductoUpdate):
 async def eliminar_tipo_producto(tipo_id: str):
     return await delete_item("tipos_producto", tipo_id)
 
+@api_router.put("/tipos-producto/reorder")
+async def reordenar_tipos_producto(request: ReorderRequest):
+    return await reorder_items("tipos_producto", request.items)
+
 # ============ ENTALLE ROUTES ============
 
 @api_router.post("/entalles", response_model=Entalle)
@@ -511,6 +515,10 @@ async def actualizar_entalle(entalle_id: str, entalle: EntalleUpdate):
 @api_router.delete("/entalles/{entalle_id}")
 async def eliminar_entalle(entalle_id: str):
     return await delete_item("entalles", entalle_id)
+
+@api_router.put("/entalles/reorder")
+async def reordenar_entalles(request: ReorderRequest):
+    return await reorder_items("entalles", request.items)
 
 # ============ TELA ROUTES ============
 
