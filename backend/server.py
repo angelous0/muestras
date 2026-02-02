@@ -346,6 +346,20 @@ async def count_items(collection_name: str, search: Optional[str] = None, activo
         query["activo"] = activo
     return await db[collection_name].count_documents(query)
 
+# ============ REORDER MODEL ============
+
+class ReorderRequest(BaseModel):
+    items: List[dict]  # List of {id: str, orden: int}
+
+async def reorder_items(collection_name: str, items: List[dict]):
+    """Update order for multiple items"""
+    for item in items:
+        await db[collection_name].update_one(
+            {"id": item["id"]},
+            {"$set": {"orden": item["orden"], "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    return {"message": "Orden actualizado correctamente"}
+
 # ============ FILE UPLOAD HELPER ============
 
 async def save_upload_file(file: UploadFile, subfolder: str) -> str:
