@@ -2,7 +2,10 @@ from fastapi import FastAPI, APIRouter, HTTPException, Query, UploadFile, File, 
 from fastapi.responses import FileResponse, RedirectResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import String, Boolean, Integer, Float, Text, DateTime, select, update, delete, func, text
+from sqlalchemy.dialects.postgresql import ARRAY
 import os
 import logging
 from pathlib import Path
@@ -21,10 +24,17 @@ load_dotenv(ROOT_DIR / '.env')
 UPLOADS_DIR = ROOT_DIR / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# PostgreSQL Configuration
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+DB_SCHEMA = os.environ.get('DB_SCHEMA', 'muestra')
+
+# Convert postgres:// to postgresql+asyncpg://
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql+asyncpg://', 1)
+
+# Create async engine
+engine = create_async_engine(DATABASE_URL, echo=False)
+async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # Cloudflare R2 Configuration
 R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID')
@@ -45,84 +55,194 @@ if R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY:
         region_name='auto'
     )
     logging.info(f"R2 client initialized for bucket: {R2_BUCKET_NAME}")
-else:
-    logging.warning("R2 credentials not found, using local storage")
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI()
-
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# ============ BASE MODELS ============
+# ============ SQLAlchemy Models ============
 
-class BaseItem(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+class Base(DeclarativeBase):
+    pass
+
+class MarcaDB(Base):
+    __tablename__ = "marcas"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    descripcion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class TipoProductoDB(Base):
+    __tablename__ = "tipos_producto"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    descripcion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class EntalloDB(Base):
+    __tablename__ = "entalles"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    descripcion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class TelaDB(Base):
+    __tablename__ = "telas"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    descripcion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    gramaje: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    elasticidad: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    proveedor: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    ancho: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    color: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    precio: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    clasificacion: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class HiloDB(Base):
+    __tablename__ = "hilos"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class MuestraBaseDB(Base):
+    __tablename__ = "muestras_base"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(500), nullable=False)
+    marca_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    tipo_producto_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    entalle_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    tela_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    consumo_tela: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    costo_estimado: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    precio_estimado: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    rentabilidad_esperada: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    aprobado: Mapped[bool] = mapped_column(Boolean, default=False)
+    archivo_costos: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class BaseDB(Base):
+    __tablename__ = "bases"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(500), nullable=False)
+    muestra_base_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    hilo_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    patron_archivo: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    imagen_archivo: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    fichas_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    fichas_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    tizados_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    tizados_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    aprobado: Mapped[bool] = mapped_column(Boolean, default=False)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class FichaDB(Base):
+    __tablename__ = "fichas"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    descripcion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    archivo: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class TizadoDB(Base):
+    __tablename__ = "tizados"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    ancho: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    curva: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    archivo_tizado: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+# ============ Pydantic Schemas ============
+
+class MarcaCreate(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    activo: bool = True
+
+class Marca(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
     nombre: str
     descripcion: Optional[str] = None
     activo: bool = True
     orden: int = 0
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class BaseItemCreate(BaseModel):
+class TipoProductoCreate(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    activo: bool = True
+
+class TipoProducto(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
     nombre: str
     descripcion: Optional[str] = None
     activo: bool = True
     orden: int = 0
 
-class BaseItemUpdate(BaseModel):
-    nombre: Optional[str] = None
+class EntalleCreate(BaseModel):
+    nombre: str
     descripcion: Optional[str] = None
-    activo: Optional[bool] = None
-    orden: Optional[int] = None
+    activo: bool = True
 
-# ============ MARCA MODELS ============
+class Entalle(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
+    descripcion: Optional[str] = None
+    activo: bool = True
+    orden: int = 0
 
-class Marca(BaseItem):
-    pass
-
-class MarcaCreate(BaseItemCreate):
-    pass
-
-class MarcaUpdate(BaseItemUpdate):
-    pass
-
-# ============ TIPO PRODUCTO MODELS ============
-
-class TipoProducto(BaseItem):
-    pass
-
-class TipoProductoCreate(BaseItemCreate):
-    pass
-
-class TipoProductoUpdate(BaseItemUpdate):
-    pass
-
-# ============ ENTALLE MODELS ============
-
-class Entalle(BaseItem):
-    pass
-
-class EntalleCreate(BaseItemCreate):
-    pass
-
-class EntalleUpdate(BaseItemUpdate):
-    pass
-
-# ============ TELA MODELS ============
-
-class Tela(BaseItem):
-    gramaje: Optional[float] = None  # Onzas
-    elasticidad: Optional[str] = None
-    proveedor: Optional[str] = None
-    ancho: Optional[float] = None  # cm
-    color: Optional[str] = None  # Azul, Negro, Color, Crudo
-    precio: Optional[float] = None  # S/
-    clasificacion: Optional[str] = None
-
-class TelaCreate(BaseItemCreate):
+class TelaCreate(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
     gramaje: Optional[float] = None
     elasticidad: Optional[str] = None
     proveedor: Optional[str] = None
@@ -130,8 +250,13 @@ class TelaCreate(BaseItemCreate):
     color: Optional[str] = None
     precio: Optional[float] = None
     clasificacion: Optional[str] = None
+    activo: bool = True
 
-class TelaUpdate(BaseItemUpdate):
+class Tela(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
+    descripcion: Optional[str] = None
     gramaje: Optional[float] = None
     elasticidad: Optional[str] = None
     proveedor: Optional[str] = None
@@ -139,41 +264,21 @@ class TelaUpdate(BaseItemUpdate):
     color: Optional[str] = None
     precio: Optional[float] = None
     clasificacion: Optional[str] = None
-
-# ============ HILO MODELS ============
-
-class Hilo(BaseItem):
-    pass
-
-class HiloCreate(BaseItemCreate):
-    pass
-
-class HiloUpdate(BaseItemUpdate):
-    pass
-
-# ============ MUESTRA BASE MODELS ============
-
-class MuestraBase(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    nombre: str
-    marca_id: Optional[str] = None
-    tipo_producto_id: Optional[str] = None
-    entalle_id: Optional[str] = None
-    tela_id: Optional[str] = None
-    consumo_tela: Optional[float] = None
-    costo_estimado: Optional[float] = None
-    precio_estimado: Optional[float] = None
-    rentabilidad_esperada: Optional[float] = None  # Calculated field
-    aprobado: bool = False
-    archivo_costos: Optional[str] = None  # File path
-    descripcion: Optional[str] = None
     activo: bool = True
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    orden: int = 0
+
+class HiloCreate(BaseModel):
+    nombre: str
+    activo: bool = True
+
+class Hilo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
+    activo: bool = True
+    orden: int = 0
 
 class MuestraBaseCreate(BaseModel):
-    nombre: str
     marca_id: Optional[str] = None
     tipo_producto_id: Optional[str] = None
     entalle_id: Optional[str] = None
@@ -182,11 +287,11 @@ class MuestraBaseCreate(BaseModel):
     costo_estimado: Optional[float] = None
     precio_estimado: Optional[float] = None
     aprobado: bool = False
-    descripcion: Optional[str] = None
-    activo: bool = True
 
-class MuestraBaseUpdate(BaseModel):
-    nombre: Optional[str] = None
+class MuestraBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
     marca_id: Optional[str] = None
     tipo_producto_id: Optional[str] = None
     entalle_id: Optional[str] = None
@@ -194,243 +299,126 @@ class MuestraBaseUpdate(BaseModel):
     consumo_tela: Optional[float] = None
     costo_estimado: Optional[float] = None
     precio_estimado: Optional[float] = None
-    aprobado: Optional[bool] = None
-    descripcion: Optional[str] = None
-    activo: Optional[bool] = None
-
-# ============ FICHA MODELS ============
-
-class Ficha(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    nombre: str
-    archivo: Optional[str] = None
-    descripcion: Optional[str] = None
+    rentabilidad_esperada: Optional[float] = None
+    aprobado: bool = False
+    archivo_costos: Optional[str] = None
     activo: bool = True
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    orden: int = 0
+
+class BaseCreate(BaseModel):
+    muestra_base_id: Optional[str] = None
+    hilo_id: Optional[str] = None
+    aprobado: bool = False
+
+class BaseModel_(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
+    muestra_base_id: Optional[str] = None
+    hilo_id: Optional[str] = None
+    patron_archivo: Optional[str] = None
+    imagen_archivo: Optional[str] = None
+    fichas_archivos: List[str] = []
+    fichas_nombres: List[str] = []
+    tizados_archivos: List[str] = []
+    tizados_nombres: List[str] = []
+    aprobado: bool = False
+    activo: bool = True
+    orden: int = 0
 
 class FichaCreate(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
     activo: bool = True
 
-class FichaUpdate(BaseModel):
-    nombre: Optional[str] = None
-    descripcion: Optional[str] = None
-    activo: Optional[bool] = None
-
-# ============ TIZADO MODELS ============
-
-class Tizado(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+class Ficha(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
     nombre: str
-    ancho: Optional[float] = None
-    curva: Optional[str] = None
-    archivo_tizado: Optional[str] = None
     descripcion: Optional[str] = None
+    archivo: Optional[str] = None
     activo: bool = True
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    orden: int = 0
 
 class TizadoCreate(BaseModel):
     nombre: str
     ancho: Optional[float] = None
     curva: Optional[str] = None
-    descripcion: Optional[str] = None
     activo: bool = True
 
-class TizadoUpdate(BaseModel):
-    nombre: Optional[str] = None
+class Tizado(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
     ancho: Optional[float] = None
     curva: Optional[str] = None
-    descripcion: Optional[str] = None
-    activo: Optional[bool] = None
-
-# ============ BASE MODELS ============
-
-class Base(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    nombre: str
-    muestra_base_id: Optional[str] = None
-    hilo_id: Optional[str] = None
-    patron_archivo: Optional[str] = None
-    imagen_archivo: Optional[str] = None
-    fichas_archivos: List[str] = Field(default_factory=list)
-    fichas_nombres: List[str] = Field(default_factory=list)
-    tizados_archivos: List[str] = Field(default_factory=list)
-    tizados_nombres: List[str] = Field(default_factory=list)
-    aprobado: bool = False
+    archivo_tizado: Optional[str] = None
     activo: bool = True
     orden: int = 0
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class BaseCreate(BaseModel):
-    nombre: str
-    muestra_base_id: Optional[str] = None
-    hilo_id: Optional[str] = None
-    aprobado: bool = False
-    activo: bool = True
+# ============ Database Initialization ============
 
-class BaseUpdate(BaseModel):
-    nombre: Optional[str] = None
-    muestra_base_id: Optional[str] = None
-    hilo_id: Optional[str] = None
-    aprobado: Optional[bool] = None
-    activo: Optional[bool] = None
+async def init_db():
+    """Create schema and tables if they don't exist"""
+    async with engine.begin() as conn:
+        # Create schema if not exists
+        await conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {DB_SCHEMA}"))
+        # Create all tables
+        await conn.run_sync(Base.metadata.create_all)
+    logging.info(f"Database initialized with schema: {DB_SCHEMA}")
 
-# ============ HELPER FUNCTIONS ============
+@app.on_event("startup")
+async def startup():
+    await init_db()
 
-def serialize_item(item: BaseModel) -> dict:
-    """Convert Pydantic model to dict with datetime serialization"""
-    doc = item.model_dump()
-    doc['created_at'] = doc['created_at'].isoformat()
-    doc['updated_at'] = doc['updated_at'].isoformat()
-    return doc
-
-def deserialize_item(doc: dict) -> dict:
-    """Convert MongoDB doc to dict with datetime deserialization"""
-    if isinstance(doc.get('created_at'), str):
-        doc['created_at'] = datetime.fromisoformat(doc['created_at'])
-    if isinstance(doc.get('updated_at'), str):
-        doc['updated_at'] = datetime.fromisoformat(doc['updated_at'])
-    return doc
-
-def calculate_rentabilidad(precio: float, costo: float) -> float:
-    """Calculate expected profitability"""
-    if costo and costo > 0 and precio:
-        return round(((precio - costo) / costo) * 100, 2)
-    return 0.0
-
-# ============ GENERIC CRUD FUNCTIONS ============
-
-async def create_item(collection_name: str, item_data: BaseModel, model_class):
-    """Generic create function"""
-    item_dict = item_data.model_dump()
-    item_obj = model_class(**item_dict)
-    doc = serialize_item(item_obj)
-    await db[collection_name].insert_one(doc)
-    return item_obj
-
-async def get_items(collection_name: str, search: Optional[str] = None, activo: Optional[bool] = None, limit: int = 100, skip: int = 0):
-    """Generic get all with search and filter"""
-    query = {}
-    if search:
-        query["nombre"] = {"$regex": search, "$options": "i"}
-    if activo is not None:
-        query["activo"] = activo
-    
-    cursor = db[collection_name].find(query, {"_id": 0}).skip(skip).limit(limit).sort("orden", 1)
-    items = await cursor.to_list(limit)
-    for item in items:
-        deserialize_item(item)
-    return items
-
-async def get_item_by_id(collection_name: str, item_id: str):
-    """Generic get by ID"""
-    doc = await db[collection_name].find_one({"id": item_id}, {"_id": 0})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Item no encontrado")
-    return deserialize_item(doc)
-
-async def update_item(collection_name: str, item_id: str, item_update: BaseModel):
-    """Generic update function"""
-    update_data = {k: v for k, v in item_update.model_dump().items() if v is not None}
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No hay datos para actualizar")
-    
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
-    result = await db[collection_name].update_one(
-        {"id": item_id},
-        {"$set": update_data}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Item no encontrado")
-    
-    return await get_item_by_id(collection_name, item_id)
-
-async def delete_item(collection_name: str, item_id: str):
-    """Generic delete function"""
-    result = await db[collection_name].delete_one({"id": item_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Item no encontrado")
-    return {"message": "Item eliminado correctamente", "id": item_id}
-
-async def count_items(collection_name: str, search: Optional[str] = None, activo: Optional[bool] = None):
-    """Count items with filters"""
-    query = {}
-    if search:
-        query["nombre"] = {"$regex": search, "$options": "i"}
-    if activo is not None:
-        query["activo"] = activo
-    return await db[collection_name].count_documents(query)
-
-# ============ REORDER MODEL ============
-
-class ReorderRequest(BaseModel):
-    items: List[dict]  # List of {id: str, orden: int}
-
-async def reorder_items(collection_name: str, items: List[dict]):
-    """Update order for multiple items"""
-    for item in items:
-        await db[collection_name].update_one(
-            {"id": item["id"]},
-            {"$set": {"orden": item["orden"], "updated_at": datetime.now(timezone.utc).isoformat()}}
-        )
-    return {"message": "Orden actualizado correctamente"}
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ============ FILE UPLOAD HELPER ============
 
 async def save_upload_file(file: UploadFile, subfolder: str) -> str:
-    """Save uploaded file to R2 (or local if R2 not configured) and return the path"""
+    """Save uploaded file to R2 (or local if R2 not configured)"""
     file_id = str(uuid.uuid4())
     ext = Path(file.filename).suffix if file.filename else ""
     filename = f"{file_id}{ext}"
     key = f"{subfolder}/{filename}"
     
     if r2_client:
-        # Upload to R2
         try:
             file_content = await file.read()
             content_type = file.content_type or 'application/octet-stream'
-            
             r2_client.put_object(
                 Bucket=R2_BUCKET_NAME,
                 Key=key,
                 Body=file_content,
                 ContentType=content_type
             )
-            logging.info(f"File uploaded to R2: {key}")
             return f"r2://{key}"
         except Exception as e:
             logging.error(f"Error uploading to R2: {e}")
             raise HTTPException(status_code=500, detail=f"Error al subir archivo: {str(e)}")
     else:
-        # Fallback to local storage
         folder = UPLOADS_DIR / subfolder
         folder.mkdir(exist_ok=True)
         file_path = folder / filename
-        
         with open(file_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
-        
         return f"{subfolder}/{filename}"
 
 def get_r2_presigned_url(key: str, expiration: int = 3600) -> str:
     """Generate a presigned URL for R2 file access"""
     if not r2_client:
         return None
-    
     try:
-        # Remove r2:// prefix if present
         if key.startswith("r2://"):
             key = key[5:]
-        
         url = r2_client.generate_presigned_url(
             'get_object',
             Params={'Bucket': R2_BUCKET_NAME, 'Key': key},
@@ -441,673 +429,816 @@ def get_r2_presigned_url(key: str, expiration: int = 3600) -> str:
         logging.error(f"Error generating presigned URL: {e}")
         return None
 
+# ============ Helper Functions ============
+
+def calculate_rentabilidad(costo: float, precio: float) -> float:
+    """Calculate profitability percentage"""
+    if costo and precio and costo > 0:
+        return round(((precio - costo) / costo) * 100, 2)
+    return None
+
+async def generate_muestra_base_name(session: AsyncSession, marca_id: str, tipo_id: str, entalle_id: str, tela_id: str) -> str:
+    """Generate automatic name for MuestraBase"""
+    parts = []
+    if marca_id:
+        result = await session.execute(select(MarcaDB).where(MarcaDB.id == marca_id))
+        marca = result.scalar_one_or_none()
+        if marca:
+            parts.append(marca.nombre)
+    if tipo_id:
+        result = await session.execute(select(TipoProductoDB).where(TipoProductoDB.id == tipo_id))
+        tipo = result.scalar_one_or_none()
+        if tipo:
+            parts.append(tipo.nombre)
+    if tela_id:
+        result = await session.execute(select(TelaDB).where(TelaDB.id == tela_id))
+        tela = result.scalar_one_or_none()
+        if tela:
+            parts.append(tela.nombre)
+    if entalle_id:
+        result = await session.execute(select(EntalloDB).where(EntalloDB.id == entalle_id))
+        entalle = result.scalar_one_or_none()
+        if entalle:
+            parts.append(entalle.nombre)
+    return "-".join(parts) if parts else "Nueva Muestra"
+
+async def generate_base_name(session: AsyncSession, muestra_base_id: str, hilo_id: str) -> str:
+    """Generate automatic name for Base"""
+    parts = []
+    if muestra_base_id:
+        result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == muestra_base_id))
+        muestra = result.scalar_one_or_none()
+        if muestra:
+            parts.append(muestra.nombre)
+    if hilo_id:
+        result = await session.execute(select(HiloDB).where(HiloDB.id == hilo_id))
+        hilo = result.scalar_one_or_none()
+        if hilo:
+            parts.append(hilo.nombre)
+    return "-".join(parts) if parts else "Nueva Base"
+
 # ============ ROUTES ============
 
 @api_router.get("/")
 async def root():
-    return {"message": "API Módulo Muestras Textil"}
+    return {"message": "API Módulo Muestras Textil - PostgreSQL"}
 
 # ============ FILE ROUTES ============
 
 @api_router.post("/upload/{category}")
 async def upload_file(category: str, file: UploadFile = File(...)):
-    """Upload a file to the specified category"""
-    allowed_categories = ["costos", "patrones", "imagenes", "fichas", "tizados"]
+    allowed_categories = ["costos", "patrones", "imagenes", "fichas", "tizados", "fichas_bases", "tizados_bases"]
     if category not in allowed_categories:
-        raise HTTPException(status_code=400, detail=f"Categoría no válida. Use: {allowed_categories}")
-    
+        raise HTTPException(status_code=400, detail=f"Categoría no válida")
     file_path = await save_upload_file(file, category)
     return {"file_path": file_path, "filename": file.filename}
 
 @api_router.get("/files/{category}/{filename}")
 async def get_file(category: str, filename: str):
-    """Get a file by category and filename - supports both local and R2 storage"""
     key = f"{category}/{filename}"
-    
-    # Check if R2 is configured and file exists in R2
     if r2_client:
         presigned_url = get_r2_presigned_url(key)
         if presigned_url:
             return RedirectResponse(url=presigned_url)
-    
-    # Fallback to local file
     file_path = UPLOADS_DIR / category / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     return FileResponse(file_path)
 
-@api_router.get("/files/r2/{category}/{filename}")
-async def get_r2_file(category: str, filename: str):
-    """Get a file from R2 storage directly"""
-    if not r2_client:
-        raise HTTPException(status_code=503, detail="R2 no está configurado")
-    
-    key = f"{category}/{filename}"
-    presigned_url = get_r2_presigned_url(key)
-    
-    if not presigned_url:
-        raise HTTPException(status_code=404, detail="Archivo no encontrado en R2")
-    
-    return RedirectResponse(url=presigned_url)
+# ============ DASHBOARD ============
+
+@api_router.get("/dashboard/stats")
+async def get_dashboard_stats():
+    async with async_session() as session:
+        stats = {}
+        for model, name in [(MarcaDB, "marcas"), (TipoProductoDB, "tipos_producto"), (EntalloDB, "entalles"),
+                            (TelaDB, "telas"), (HiloDB, "hilos"), (MuestraBaseDB, "muestras_base"),
+                            (BaseDB, "bases"), (FichaDB, "fichas"), (TizadoDB, "tizados")]:
+            result = await session.execute(select(func.count()).select_from(model))
+            stats[name] = result.scalar()
+        return stats
 
 # ============ MARCAS ROUTES ============
 
-@api_router.post("/marcas", response_model=Marca)
-async def crear_marca(marca: MarcaCreate):
-    return await create_item("marcas", marca, Marca)
+@api_router.get("/marcas")
+async def get_marcas(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(MarcaDB)
+        if search:
+            query = query.where(MarcaDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(MarcaDB.activo == activo)
+        query = query.order_by(MarcaDB.orden)
+        result = await session.execute(query)
+        return [Marca.model_validate(m) for m in result.scalars().all()]
 
-@api_router.get("/marcas", response_model=List[Marca])
-async def listar_marcas(
-    search: Optional[str] = Query(None, description="Buscar por nombre"),
-    activo: Optional[bool] = Query(None, description="Filtrar por estado activo"),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    return await get_items("marcas", search, activo, limit, skip)
+@api_router.post("/marcas", response_model=Marca)
+async def create_marca(data: MarcaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(MarcaDB.orden), 0)))
+        max_orden = result.scalar()
+        item = MarcaDB(**data.model_dump(), orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return Marca.model_validate(item)
+
+@api_router.put("/marcas/{item_id}", response_model=Marca)
+async def update_marca(item_id: str, data: MarcaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(MarcaDB).where(MarcaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return Marca.model_validate(item)
+
+@api_router.delete("/marcas/{item_id}")
+async def delete_marca(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(MarcaDB).where(MarcaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
 
 @api_router.get("/marcas/count")
-async def contar_marcas(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("marcas", search, activo)
-    return {"count": count}
+async def count_marcas():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(MarcaDB))
+        return {"count": result.scalar()}
 
-@api_router.get("/marcas/{marca_id}", response_model=Marca)
-async def obtener_marca(marca_id: str):
-    return await get_item_by_id("marcas", marca_id)
+@api_router.put("/reorder/marcas")
+async def reorder_marcas(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            await session.execute(update(MarcaDB).where(MarcaDB.id == item["id"]).values(orden=item["orden"]))
+        await session.commit()
+        return {"message": "Orden actualizado"}
 
-@api_router.put("/marcas/{marca_id}", response_model=Marca)
-async def actualizar_marca(marca_id: str, marca: MarcaUpdate):
-    return await update_item("marcas", marca_id, marca)
+# ============ TIPOS PRODUCTO ROUTES ============
 
-@api_router.delete("/marcas/{marca_id}")
-async def eliminar_marca(marca_id: str):
-    return await delete_item("marcas", marca_id)
-
-@api_router.put("/marcas/reorder")
-async def reordenar_marcas(request: ReorderRequest):
-    return await reorder_items("marcas", request.items)
-
-# ============ TIPO PRODUCTO ROUTES ============
+@api_router.get("/tipos-producto")
+async def get_tipos_producto(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(TipoProductoDB)
+        if search:
+            query = query.where(TipoProductoDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(TipoProductoDB.activo == activo)
+        query = query.order_by(TipoProductoDB.orden)
+        result = await session.execute(query)
+        return [TipoProducto.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/tipos-producto", response_model=TipoProducto)
-async def crear_tipo_producto(tipo: TipoProductoCreate):
-    return await create_item("tipos_producto", tipo, TipoProducto)
+async def create_tipo_producto(data: TipoProductoCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(TipoProductoDB.orden), 0)))
+        max_orden = result.scalar()
+        item = TipoProductoDB(**data.model_dump(), orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return TipoProducto.model_validate(item)
 
-@api_router.get("/tipos-producto", response_model=List[TipoProducto])
-async def listar_tipos_producto(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    return await get_items("tipos_producto", search, activo, limit, skip)
+@api_router.put("/tipos-producto/{item_id}", response_model=TipoProducto)
+async def update_tipo_producto(item_id: str, data: TipoProductoCreate):
+    async with async_session() as session:
+        result = await session.execute(select(TipoProductoDB).where(TipoProductoDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return TipoProducto.model_validate(item)
+
+@api_router.delete("/tipos-producto/{item_id}")
+async def delete_tipo_producto(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(TipoProductoDB).where(TipoProductoDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
 
 @api_router.get("/tipos-producto/count")
-async def contar_tipos_producto(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("tipos_producto", search, activo)
-    return {"count": count}
+async def count_tipos_producto():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(TipoProductoDB))
+        return {"count": result.scalar()}
 
-@api_router.get("/tipos-producto/{tipo_id}", response_model=TipoProducto)
-async def obtener_tipo_producto(tipo_id: str):
-    return await get_item_by_id("tipos_producto", tipo_id)
+@api_router.put("/reorder/tipos-producto")
+async def reorder_tipos_producto(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            await session.execute(update(TipoProductoDB).where(TipoProductoDB.id == item["id"]).values(orden=item["orden"]))
+        await session.commit()
+        return {"message": "Orden actualizado"}
 
-@api_router.put("/tipos-producto/{tipo_id}", response_model=TipoProducto)
-async def actualizar_tipo_producto(tipo_id: str, tipo: TipoProductoUpdate):
-    return await update_item("tipos_producto", tipo_id, tipo)
+# ============ ENTALLES ROUTES ============
 
-@api_router.delete("/tipos-producto/{tipo_id}")
-async def eliminar_tipo_producto(tipo_id: str):
-    return await delete_item("tipos_producto", tipo_id)
-
-@api_router.put("/tipos-producto/reorder")
-async def reordenar_tipos_producto(request: ReorderRequest):
-    return await reorder_items("tipos_producto", request.items)
-
-# ============ ENTALLE ROUTES ============
+@api_router.get("/entalles")
+async def get_entalles(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(EntalloDB)
+        if search:
+            query = query.where(EntalloDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(EntalloDB.activo == activo)
+        query = query.order_by(EntalloDB.orden)
+        result = await session.execute(query)
+        return [Entalle.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/entalles", response_model=Entalle)
-async def crear_entalle(entalle: EntalleCreate):
-    return await create_item("entalles", entalle, Entalle)
+async def create_entalle(data: EntalleCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(EntalloDB.orden), 0)))
+        max_orden = result.scalar()
+        item = EntalloDB(**data.model_dump(), orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return Entalle.model_validate(item)
 
-@api_router.get("/entalles", response_model=List[Entalle])
-async def listar_entalles(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    return await get_items("entalles", search, activo, limit, skip)
+@api_router.put("/entalles/{item_id}", response_model=Entalle)
+async def update_entalle(item_id: str, data: EntalleCreate):
+    async with async_session() as session:
+        result = await session.execute(select(EntalloDB).where(EntalloDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return Entalle.model_validate(item)
+
+@api_router.delete("/entalles/{item_id}")
+async def delete_entalle(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(EntalloDB).where(EntalloDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
 
 @api_router.get("/entalles/count")
-async def contar_entalles(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("entalles", search, activo)
-    return {"count": count}
+async def count_entalles():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(EntalloDB))
+        return {"count": result.scalar()}
 
-@api_router.get("/entalles/{entalle_id}", response_model=Entalle)
-async def obtener_entalle(entalle_id: str):
-    return await get_item_by_id("entalles", entalle_id)
+@api_router.put("/reorder/entalles")
+async def reorder_entalles(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            await session.execute(update(EntalloDB).where(EntalloDB.id == item["id"]).values(orden=item["orden"]))
+        await session.commit()
+        return {"message": "Orden actualizado"}
 
-@api_router.put("/entalles/{entalle_id}", response_model=Entalle)
-async def actualizar_entalle(entalle_id: str, entalle: EntalleUpdate):
-    return await update_item("entalles", entalle_id, entalle)
+# ============ TELAS ROUTES ============
 
-@api_router.delete("/entalles/{entalle_id}")
-async def eliminar_entalle(entalle_id: str):
-    return await delete_item("entalles", entalle_id)
-
-@api_router.put("/entalles/reorder")
-async def reordenar_entalles(request: ReorderRequest):
-    return await reorder_items("entalles", request.items)
-
-# ============ TELA ROUTES ============
+@api_router.get("/telas")
+async def get_telas(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(TelaDB)
+        if search:
+            query = query.where(TelaDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(TelaDB.activo == activo)
+        query = query.order_by(TelaDB.orden)
+        result = await session.execute(query)
+        return [Tela.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/telas", response_model=Tela)
-async def crear_tela(tela: TelaCreate):
-    return await create_item("telas", tela, Tela)
+async def create_tela(data: TelaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(TelaDB.orden), 0)))
+        max_orden = result.scalar()
+        item = TelaDB(**data.model_dump(), orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return Tela.model_validate(item)
 
-@api_router.get("/telas", response_model=List[Tela])
-async def listar_telas(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    return await get_items("telas", search, activo, limit, skip)
+@api_router.put("/telas/{item_id}", response_model=Tela)
+async def update_tela(item_id: str, data: TelaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(TelaDB).where(TelaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return Tela.model_validate(item)
+
+@api_router.delete("/telas/{item_id}")
+async def delete_tela(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(TelaDB).where(TelaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
 
 @api_router.get("/telas/count")
-async def contar_telas(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("telas", search, activo)
-    return {"count": count}
+async def count_telas():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(TelaDB))
+        return {"count": result.scalar()}
 
-@api_router.get("/telas/{tela_id}", response_model=Tela)
-async def obtener_tela(tela_id: str):
-    return await get_item_by_id("telas", tela_id)
+@api_router.put("/reorder/telas")
+async def reorder_telas(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            await session.execute(update(TelaDB).where(TelaDB.id == item["id"]).values(orden=item["orden"]))
+        await session.commit()
+        return {"message": "Orden actualizado"}
 
-@api_router.put("/telas/{tela_id}", response_model=Tela)
-async def actualizar_tela(tela_id: str, tela: TelaUpdate):
-    return await update_item("telas", tela_id, tela)
+# ============ HILOS ROUTES ============
 
-@api_router.delete("/telas/{tela_id}")
-async def eliminar_tela(tela_id: str):
-    return await delete_item("telas", tela_id)
-
-@api_router.put("/telas/reorder")
-async def reordenar_telas(request: ReorderRequest):
-    return await reorder_items("telas", request.items)
-
-# ============ HILO ROUTES ============
+@api_router.get("/hilos")
+async def get_hilos(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(HiloDB)
+        if search:
+            query = query.where(HiloDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(HiloDB.activo == activo)
+        query = query.order_by(HiloDB.orden)
+        result = await session.execute(query)
+        return [Hilo.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/hilos", response_model=Hilo)
-async def crear_hilo(hilo: HiloCreate):
-    return await create_item("hilos", hilo, Hilo)
+async def create_hilo(data: HiloCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(HiloDB.orden), 0)))
+        max_orden = result.scalar()
+        item = HiloDB(**data.model_dump(), orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return Hilo.model_validate(item)
 
-@api_router.get("/hilos", response_model=List[Hilo])
-async def listar_hilos(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    return await get_items("hilos", search, activo, limit, skip)
+@api_router.put("/hilos/{item_id}", response_model=Hilo)
+async def update_hilo(item_id: str, data: HiloCreate):
+    async with async_session() as session:
+        result = await session.execute(select(HiloDB).where(HiloDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return Hilo.model_validate(item)
+
+@api_router.delete("/hilos/{item_id}")
+async def delete_hilo(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(HiloDB).where(HiloDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
 
 @api_router.get("/hilos/count")
-async def contar_hilos(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("hilos", search, activo)
-    return {"count": count}
+async def count_hilos():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(HiloDB))
+        return {"count": result.scalar()}
 
-@api_router.get("/hilos/{hilo_id}", response_model=Hilo)
-async def obtener_hilo(hilo_id: str):
-    return await get_item_by_id("hilos", hilo_id)
+@api_router.put("/reorder/hilos")
+async def reorder_hilos(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            await session.execute(update(HiloDB).where(HiloDB.id == item["id"]).values(orden=item["orden"]))
+        await session.commit()
+        return {"message": "Orden actualizado"}
 
-@api_router.put("/hilos/{hilo_id}", response_model=Hilo)
-async def actualizar_hilo(hilo_id: str, hilo: HiloUpdate):
-    return await update_item("hilos", hilo_id, hilo)
+# ============ MUESTRAS BASE ROUTES ============
 
-@api_router.delete("/hilos/{hilo_id}")
-async def eliminar_hilo(hilo_id: str):
-    return await delete_item("hilos", hilo_id)
-
-@api_router.put("/hilos/reorder")
-async def reordenar_hilos(request: ReorderRequest):
-    return await reorder_items("hilos", request.items)
-
-# ============ MUESTRA BASE ROUTES ============
+@api_router.get("/muestras-base")
+async def get_muestras_base(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(MuestraBaseDB)
+        if search:
+            query = query.where(MuestraBaseDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(MuestraBaseDB.activo == activo)
+        query = query.order_by(MuestraBaseDB.orden)
+        result = await session.execute(query)
+        return [MuestraBase.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/muestras-base", response_model=MuestraBase)
-async def crear_muestra_base(muestra: MuestraBaseCreate):
-    muestra_dict = muestra.model_dump()
-    # Calculate rentabilidad
-    rentabilidad = calculate_rentabilidad(
-        muestra_dict.get('precio_estimado') or 0,
-        muestra_dict.get('costo_estimado') or 0
-    )
-    muestra_obj = MuestraBase(**muestra_dict, rentabilidad_esperada=rentabilidad)
-    doc = serialize_item(muestra_obj)
-    await db.muestras_base.insert_one(doc)
-    return muestra_obj
+async def create_muestra_base(data: MuestraBaseCreate):
+    async with async_session() as session:
+        nombre = await generate_muestra_base_name(session, data.marca_id, data.tipo_producto_id, data.entalle_id, data.tela_id)
+        rentabilidad = calculate_rentabilidad(data.costo_estimado, data.precio_estimado)
+        result = await session.execute(select(func.coalesce(func.max(MuestraBaseDB.orden), 0)))
+        max_orden = result.scalar()
+        item = MuestraBaseDB(**data.model_dump(), nombre=nombre, rentabilidad_esperada=rentabilidad, orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return MuestraBase.model_validate(item)
 
-@api_router.get("/muestras-base", response_model=List[MuestraBase])
-async def listar_muestras_base(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    aprobado: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    query = {}
-    if search:
-        query["nombre"] = {"$regex": search, "$options": "i"}
-    if activo is not None:
-        query["activo"] = activo
-    if aprobado is not None:
-        query["aprobado"] = aprobado
-    
-    cursor = db.muestras_base.find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1)
-    items = await cursor.to_list(limit)
-    for item in items:
-        deserialize_item(item)
-    return items
+@api_router.put("/muestras-base/{item_id}", response_model=MuestraBase)
+async def update_muestra_base(item_id: str, data: MuestraBaseCreate):
+    async with async_session() as session:
+        result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        nombre = await generate_muestra_base_name(session, data.marca_id, data.tipo_producto_id, data.entalle_id, data.tela_id)
+        rentabilidad = calculate_rentabilidad(data.costo_estimado, data.precio_estimado)
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.nombre = nombre
+        item.rentabilidad_esperada = rentabilidad
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return MuestraBase.model_validate(item)
+
+@api_router.delete("/muestras-base/{item_id}")
+async def delete_muestra_base(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
 
 @api_router.get("/muestras-base/count")
-async def contar_muestras_base(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("muestras_base", search, activo)
-    return {"count": count}
+async def count_muestras_base():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(MuestraBaseDB))
+        return {"count": result.scalar()}
 
-@api_router.get("/muestras-base/{muestra_id}", response_model=MuestraBase)
-async def obtener_muestra_base(muestra_id: str):
-    return await get_item_by_id("muestras_base", muestra_id)
+@api_router.post("/muestras-base/{item_id}/archivo")
+async def upload_archivo_costos(item_id: str, file: UploadFile = File(...)):
+    async with async_session() as session:
+        result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        file_path = await save_upload_file(file, "costos")
+        item.archivo_costos = file_path
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_path": file_path}
 
-@api_router.put("/muestras-base/{muestra_id}", response_model=MuestraBase)
-async def actualizar_muestra_base(muestra_id: str, muestra: MuestraBaseUpdate):
-    update_data = {k: v for k, v in muestra.model_dump().items() if v is not None}
-    
-    # Recalculate rentabilidad if precio or costo changed
-    current = await get_item_by_id("muestras_base", muestra_id)
-    precio = update_data.get('precio_estimado', current.get('precio_estimado'))
-    costo = update_data.get('costo_estimado', current.get('costo_estimado'))
-    if precio and costo:
-        update_data['rentabilidad_esperada'] = calculate_rentabilidad(precio, costo)
-    
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
-    result = await db.muestras_base.update_one(
-        {"id": muestra_id},
-        {"$set": update_data}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Muestra no encontrada")
-    
-    return await get_item_by_id("muestras_base", muestra_id)
+# ============ BASES ROUTES ============
 
-@api_router.delete("/muestras-base/{muestra_id}")
-async def eliminar_muestra_base(muestra_id: str):
-    return await delete_item("muestras_base", muestra_id)
+@api_router.get("/bases")
+async def get_bases(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(BaseDB)
+        if search:
+            query = query.where(BaseDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(BaseDB.activo == activo)
+        query = query.order_by(BaseDB.orden)
+        result = await session.execute(query)
+        return [BaseModel_.model_validate(m) for m in result.scalars().all()]
 
-@api_router.post("/muestras-base/{muestra_id}/archivo")
-async def subir_archivo_costos(muestra_id: str, file: UploadFile = File(...)):
-    """Upload cost file for a muestra base"""
-    await get_item_by_id("muestras_base", muestra_id)
-    file_path = await save_upload_file(file, "costos")
-    await db.muestras_base.update_one(
-        {"id": muestra_id},
-        {"$set": {"archivo_costos": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
-    return {"file_path": file_path}
+@api_router.post("/bases", response_model=BaseModel_)
+async def create_base(data: BaseCreate):
+    async with async_session() as session:
+        nombre = await generate_base_name(session, data.muestra_base_id, data.hilo_id)
+        result = await session.execute(select(func.coalesce(func.max(BaseDB.orden), 0)))
+        max_orden = result.scalar()
+        item = BaseDB(**data.model_dump(), nombre=nombre, orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return BaseModel_.model_validate(item)
 
-# ============ FICHA ROUTES ============
+@api_router.put("/bases/{item_id}", response_model=BaseModel_)
+async def update_base(item_id: str, data: BaseCreate):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        nombre = await generate_base_name(session, data.muestra_base_id, data.hilo_id)
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.nombre = nombre
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return BaseModel_.model_validate(item)
 
-@api_router.post("/fichas", response_model=Ficha)
-async def crear_ficha(ficha: FichaCreate):
-    return await create_item("fichas", ficha, Ficha)
-
-@api_router.get("/fichas", response_model=List[Ficha])
-async def listar_fichas(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    return await get_items("fichas", search, activo, limit, skip)
-
-@api_router.get("/fichas/count")
-async def contar_fichas(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("fichas", search, activo)
-    return {"count": count}
-
-@api_router.get("/fichas/{ficha_id}", response_model=Ficha)
-async def obtener_ficha(ficha_id: str):
-    return await get_item_by_id("fichas", ficha_id)
-
-@api_router.put("/fichas/{ficha_id}", response_model=Ficha)
-async def actualizar_ficha(ficha_id: str, ficha: FichaUpdate):
-    return await update_item("fichas", ficha_id, ficha)
-
-@api_router.delete("/fichas/{ficha_id}")
-async def eliminar_ficha(ficha_id: str):
-    return await delete_item("fichas", ficha_id)
-
-@api_router.post("/fichas/{ficha_id}/archivo")
-async def subir_archivo_ficha(ficha_id: str, file: UploadFile = File(...)):
-    """Upload file for a ficha"""
-    await get_item_by_id("fichas", ficha_id)
-    file_path = await save_upload_file(file, "fichas")
-    await db.fichas.update_one(
-        {"id": ficha_id},
-        {"$set": {"archivo": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
-    return {"file_path": file_path}
-
-# ============ TIZADO ROUTES ============
-
-@api_router.post("/tizados", response_model=Tizado)
-async def crear_tizado(tizado: TizadoCreate):
-    return await create_item("tizados", tizado, Tizado)
-
-@api_router.get("/tizados", response_model=List[Tizado])
-async def listar_tizados(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    return await get_items("tizados", search, activo, limit, skip)
-
-@api_router.get("/tizados/count")
-async def contar_tizados(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("tizados", search, activo)
-    return {"count": count}
-
-@api_router.get("/tizados/{tizado_id}", response_model=Tizado)
-async def obtener_tizado(tizado_id: str):
-    return await get_item_by_id("tizados", tizado_id)
-
-@api_router.put("/tizados/{tizado_id}", response_model=Tizado)
-async def actualizar_tizado(tizado_id: str, tizado: TizadoUpdate):
-    return await update_item("tizados", tizado_id, tizado)
-
-@api_router.delete("/tizados/{tizado_id}")
-async def eliminar_tizado(tizado_id: str):
-    return await delete_item("tizados", tizado_id)
-
-@api_router.post("/tizados/{tizado_id}/archivo")
-async def subir_archivo_tizado(tizado_id: str, file: UploadFile = File(...)):
-    """Upload file for a tizado"""
-    await get_item_by_id("tizados", tizado_id)
-    file_path = await save_upload_file(file, "tizados")
-    await db.tizados.update_one(
-        {"id": tizado_id},
-        {"$set": {"archivo_tizado": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
-    return {"file_path": file_path}
-
-# ============ BASE ROUTES ============
-
-@api_router.post("/bases", response_model=Base)
-async def crear_base(base: BaseCreate):
-    return await create_item("bases", base, Base)
-
-@api_router.get("/bases", response_model=List[Base])
-async def listar_bases(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None),
-    aprobado: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    skip: int = Query(0, ge=0)
-):
-    query = {}
-    if search:
-        query["nombre"] = {"$regex": search, "$options": "i"}
-    if activo is not None:
-        query["activo"] = activo
-    if aprobado is not None:
-        query["aprobado"] = aprobado
-    
-    cursor = db.bases.find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1)
-    items = await cursor.to_list(limit)
-    for item in items:
-        deserialize_item(item)
-    return items
+@api_router.delete("/bases/{item_id}")
+async def delete_base(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
 
 @api_router.get("/bases/count")
-async def contar_bases(
-    search: Optional[str] = Query(None),
-    activo: Optional[bool] = Query(None)
-):
-    count = await count_items("bases", search, activo)
-    return {"count": count}
-
-@api_router.get("/bases/{base_id}", response_model=Base)
-async def obtener_base(base_id: str):
-    return await get_item_by_id("bases", base_id)
-
-@api_router.put("/bases/{base_id}", response_model=Base)
-async def actualizar_base(base_id: str, base: BaseUpdate):
-    update_data = {k: v for k, v in base.model_dump().items() if v is not None}
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No hay datos para actualizar")
-    
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
-    result = await db.bases.update_one(
-        {"id": base_id},
-        {"$set": update_data}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Base no encontrada")
-    
-    return await get_item_by_id("bases", base_id)
-
-@api_router.delete("/bases/{base_id}")
-async def eliminar_base(base_id: str):
-    return await delete_item("bases", base_id)
+async def count_bases():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(BaseDB))
+        return {"count": result.scalar()}
 
 @api_router.post("/bases/{base_id}/patron")
-async def subir_patron(base_id: str, file: UploadFile = File(...)):
-    """Upload patron file for a base"""
-    await get_item_by_id("bases", base_id)
-    file_path = await save_upload_file(file, "patrones")
-    await db.bases.update_one(
-        {"id": base_id},
-        {"$set": {"patron_archivo": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
-    return {"file_path": file_path}
+async def upload_patron(base_id: str, file: UploadFile = File(...)):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        file_path = await save_upload_file(file, "patrones")
+        item.patron_archivo = file_path
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_path": file_path}
 
 @api_router.post("/bases/{base_id}/imagen")
-async def subir_imagen(base_id: str, file: UploadFile = File(...)):
-    """Upload image file for a base"""
-    await get_item_by_id("bases", base_id)
-    file_path = await save_upload_file(file, "imagenes")
-    await db.bases.update_one(
-        {"id": base_id},
-        {"$set": {"imagen_archivo": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
-    return {"file_path": file_path}
+async def upload_imagen(base_id: str, file: UploadFile = File(...)):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        file_path = await save_upload_file(file, "imagenes")
+        item.imagen_archivo = file_path
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_path": file_path}
 
 @api_router.post("/bases/{base_id}/fichas")
-async def subir_fichas(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
-    """Upload multiple ficha files for a base with optional names"""
-    await get_item_by_id("bases", base_id)
-    
-    if not files:
-        raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
-    
-    file_paths = []
-    for file in files:
-        file_path = await save_upload_file(file, "fichas_bases")
-        file_paths.append(file_path)
-    
-    # Append to existing fichas
-    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
-    existing_fichas = current.get("fichas_archivos", [])
-    existing_nombres = current.get("fichas_nombres", [])
-    
-    # If nombres provided, use them; otherwise use filenames
-    new_nombres = []
-    for i, file_path in enumerate(file_paths):
-        if i < len(nombres) and nombres[i]:
-            new_nombres.append(nombres[i])
-        else:
-            new_nombres.append(file_path.split('/')[-1])
-    
-    await db.bases.update_one(
-        {"id": base_id},
-        {"$set": {
-            "fichas_archivos": existing_fichas + file_paths,
-            "fichas_nombres": existing_nombres + new_nombres,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
-    )
-    return {"file_paths": file_paths, "nombres": new_nombres}
+async def upload_fichas(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        if not files:
+            raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
+        
+        file_paths = []
+        for file in files:
+            file_path = await save_upload_file(file, "fichas_bases")
+            file_paths.append(file_path)
+        
+        new_nombres = []
+        for i, file_path in enumerate(file_paths):
+            if i < len(nombres) and nombres[i]:
+                new_nombres.append(nombres[i])
+            else:
+                new_nombres.append(file_path.split('/')[-1])
+        
+        item.fichas_archivos = (item.fichas_archivos or []) + file_paths
+        item.fichas_nombres = (item.fichas_nombres or []) + new_nombres
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_paths": file_paths, "nombres": new_nombres}
 
 @api_router.delete("/bases/{base_id}/fichas/{file_index}")
-async def eliminar_ficha_base(base_id: str, file_index: int):
-    """Remove a ficha file from a base"""
-    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
-    if not current:
-        raise HTTPException(status_code=404, detail="Base no encontrada")
-    
-    fichas = current.get("fichas_archivos", [])
-    nombres = current.get("fichas_nombres", [])
-    
-    if file_index < 0 or file_index >= len(fichas):
-        raise HTTPException(status_code=400, detail="Índice de archivo inválido")
-    
-    fichas.pop(file_index)
-    if file_index < len(nombres):
-        nombres.pop(file_index)
-    
-    await db.bases.update_one(
-        {"id": base_id},
-        {"$set": {
-            "fichas_archivos": fichas,
-            "fichas_nombres": nombres,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
-    )
-    return {"message": "Archivo eliminado"}
+async def delete_ficha(base_id: str, file_index: int):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        
+        fichas = list(item.fichas_archivos or [])
+        nombres = list(item.fichas_nombres or [])
+        
+        if file_index < 0 or file_index >= len(fichas):
+            raise HTTPException(status_code=400, detail="Índice inválido")
+        
+        fichas.pop(file_index)
+        if file_index < len(nombres):
+            nombres.pop(file_index)
+        
+        item.fichas_archivos = fichas
+        item.fichas_nombres = nombres
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"message": "Eliminado"}
 
 @api_router.post("/bases/{base_id}/tizados")
-async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
-    """Upload multiple tizado files for a base with optional names"""
-    await get_item_by_id("bases", base_id)
-    
-    if not files:
-        raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
-    
-    file_paths = []
-    for file in files:
-        file_path = await save_upload_file(file, "tizados_bases")
-        file_paths.append(file_path)
-    
-    # Append to existing tizados
-    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
-    existing_tizados = current.get("tizados_archivos", [])
-    existing_nombres = current.get("tizados_nombres", [])
-    
-    # If nombres provided, use them; otherwise use filenames
-    new_nombres = []
-    for i, file_path in enumerate(file_paths):
-        if i < len(nombres) and nombres[i]:
-            new_nombres.append(nombres[i])
-        else:
-            new_nombres.append(file_path.split('/')[-1])
-    
-    await db.bases.update_one(
-        {"id": base_id},
-        {"$set": {
-            "tizados_archivos": existing_tizados + file_paths,
-            "tizados_nombres": existing_nombres + new_nombres,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
-    )
-    return {"file_paths": file_paths, "nombres": new_nombres}
+async def upload_tizados(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        if not files:
+            raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
+        
+        file_paths = []
+        for file in files:
+            file_path = await save_upload_file(file, "tizados_bases")
+            file_paths.append(file_path)
+        
+        new_nombres = []
+        for i, file_path in enumerate(file_paths):
+            if i < len(nombres) and nombres[i]:
+                new_nombres.append(nombres[i])
+            else:
+                new_nombres.append(file_path.split('/')[-1])
+        
+        item.tizados_archivos = (item.tizados_archivos or []) + file_paths
+        item.tizados_nombres = (item.tizados_nombres or []) + new_nombres
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_paths": file_paths, "nombres": new_nombres}
 
 @api_router.delete("/bases/{base_id}/tizados/{file_index}")
-async def eliminar_tizado_base(base_id: str, file_index: int):
-    """Remove a tizado file from a base"""
-    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
-    if not current:
-        raise HTTPException(status_code=404, detail="Base no encontrada")
-    
-    tizados = current.get("tizados_archivos", [])
-    nombres = current.get("tizados_nombres", [])
-    
-    if file_index < 0 or file_index >= len(tizados):
-        raise HTTPException(status_code=400, detail="Índice de archivo inválido")
-    
-    tizados.pop(file_index)
-    if file_index < len(nombres):
-        nombres.pop(file_index)
-    
-    await db.bases.update_one(
-        {"id": base_id},
-        {"$set": {
-            "tizados_archivos": tizados,
-            "tizados_nombres": nombres,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }}
-    )
-    return {"message": "Archivo eliminado"}
+async def delete_tizado(base_id: str, file_index: int):
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        
+        tizados = list(item.tizados_archivos or [])
+        nombres = list(item.tizados_nombres or [])
+        
+        if file_index < 0 or file_index >= len(tizados):
+            raise HTTPException(status_code=400, detail="Índice inválido")
+        
+        tizados.pop(file_index)
+        if file_index < len(nombres):
+            nombres.pop(file_index)
+        
+        item.tizados_archivos = tizados
+        item.tizados_nombres = nombres
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"message": "Eliminado"}
 
-# ============ DASHBOARD STATS ============
+# ============ FICHAS ROUTES ============
 
-@api_router.get("/dashboard/stats")
-async def obtener_estadisticas():
-    """Get counts for all collections"""
-    stats = {
-        "marcas": await db.marcas.count_documents({}),
-        "tipos_producto": await db.tipos_producto.count_documents({}),
-        "entalles": await db.entalles.count_documents({}),
-        "telas": await db.telas.count_documents({}),
-        "hilos": await db.hilos.count_documents({}),
-        "muestras_base": await db.muestras_base.count_documents({}),
-        "bases": await db.bases.count_documents({}),
-        "fichas": await db.fichas.count_documents({}),
-        "tizados": await db.tizados.count_documents({})
-    }
-    return stats
+@api_router.get("/fichas")
+async def get_fichas(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(FichaDB)
+        if search:
+            query = query.where(FichaDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(FichaDB.activo == activo)
+        query = query.order_by(FichaDB.orden)
+        result = await session.execute(query)
+        return [Ficha.model_validate(m) for m in result.scalars().all()]
 
-# Include the router in the main app
+@api_router.post("/fichas", response_model=Ficha)
+async def create_ficha(data: FichaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(FichaDB.orden), 0)))
+        max_orden = result.scalar()
+        item = FichaDB(**data.model_dump(), orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return Ficha.model_validate(item)
+
+@api_router.put("/fichas/{item_id}", response_model=Ficha)
+async def update_ficha(item_id: str, data: FichaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(FichaDB).where(FichaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return Ficha.model_validate(item)
+
+@api_router.delete("/fichas/{item_id}")
+async def delete_ficha_item(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(FichaDB).where(FichaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
+
+@api_router.get("/fichas/count")
+async def count_fichas():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(FichaDB))
+        return {"count": result.scalar()}
+
+@api_router.post("/fichas/{item_id}/archivo")
+async def upload_ficha_archivo(item_id: str, file: UploadFile = File(...)):
+    async with async_session() as session:
+        result = await session.execute(select(FichaDB).where(FichaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        file_path = await save_upload_file(file, "fichas")
+        item.archivo = file_path
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_path": file_path}
+
+# ============ TIZADOS ROUTES ============
+
+@api_router.get("/tizados")
+async def get_tizados(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(TizadoDB)
+        if search:
+            query = query.where(TizadoDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(TizadoDB.activo == activo)
+        query = query.order_by(TizadoDB.orden)
+        result = await session.execute(query)
+        return [Tizado.model_validate(m) for m in result.scalars().all()]
+
+@api_router.post("/tizados", response_model=Tizado)
+async def create_tizado(data: TizadoCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(TizadoDB.orden), 0)))
+        max_orden = result.scalar()
+        item = TizadoDB(**data.model_dump(), orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return Tizado.model_validate(item)
+
+@api_router.put("/tizados/{item_id}", response_model=Tizado)
+async def update_tizado(item_id: str, data: TizadoCreate):
+    async with async_session() as session:
+        result = await session.execute(select(TizadoDB).where(TizadoDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return Tizado.model_validate(item)
+
+@api_router.delete("/tizados/{item_id}")
+async def delete_tizado_item(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(TizadoDB).where(TizadoDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
+
+@api_router.get("/tizados/count")
+async def count_tizados():
+    async with async_session() as session:
+        result = await session.execute(select(func.count()).select_from(TizadoDB))
+        return {"count": result.scalar()}
+
+@api_router.post("/tizados/{item_id}/archivo")
+async def upload_tizado_archivo(item_id: str, file: UploadFile = File(...)):
+    async with async_session() as session:
+        result = await session.execute(select(TizadoDB).where(TizadoDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        file_path = await save_upload_file(file, "tizados")
+        item.archivo_tizado = file_path
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_path": file_path}
+
+# Include router
 app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
