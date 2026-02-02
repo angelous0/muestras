@@ -925,7 +925,7 @@ export default function BasesPage() {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input 
-                                placeholder="Buscar por nombre..."
+                                placeholder="Buscar por ancho, curva u otras bases..."
                                 value={tizadoSearchInDialog}
                                 onChange={(e) => setTizadoSearchInDialog(e.target.value)}
                                 className="pl-10 bg-white"
@@ -937,10 +937,8 @@ export default function BasesPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-12">#</TableHead>
-                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Nombre</TableHead>
-                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Ancho</TableHead>
-                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Curva</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Ancho</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-32">Curva</TableHead>
                                         <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Otras Bases</TableHead>
                                         <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Acciones</TableHead>
                                     </TableRow>
@@ -948,20 +946,16 @@ export default function BasesPage() {
                                 <TableBody>
                                     {filteredTizadosInDialog.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">
                                                 No hay tizados disponibles
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredTizadosInDialog.map((tizado, index) => {
+                                        filteredTizadosInDialog.map((tizado) => {
                                             const isLinked = (tizado.bases_ids || []).includes(currentBaseForFiles?.id);
                                             const otherBases = getOtherBasesNames(tizado);
                                             return (
                                                 <TableRow key={tizado.id} className={`border-b border-slate-100 hover:bg-slate-50 ${isLinked ? 'bg-emerald-50' : ''}`}>
-                                                    <TableCell className="py-2 px-3 text-sm text-slate-600">{index + 1}</TableCell>
-                                                    <TableCell className="py-2 px-3 text-sm text-slate-700 font-medium">
-                                                        {tizado.nombre}
-                                                    </TableCell>
                                                     <TableCell className="py-2 px-3 text-sm text-slate-600">
                                                         {tizado.ancho ? `${tizado.ancho} cm` : '-'}
                                                     </TableCell>
@@ -969,20 +963,29 @@ export default function BasesPage() {
                                                         {tizado.curva || '-'}
                                                     </TableCell>
                                                     <TableCell className="py-2 px-3 text-sm">
-                                                        {otherBases.length > 0 ? (
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {otherBases.slice(0, 2).map((name, i) => (
-                                                                    <Badge key={i} variant="outline" className="text-xs truncate max-w-[80px]">
-                                                                        {name}
-                                                                    </Badge>
-                                                                ))}
-                                                                {otherBases.length > 2 && (
-                                                                    <Badge variant="secondary" className="text-xs">+{otherBases.length - 2}</Badge>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-slate-400">-</span>
-                                                        )}
+                                                        <button
+                                                            onClick={() => openBasesEditor(tizado)}
+                                                            className="flex flex-wrap gap-1 w-full text-left hover:bg-slate-100 p-1 rounded transition-colors cursor-pointer min-h-[28px] items-center"
+                                                            title="Clic para agregar o eliminar bases"
+                                                        >
+                                                            {otherBases.length > 0 ? (
+                                                                <>
+                                                                    {otherBases.slice(0, 3).map((name, i) => (
+                                                                        <Badge key={i} variant="outline" className="text-xs truncate max-w-[100px]">
+                                                                            {name}
+                                                                        </Badge>
+                                                                    ))}
+                                                                    {otherBases.length > 3 && (
+                                                                        <Badge variant="secondary" className="text-xs">+{otherBases.length - 3}</Badge>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-slate-400 text-xs flex items-center gap-1">
+                                                                    <Plus className="w-3 h-3" />
+                                                                    Agregar bases
+                                                                </span>
+                                                            )}
+                                                        </button>
                                                     </TableCell>
                                                     <TableCell className="py-2 px-3">
                                                         {isLinked ? (
@@ -1017,6 +1020,49 @@ export default function BasesPage() {
                     </div>
                     <div className="border-t border-slate-200 pt-4 flex justify-end">
                         <Button variant="outline" onClick={() => setTizadosDialogOpen(false)}>Cerrar</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            
+            {/* Dialog para editar bases de un tizado */}
+            <Dialog open={!!editingTizadoBases} onOpenChange={(open) => !open && setEditingTizadoBases(null)}>
+                <DialogContent className="sm:max-w-md bg-white max-h-[80vh] overflow-hidden flex flex-col">
+                    <DialogHeader className="border-b border-slate-200 pb-4">
+                        <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
+                            Editar Bases del Tizado
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-slate-500 mt-1">
+                            Ancho: {editingTizadoBases?.ancho || '-'} cm | Curva: {editingTizadoBases?.curva || '-'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto py-4">
+                        <p className="text-sm text-slate-500 mb-3">Selecciona las bases a vincular con este tizado:</p>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                            {data.map((base) => (
+                                <label 
+                                    key={base.id}
+                                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                        tempBasesIds.includes(base.id) 
+                                            ? 'bg-emerald-50 border-emerald-300' 
+                                            : 'bg-white border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <Checkbox 
+                                        checked={tempBasesIds.includes(base.id)}
+                                        onCheckedChange={() => toggleBaseInTemp(base.id)}
+                                    />
+                                    <span className="text-sm text-slate-700 flex-1 truncate">
+                                        {base.nombre || getMuestraBaseName(base.muestra_base_id)}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-200 pt-4 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setEditingTizadoBases(null)}>Cancelar</Button>
+                        <Button onClick={saveBasesForTizado} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                            Guardar
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
