@@ -1,12 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { DataTable, StatusBadge, ApprovalBadge } from '../components/DataTable';
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 import { 
     getMuestrasBase, createMuestraBase, updateMuestraBase, deleteMuestraBase, 
     uploadArchivoCostos, getFileUrl,
     getMarcas, getTiposProducto, getEntalles, getTelas
 } from '../lib/api';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '../components/ui/table';
 import {
     Dialog,
     DialogContent,
@@ -18,7 +25,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
-import { Textarea } from '../components/ui/textarea';
+import { Badge } from '../components/ui/badge';
 import {
     Select,
     SelectContent,
@@ -26,20 +33,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from '../components/ui/select';
-import { Upload, FileSpreadsheet, Download, Percent } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { Search, Plus, Pencil, Trash2, Filter, X, Upload, FileSpreadsheet, Download, Percent, Check, Clock } from 'lucide-react';
 
-const tableColumns = [
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'costo_estimado', label: 'Costo', render: (val) => val ? `$${val.toFixed(2)}` : '-' },
-    { key: 'precio_estimado', label: 'Precio', render: (val) => val ? `$${val.toFixed(2)}` : '-' },
-    { key: 'rentabilidad_esperada', label: 'Rentabilidad', render: (val) => val ? (
-        <span className={`font-medium ${val >= 30 ? 'text-emerald-600' : val >= 15 ? 'text-amber-600' : 'text-red-600'}`}>
-            {val}%
-        </span>
-    ) : '-' },
-    { key: 'aprobado', label: 'Aprobado', render: (val) => <ApprovalBadge aprobado={val} /> },
-    { key: 'activo', label: 'Estado', render: (val) => <StatusBadge activo={val} /> },
-];
+const ApprovalBadge = ({ aprobado }) => (
+    <Badge className={aprobado ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-100 text-amber-700 hover:bg-amber-100'}>
+        {aprobado ? <><Check className="w-3 h-3 mr-1" />Aprobado</> : <><Clock className="w-3 h-3 mr-1" />Pendiente</>}
+    </Badge>
+);
 
 export default function MuestrasBasePage() {
     const [data, setData] = useState([]);
@@ -52,13 +58,15 @@ export default function MuestrasBasePage() {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({});
     
-    // Catalogs for selects
+    // Catalogs
     const [marcas, setMarcas] = useState([]);
     const [tiposProducto, setTiposProducto] = useState([]);
     const [entalles, setEntalles] = useState([]);
     const [telas, setTelas] = useState([]);
     
-    const fileInputRef = useRef(null);
+    // For inline file upload
+    const [uploadingId, setUploadingId] = useState(null);
+    const fileInputRefs = useRef({});
 
     const fetchCatalogs = async () => {
         try {
@@ -101,6 +109,20 @@ export default function MuestrasBasePage() {
         return () => clearTimeout(debounce);
     }, [fetchData]);
 
+    // Helper to get catalog names
+    const getCatalogName = (id, catalog) => catalog.find(c => c.id === id)?.nombre || '-';
+
+    // Generate automatic name
+    const generateNombre = (data) => {
+        const marca = getCatalogName(data.marca_id, marcas);
+        const tipo = getCatalogName(data.tipo_producto_id, tiposProducto);
+        const tela = getCatalogName(data.tela_id, telas);
+        const entalle = getCatalogName(data.entalle_id, entalles);
+        
+        const parts = [marca, tipo, tela, entalle].filter(p => p !== '-');
+        return parts.length > 0 ? parts.join(' - ') : 'Nueva Muestra';
+    };
+
     const handleAdd = () => {
         setSelectedItem(null);
         setFormData({ activo: true, aprobado: false });
@@ -137,11 +159,17 @@ export default function MuestrasBasePage() {
         e.preventDefault();
         setSubmitting(true);
         try {
+            // Generate nombre automatically
+            const submitData = {
+                ...formData,
+                nombre: generateNombre(formData)
+            };
+            
             if (selectedItem) {
-                await updateMuestraBase(selectedItem.id, formData);
+                await updateMuestraBase(selectedItem.id, submitData);
                 toast.success('Muestra actualizada correctamente');
             } else {
-                await createMuestraBase(formData);
+                await createMuestraBase(submitData);
                 toast.success('Muestra creada correctamente');
             }
             setFormOpen(false);
@@ -153,16 +181,20 @@ export default function MuestrasBasePage() {
         }
     };
 
-    const handleFileUpload = async (e) => {
+    // Inline file upload
+    const handleFileUpload = async (itemId, e) => {
         const file = e.target.files?.[0];
-        if (!file || !selectedItem) return;
+        if (!file) return;
         
+        setUploadingId(itemId);
         try {
-            await uploadArchivoCostos(selectedItem.id, file);
+            await uploadArchivoCostos(itemId, file);
             toast.success('Archivo subido correctamente');
             fetchData();
         } catch (error) {
             toast.error('Error al subir archivo');
+        } finally {
+            setUploadingId(null);
         }
     };
 
@@ -180,11 +212,6 @@ export default function MuestrasBasePage() {
         }
     };
 
-    const getCatalogName = (id, catalog) => {
-        const item = catalog.find(c => c.id === id);
-        return item?.nombre || '-';
-    };
-
     return (
         <div className="space-y-6 animate-fade-in" data-testid="muestras-base-page">
             <div>
@@ -196,21 +223,171 @@ export default function MuestrasBasePage() {
                 </p>
             </div>
 
-            <DataTable
-                data={data}
-                columns={tableColumns}
-                onAdd={handleAdd}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                searchValue={search}
-                onSearchChange={setSearch}
-                filterActive={filterActive}
-                onFilterChange={setFilterActive}
-                loading={loading}
-                emptyMessage="No hay muestras base registradas"
-                addButtonText="Nueva Muestra"
-                testIdPrefix="muestras-base"
-            />
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                        placeholder="Buscar..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-10 h-10 bg-white"
+                        data-testid="muestras-search"
+                    />
+                    {search && (
+                        <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
+                </div>
+
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="bg-white">
+                                <Filter className="h-4 w-4 mr-2" />
+                                {filterActive === null ? 'Todos' : filterActive ? 'Activos' : 'Inactivos'}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setFilterActive(null)}>Todos</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterActive(true)}>Activos</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterActive(false)}>Inactivos</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Button onClick={handleAdd} className="bg-slate-800 hover:bg-slate-700 text-white" data-testid="muestras-add-btn">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nueva Muestra
+                    </Button>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 hover:bg-slate-50">
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Marca</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Tipo</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Entalle</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Tela</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Costo</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Precio</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Rentabilidad</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Archivo</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Aprobado</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4 w-32">Acciones</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={10} className="text-center py-8 text-slate-500">Cargando...</TableCell>
+                            </TableRow>
+                        ) : data.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={10} className="text-center py-8 text-slate-500">No hay muestras registradas</TableCell>
+                            </TableRow>
+                        ) : (
+                            data.map((item) => (
+                                <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.marca_id, marcas)}</TableCell>
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.tipo_producto_id, tiposProducto)}</TableCell>
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.entalle_id, entalles)}</TableCell>
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.tela_id, telas)}</TableCell>
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700">
+                                        {item.costo_estimado ? `S/ ${item.costo_estimado.toFixed(2)}` : '-'}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700">
+                                        {item.precio_estimado ? `S/ ${item.precio_estimado.toFixed(2)}` : '-'}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm">
+                                        {item.rentabilidad_esperada ? (
+                                            <span className={`font-semibold ${
+                                                item.rentabilidad_esperada >= 30 ? 'text-emerald-600' : 
+                                                item.rentabilidad_esperada >= 15 ? 'text-amber-600' : 'text-red-600'
+                                            }`}>
+                                                {item.rentabilidad_esperada}%
+                                            </span>
+                                        ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm">
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="file"
+                                                ref={el => fileInputRefs.current[item.id] = el}
+                                                onChange={(e) => handleFileUpload(item.id, e)}
+                                                accept=".xlsx,.xls,.csv"
+                                                className="hidden"
+                                            />
+                                            {item.archivo_costos ? (
+                                                <div className="flex items-center gap-1">
+                                                    <a 
+                                                        href={getFileUrl(item.archivo_costos)} 
+                                                        target="_blank" 
+                                                        rel="noreferrer"
+                                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                    >
+                                                        <FileSpreadsheet className="w-4 h-4" />
+                                                        <Download className="w-3 h-3" />
+                                                    </a>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => fileInputRefs.current[item.id]?.click()}
+                                                        className="h-6 px-1 text-slate-500 hover:text-slate-700"
+                                                        disabled={uploadingId === item.id}
+                                                    >
+                                                        <Upload className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => fileInputRefs.current[item.id]?.click()}
+                                                    className="h-7 text-xs"
+                                                    disabled={uploadingId === item.id}
+                                                >
+                                                    {uploadingId === item.id ? (
+                                                        'Subiendo...'
+                                                    ) : (
+                                                        <><Upload className="w-3 h-3 mr-1" />Excel</>
+                                                    )}
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4">
+                                        <ApprovalBadge aprobado={item.aprobado} />
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4">
+                                        <div className="flex gap-1">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                onClick={() => handleEdit(item)}
+                                                className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                onClick={() => handleDelete(item)}
+                                                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
 
             {/* Form Dialog */}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -222,22 +399,9 @@ export default function MuestrasBasePage() {
                     </DialogHeader>
 
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium text-slate-700">
-                                Nombre <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                value={formData.nombre || ''}
-                                onChange={(e) => handleChange('nombre', e.target.value)}
-                                placeholder="Nombre de la muestra"
-                                required
-                                data-testid="muestra-form-nombre"
-                            />
-                        </div>
-
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-700">Marca</Label>
+                                <Label className="text-sm font-medium text-slate-700">Marca <span className="text-red-500">*</span></Label>
                                 <Select value={formData.marca_id || ''} onValueChange={(v) => handleChange('marca_id', v)}>
                                     <SelectTrigger data-testid="muestra-form-marca">
                                         <SelectValue placeholder="Seleccionar" />
@@ -250,7 +414,7 @@ export default function MuestrasBasePage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-700">Tipo Producto</Label>
+                                <Label className="text-sm font-medium text-slate-700">Tipo Producto <span className="text-red-500">*</span></Label>
                                 <Select value={formData.tipo_producto_id || ''} onValueChange={(v) => handleChange('tipo_producto_id', v)}>
                                     <SelectTrigger data-testid="muestra-form-tipo">
                                         <SelectValue placeholder="Seleccionar" />
@@ -307,7 +471,7 @@ export default function MuestrasBasePage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-700">Costo Estimado ($)</Label>
+                                <Label className="text-sm font-medium text-slate-700">Costo Estimado (S/)</Label>
                                 <Input
                                     type="number"
                                     step="0.01"
@@ -318,7 +482,7 @@ export default function MuestrasBasePage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-700">Precio Estimado ($)</Label>
+                                <Label className="text-sm font-medium text-slate-700">Precio Estimado (S/)</Label>
                                 <Input
                                     type="number"
                                     step="0.01"
@@ -344,18 +508,7 @@ export default function MuestrasBasePage() {
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium text-slate-700">Descripción</Label>
-                            <Textarea
-                                value={formData.descripcion || ''}
-                                onChange={(e) => handleChange('descripcion', e.target.value)}
-                                placeholder="Descripción de la muestra..."
-                                rows={2}
-                                data-testid="muestra-form-descripcion"
-                            />
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-6 pt-2">
                             <div className="flex items-center gap-3">
                                 <Switch
                                     checked={formData.aprobado || false}
@@ -373,52 +526,6 @@ export default function MuestrasBasePage() {
                                 <span className="text-sm text-slate-600">Activo</span>
                             </div>
                         </div>
-
-                        {/* File upload (only for edit) */}
-                        {selectedItem && (
-                            <div className="border-t pt-4 mt-4">
-                                <Label className="text-sm font-medium text-slate-700 mb-2 block">
-                                    Archivo de Costos (Excel)
-                                </Label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileUpload}
-                                        accept=".xlsx,.xls,.csv"
-                                        className="hidden"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="flex-1"
-                                        data-testid="muestra-form-upload"
-                                    >
-                                        <Upload className="w-4 h-4 mr-2" />
-                                        Subir Archivo
-                                    </Button>
-                                    {selectedItem.archivo_costos && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            asChild
-                                        >
-                                            <a href={getFileUrl(selectedItem.archivo_costos)} target="_blank" rel="noreferrer">
-                                                <Download className="w-4 h-4 mr-2" />
-                                                Descargar
-                                            </a>
-                                        </Button>
-                                    )}
-                                </div>
-                                {selectedItem.archivo_costos && (
-                                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                        <FileSpreadsheet className="w-3 h-3" />
-                                        {selectedItem.archivo_costos.split('/').pop()}
-                                    </p>
-                                )}
-                            </div>
-                        )}
 
                         <DialogFooter className="gap-2 pt-4">
                             <Button type="button" variant="outline" onClick={() => setFormOpen(false)} data-testid="muestra-form-cancel">
