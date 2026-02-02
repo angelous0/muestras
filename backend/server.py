@@ -937,12 +937,11 @@ async def get_bases(search: str = "", activo: Optional[bool] = None):
 @api_router.post("/bases", response_model=BaseModel_)
 async def create_base(data: BaseCreate):
     async with async_session() as session:
-        # Usar nombre proporcionado o generar automáticamente
-        nombre = data.nombre if data.nombre else await generate_base_name(session, data.muestra_base_id, data.hilo_id)
         result = await session.execute(select(func.coalesce(func.max(BaseDB.orden), 0)))
         max_orden = result.scalar()
         item_data = data.model_dump()
-        item_data['nombre'] = nombre
+        # Usar nombre proporcionado o dejar vacío
+        item_data['nombre'] = data.nombre or ''
         item = BaseDB(**item_data, orden=max_orden + 1)
         session.add(item)
         await session.commit()
@@ -956,12 +955,10 @@ async def update_base(item_id: str, data: BaseCreate):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        # Usar nombre proporcionado o generar automáticamente
-        nombre = data.nombre if data.nombre else await generate_base_name(session, data.muestra_base_id, data.hilo_id)
         for key, value in data.model_dump().items():
-            if key != 'nombre':
-                setattr(item, key, value)
-        item.nombre = nombre
+            setattr(item, key, value)
+        # Usar nombre proporcionado o dejar vacío
+        item.nombre = data.nombre or ''
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
         await session.refresh(item)
