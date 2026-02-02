@@ -7,6 +7,10 @@ import TiposProductoPage from "./pages/TiposProductoPage";
 import EntallesPage from "./pages/EntallesPage";
 import TelasPage from "./pages/TelasPage";
 import HilosPage from "./pages/HilosPage";
+import MuestrasBasePage from "./pages/MuestrasBasePage";
+import BasesPage from "./pages/BasesPage";
+import FichasPage from "./pages/FichasPage";
+import TizadosPage from "./pages/TizadosPage";
 
 function App() {
     return (
@@ -19,6 +23,10 @@ function App() {
                     <Route path="entalles" element={<EntallesPage />} />
                     <Route path="telas" element={<TelasPage />} />
                     <Route path="hilos" element={<HilosPage />} />
+                    <Route path="muestras-base" element={<MuestrasBasePage />} />
+                    <Route path="bases" element={<BasesPage />} />
+                    <Route path="fichas" element={<FichasPage />} />
+                    <Route path="tizados" element={<TizadosPage />} />
                 </Route>
             </Routes>
         </BrowserRouter>
