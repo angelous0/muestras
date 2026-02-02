@@ -777,6 +777,9 @@ export default function BasesPage() {
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
                             Tizados de Base #{currentBaseForFiles?.id?.slice(-4) || ''}
                         </DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Gestionar tizados de la base seleccionada
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto py-4 space-y-4">
                         {/* Formulario para crear nuevo tizado */}
