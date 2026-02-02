@@ -28,9 +28,15 @@ UPLOADS_DIR.mkdir(exist_ok=True)
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 'muestra')
 
-# Convert postgres:// to postgresql+asyncpg://
+# Convert postgres:// to postgresql+asyncpg:// and remove sslmode parameter
 if DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql+asyncpg://', 1)
+
+# Remove sslmode from URL for asyncpg (it doesn't support it as URL param)
+if '?sslmode=' in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split('?sslmode=')[0]
+elif '&sslmode=' in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace('&sslmode=disable', '').replace('&sslmode=require', '')
 
 # Create async engine
 engine = create_async_engine(DATABASE_URL, echo=False)
