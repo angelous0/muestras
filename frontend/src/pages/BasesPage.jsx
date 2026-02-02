@@ -11,10 +11,14 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableHead,
     TableHeader,
     TableRow,
 } from '../components/ui/table';
+import {
+    useResizableColumns,
+    ResizableTableHead,
+    ResizableTableCell,
+} from '../components/ResizableTable';
 import {
     Dialog,
     DialogContent,
@@ -44,7 +48,7 @@ import {
 import { ScrollArea } from '../components/ui/scroll-area';
 import { 
     Search, Plus, Pencil, Trash2, Filter, X, Upload, 
-    FileSpreadsheet, Download, Image, Check, Clock, File, FolderOpen
+    FileSpreadsheet, Download, Image, Check, Clock, File, FolderOpen, RotateCcw
 } from 'lucide-react';
 
 const ApprovalBadge = ({ aprobado }) => (
