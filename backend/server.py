@@ -1019,7 +1019,8 @@ async def upload_patron(base_id: str, file: UploadFile = File(...)):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        file_path = await save_upload_file(file, "patrones")
+        # Use original filename
+        file_path = await save_upload_file(file, "patrones", None)
         item.patron_archivo = file_path
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
@@ -1032,7 +1033,8 @@ async def upload_imagen(base_id: str, file: UploadFile = File(...)):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        file_path = await save_upload_file(file, "imagenes")
+        # Use original filename
+        file_path = await save_upload_file(file, "imagenes", None)
         item.imagen_archivo = file_path
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
