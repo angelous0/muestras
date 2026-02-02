@@ -396,6 +396,17 @@ export default function BasesPage() {
         tizado.nombre.toLowerCase().includes(tizadoSearch.toLowerCase())
     );
 
+    // Get other bases names for a tizado (excluding current base)
+    const getOtherBasesNames = (tizado) => {
+        if (!tizado.bases_ids || !currentBaseForFiles) return [];
+        return tizado.bases_ids
+            .filter(id => id !== currentBaseForFiles.id)
+            .map(id => {
+                const base = data.find(b => b.id === id);
+                return base?.nombre || `Base ${id.slice(-6)}`;
+            });
+    };
+
     // Create new ficha with name and file
     const handleCreateFicha = async () => {
         if (!newFichaName || !newFichaFile || !currentBaseForFiles) return;
