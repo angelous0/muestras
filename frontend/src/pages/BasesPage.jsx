@@ -838,82 +838,110 @@ export default function BasesPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Tizados Dialog - Para vincular/desvincular tizados */}
+            {/* Tizados Dialog - Rediseñado con tabla */}
             <Dialog open={tizadosDialogOpen} onOpenChange={setTizadosDialogOpen}>
-                <DialogContent className="sm:max-w-lg bg-white max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogContent className="sm:max-w-3xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader className="border-b border-slate-200 pb-4">
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
-                            Tizados de Base
+                            Tizados de Base #{currentBaseForFiles?.id?.slice(-4) || ''}
                         </DialogTitle>
-                        <DialogDescription className="text-sm text-slate-500">
-                            Selecciona los tizados que quieres vincular a esta base
+                        <DialogDescription className="sr-only">
+                            Gestionar tizados vinculados a esta base
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto py-4 space-y-4">
-                        {/* Tizados vinculados */}
-                        {getTizadosForCurrentBase().length > 0 && (
-                            <div className="space-y-2">
-                                <Label className="text-sm font-medium text-slate-700">Tizados vinculados ({getTizadosForCurrentBase().length})</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {getTizadosForCurrentBase().map(t => (
-                                        <Badge key={t.id} className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 gap-1 pr-1 cursor-pointer" onClick={() => handleToggleTizadoAssociation(t)}>
-                                            <span>{t.nombre}</span>
-                                            <X className="w-3 h-3 ml-1" />
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* Campo de búsqueda */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input 
-                                placeholder="Buscar tizados..."
+                                placeholder="Buscar por nombre..."
                                 value={tizadoSearchInDialog}
                                 onChange={(e) => setTizadoSearchInDialog(e.target.value)}
                                 className="pl-10 bg-white"
                             />
                         </div>
 
-                        {/* Lista de todos los tizados */}
-                        <div className="border border-slate-200 rounded-lg">
-                            <ScrollArea className="h-[250px]">
-                                <div className="p-2 space-y-1">
+                        {/* Tabla de tizados */}
+                        <div className="border border-slate-200 rounded-lg overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-12">#</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Nombre</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Ancho</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Curva</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Otras Bases</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {filteredTizadosInDialog.length === 0 ? (
-                                        <p className="text-sm text-slate-500 text-center py-8">
-                                            No hay tizados disponibles. Crea uno desde la sección Tizados.
-                                        </p>
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                                                No hay tizados disponibles
+                                            </TableCell>
+                                        </TableRow>
                                     ) : (
-                                        filteredTizadosInDialog.map(tizado => {
+                                        filteredTizadosInDialog.map((tizado, index) => {
                                             const isLinked = (tizado.bases_ids || []).includes(currentBaseForFiles?.id);
+                                            const otherBases = getOtherBasesNames(tizado);
                                             return (
-                                                <label 
-                                                    key={tizado.id}
-                                                    className={`flex items-center gap-3 p-3 rounded cursor-pointer transition-colors ${
-                                                        isLinked ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-slate-50'
-                                                    }`}
-                                                >
-                                                    <Checkbox 
-                                                        checked={isLinked}
-                                                        onCheckedChange={() => handleToggleTizadoAssociation(tizado)}
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-slate-700 truncate">{tizado.nombre}</p>
-                                                        <p className="text-xs text-slate-500">
-                                                            {tizado.ancho ? `Ancho: ${tizado.ancho}cm` : ''} 
-                                                            {tizado.curva ? ` | Curva: ${tizado.curva}` : ''}
-                                                        </p>
-                                                    </div>
-                                                    {isLinked && (
-                                                        <Badge className="bg-emerald-100 text-emerald-700 text-xs">Vinculado</Badge>
-                                                    )}
-                                                </label>
+                                                <TableRow key={tizado.id} className={`border-b border-slate-100 hover:bg-slate-50 ${isLinked ? 'bg-emerald-50' : ''}`}>
+                                                    <TableCell className="py-2 px-3 text-sm text-slate-600">{index + 1}</TableCell>
+                                                    <TableCell className="py-2 px-3 text-sm text-slate-700 font-medium">
+                                                        {tizado.nombre}
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3 text-sm text-slate-600">
+                                                        {tizado.ancho ? `${tizado.ancho} cm` : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3 text-sm text-slate-600">
+                                                        {tizado.curva || '-'}
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3 text-sm">
+                                                        {otherBases.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {otherBases.slice(0, 2).map((name, i) => (
+                                                                    <Badge key={i} variant="outline" className="text-xs truncate max-w-[80px]">
+                                                                        {name}
+                                                                    </Badge>
+                                                                ))}
+                                                                {otherBases.length > 2 && (
+                                                                    <Badge variant="secondary" className="text-xs">+{otherBases.length - 2}</Badge>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-400">-</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3">
+                                                        {isLinked ? (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                onClick={() => handleToggleTizadoAssociation(tizado)}
+                                                                className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                            >
+                                                                <X className="w-3 h-3 mr-1" />
+                                                                Desvincular
+                                                            </Button>
+                                                        ) : (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                onClick={() => handleToggleTizadoAssociation(tizado)}
+                                                                className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                            >
+                                                                <Plus className="w-3 h-3 mr-1" />
+                                                                Vincular
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
                                             );
                                         })
                                     )}
-                                </div>
-                            </ScrollArea>
+                                </TableBody>
+                            </Table>
                         </div>
                     </div>
                     <div className="border-t border-slate-200 pt-4 flex justify-end">
