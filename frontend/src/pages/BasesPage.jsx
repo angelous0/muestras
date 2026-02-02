@@ -428,6 +428,55 @@ export default function BasesPage() {
                 return base?.nombre || `Base ${id.slice(-6)}`;
             });
     };
+    
+    // Get all bases for a tizado (including current base)
+    const getAllBasesForTizado = (tizado) => {
+        if (!tizado.bases_ids) return [];
+        return tizado.bases_ids.map(id => {
+            const base = data.find(b => b.id === id);
+            return { id, nombre: base?.nombre || `Base ${id.slice(-6)}` };
+        });
+    };
+    
+    // Open bases editor for a tizado
+    const openBasesEditor = (tizado) => {
+        setEditingTizadoBases(tizado);
+        setTempBasesIds([...(tizado.bases_ids || [])]);
+    };
+    
+    // Toggle base in temp list
+    const toggleBaseInTemp = (baseId) => {
+        setTempBasesIds(prev => {
+            if (prev.includes(baseId)) {
+                return prev.filter(id => id !== baseId);
+            } else {
+                return [...prev, baseId];
+            }
+        });
+    };
+    
+    // Save bases for tizado
+    const saveBasesForTizado = async () => {
+        if (!editingTizadoBases) return;
+        try {
+            await updateTizado(editingTizadoBases.id, { ...editingTizadoBases, bases_ids: tempBasesIds });
+            toast.success('Bases actualizadas');
+            
+            // Refresh data
+            fetchData();
+            fetchCatalogs();
+            if (currentBaseForFiles) {
+                const updated = await getBases({});
+                const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+                if (refreshed) setCurrentBaseForFiles(refreshed);
+            }
+            
+            setEditingTizadoBases(null);
+            setTempBasesIds([]);
+        } catch (error) {
+            toast.error('Error al actualizar bases');
+        }
+    };
 
     // Create new ficha with name and file
     const handleCreateFicha = async () => {
