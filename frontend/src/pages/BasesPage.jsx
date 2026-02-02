@@ -105,7 +105,8 @@ export default function BasesPage() {
 
     // Columnas redimensionables
     const defaultColumnWidths = {
-        muestraBase: 200,
+        muestraBase: 180,
+        nombre: 150,
         hilo: 100,
         patron: 100,
         imagen: 100,
