@@ -180,7 +180,7 @@ export default function BasesPage() {
 
     const handleAdd = () => {
         setSelectedItem(null);
-        setFormData({ activo: true, aprobado: false });
+        setFormData({ nombre: '', activo: true, aprobado: false });
         setFormOpen(true);
     };
 
