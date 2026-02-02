@@ -24,4 +24,6 @@ export const ApprovalBadge = ({ aprobado }) => (
     </Badge>
 );
 
-export { DataTable } from './DataTableBase';
+// Import and re-export DataTable
+import { DataTable as DataTableComponent } from './DataTableBase';
+export const DataTable = DataTableComponent;
