@@ -231,32 +231,29 @@ class Base(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     nombre: str
     muestra_base_id: Optional[str] = None
+    hilo_id: Optional[str] = None
     patron_archivo: Optional[str] = None
     imagen_archivo: Optional[str] = None
-    fichas_ids: List[str] = Field(default_factory=list)
-    tizados_ids: List[str] = Field(default_factory=list)
+    fichas_archivos: List[str] = Field(default_factory=list)
+    tizados_archivos: List[str] = Field(default_factory=list)
     aprobado: bool = False
-    descripcion: Optional[str] = None
     activo: bool = True
+    orden: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class BaseCreate(BaseModel):
     nombre: str
     muestra_base_id: Optional[str] = None
-    fichas_ids: List[str] = Field(default_factory=list)
-    tizados_ids: List[str] = Field(default_factory=list)
+    hilo_id: Optional[str] = None
     aprobado: bool = False
-    descripcion: Optional[str] = None
     activo: bool = True
 
 class BaseUpdate(BaseModel):
     nombre: Optional[str] = None
     muestra_base_id: Optional[str] = None
-    fichas_ids: Optional[List[str]] = None
-    tizados_ids: Optional[List[str]] = None
+    hilo_id: Optional[str] = None
     aprobado: Optional[bool] = None
-    descripcion: Optional[str] = None
     activo: Optional[bool] = None
 
 # ============ HELPER FUNCTIONS ============
