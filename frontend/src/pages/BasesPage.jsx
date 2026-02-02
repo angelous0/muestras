@@ -675,7 +675,7 @@ export default function BasesPage() {
                                         <Button 
                                             type="button"
                                             onClick={handleCreateFicha}
-                                            disabled={!newFichaName || uploadingFiles}
+                                            disabled={!newFichaName || !newFichaFile || uploadingFiles}
                                             className="bg-emerald-600 hover:bg-emerald-700 text-white"
                                         >
                                             {uploadingFiles ? 'Guardando...' : 'Guardar Ficha'}
