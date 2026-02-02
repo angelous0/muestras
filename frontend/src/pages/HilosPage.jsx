@@ -7,15 +7,11 @@ import { getHilos, createHilo, updateHilo, deleteHilo } from '../lib/api';
 
 const formFields = [
     { key: 'nombre', label: 'Nombre', type: 'text', required: true, placeholder: 'Ej: Hilo Polyester, Hilo Algodón...' },
-    { key: 'color', label: 'Color', type: 'text', placeholder: 'Ej: Blanco, Negro, Rojo...' },
-    { key: 'grosor', label: 'Grosor', type: 'text', placeholder: 'Ej: 40/2, 20/2...' },
     { key: 'activo', label: 'Estado', type: 'switch', defaultValue: true },
 ];
 
 const tableColumns = [
     { key: 'nombre', label: 'Nombre' },
-    { key: 'color', label: 'Color', render: (val) => val || '-' },
-    { key: 'grosor', label: 'Grosor', render: (val) => val || '-' },
     { key: 'activo', label: 'Estado', render: (val) => <StatusBadge activo={val} /> },
 ];
 

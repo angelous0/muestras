@@ -101,16 +101,13 @@ class TelaUpdate(BaseItemUpdate):
 # ============ HILO MODELS ============
 
 class Hilo(BaseItem):
-    color: Optional[str] = None
-    grosor: Optional[str] = None
+    pass
 
 class HiloCreate(BaseItemCreate):
-    color: Optional[str] = None
-    grosor: Optional[str] = None
+    pass
 
 class HiloUpdate(BaseItemUpdate):
-    color: Optional[str] = None
-    grosor: Optional[str] = None
+    pass
 
 # ============ MUESTRA BASE MODELS ============
 
