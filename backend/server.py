@@ -1213,7 +1213,8 @@ async def upload_ficha_archivo(item_id: str, file: UploadFile = File(...)):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        file_path = await save_upload_file(file, "fichas")
+        # Use original filename
+        file_path = await save_upload_file(file, "fichas", None)
         item.archivo = file_path
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
