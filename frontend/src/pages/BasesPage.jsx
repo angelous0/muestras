@@ -338,6 +338,119 @@ export default function BasesPage() {
     };
 
     const getFileName = (path) => path?.split('/').pop() || '';
+    
+    // Helper to get file extension
+    const getFileExtension = (path) => {
+        const ext = path?.split('.').pop()?.toUpperCase() || 'FILE';
+        return ext;
+    };
+
+    // Convert fichas_archivos to structured array with names
+    const getFichasWithNames = () => {
+        if (!currentBaseForFiles?.fichas_archivos) return [];
+        return currentBaseForFiles.fichas_archivos.map((archivo, index) => ({
+            archivo,
+            nombre: currentBaseForFiles.fichas_nombres?.[index] || getFileName(archivo)
+        }));
+    };
+
+    // Convert tizados_archivos to structured array with names
+    const getTizadosWithNames = () => {
+        if (!currentBaseForFiles?.tizados_archivos) return [];
+        return currentBaseForFiles.tizados_archivos.map((archivo, index) => ({
+            archivo,
+            nombre: currentBaseForFiles.tizados_nombres?.[index] || getFileName(archivo)
+        }));
+    };
+
+    // Filter fichas by search
+    const filteredFichas = getFichasWithNames().filter(ficha => 
+        ficha.nombre.toLowerCase().includes(fichaSearch.toLowerCase())
+    );
+
+    // Filter tizados by search
+    const filteredTizados = getTizadosWithNames().filter(tizado => 
+        tizado.nombre.toLowerCase().includes(tizadoSearch.toLowerCase())
+    );
+
+    // Create new ficha with name and file
+    const handleCreateFicha = async () => {
+        if (!newFichaName || !currentBaseForFiles) return;
+        
+        setUploadingFiles(true);
+        try {
+            const files = newFichaFile ? [newFichaFile] : [];
+            const nombres = [newFichaName];
+            
+            if (files.length > 0) {
+                await uploadFichasBase(currentBaseForFiles.id, files, nombres);
+            } else {
+                // Create ficha without file
+                await uploadFichasBase(currentBaseForFiles.id, [], nombres);
+            }
+            
+            toast.success('Ficha creada correctamente');
+            
+            // Refresh data
+            fetchData();
+            const updated = await getBases({});
+            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+            if (refreshed) setCurrentBaseForFiles(refreshed);
+            
+            // Reset form
+            setNewFichaName('');
+            setNewFichaFile(null);
+            setShowNewFichaForm(false);
+        } catch (error) {
+            toast.error('Error al crear ficha');
+        } finally {
+            setUploadingFiles(false);
+        }
+    };
+
+    // Create new tizado with name and file
+    const handleCreateTizado = async () => {
+        if (!newTizadoName || !currentBaseForFiles) return;
+        
+        setUploadingFiles(true);
+        try {
+            const files = newTizadoFile ? [newTizadoFile] : [];
+            const nombres = [newTizadoName];
+            
+            if (files.length > 0) {
+                await uploadTizadosBase(currentBaseForFiles.id, files, nombres);
+            } else {
+                await uploadTizadosBase(currentBaseForFiles.id, [], nombres);
+            }
+            
+            toast.success('Tizado creado correctamente');
+            
+            // Refresh data
+            fetchData();
+            const updated = await getBases({});
+            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+            if (refreshed) setCurrentBaseForFiles(refreshed);
+            
+            // Reset form
+            setNewTizadoName('');
+            setNewTizadoFile(null);
+            setShowNewTizadoForm(false);
+        } catch (error) {
+            toast.error('Error al crear tizado');
+        } finally {
+            setUploadingFiles(false);
+        }
+    };
+
+    // Handle upload to existing ficha (placeholder for future)
+    const handleUploadToExistingFicha = (index) => {
+        toast.info('Funcionalidad de subir archivo a ficha existente próximamente');
+    };
+
+    // Handle upload to existing tizado (placeholder for future)
+    const handleUploadToExistingTizado = (index) => {
+        toast.info('Funcionalidad de subir archivo a tizado existente próximamente');
+    };
 
     return (
         <div className="space-y-6 animate-fade-in" data-testid="bases-page">
