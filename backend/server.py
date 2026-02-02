@@ -903,13 +903,22 @@ async def eliminar_ficha_base(base_id: str, file_index: int):
         raise HTTPException(status_code=404, detail="Base no encontrada")
     
     fichas = current.get("fichas_archivos", [])
+    nombres = current.get("fichas_nombres", [])
+    
     if file_index < 0 or file_index >= len(fichas):
         raise HTTPException(status_code=400, detail="Índice de archivo inválido")
     
     fichas.pop(file_index)
+    if file_index < len(nombres):
+        nombres.pop(file_index)
+    
     await db.bases.update_one(
         {"id": base_id},
-        {"$set": {"fichas_archivos": fichas, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "fichas_archivos": fichas,
+            "fichas_nombres": nombres,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     return {"message": "Archivo eliminado"}
 
