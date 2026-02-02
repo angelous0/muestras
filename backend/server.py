@@ -555,6 +555,10 @@ async def actualizar_tela(tela_id: str, tela: TelaUpdate):
 async def eliminar_tela(tela_id: str):
     return await delete_item("telas", tela_id)
 
+@api_router.put("/telas/reorder")
+async def reordenar_telas(request: ReorderRequest):
+    return await reorder_items("telas", request.items)
+
 # ============ HILO ROUTES ============
 
 @api_router.post("/hilos", response_model=Hilo)
@@ -589,6 +593,10 @@ async def actualizar_hilo(hilo_id: str, hilo: HiloUpdate):
 @api_router.delete("/hilos/{hilo_id}")
 async def eliminar_hilo(hilo_id: str):
     return await delete_item("hilos", hilo_id)
+
+@api_router.put("/hilos/reorder")
+async def reordenar_hilos(request: ReorderRequest):
+    return await reorder_items("hilos", request.items)
 
 # ============ MUESTRA BASE ROUTES ============
 
