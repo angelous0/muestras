@@ -341,10 +341,32 @@ export default function BasesPage() {
         return allTizados.filter(t => (t.bases_ids || []).includes(currentBaseForFiles.id));
     };
 
-    // Filter tizados by search
-    const filteredTizadosInDialog = allTizados.filter(t => 
-        t.nombre?.toLowerCase().includes(tizadoSearchInDialog.toLowerCase())
-    );
+    // Filter tizados by search (by ancho, curva, and otras bases)
+    const filteredTizadosInDialog = allTizados.filter(t => {
+        const searchLower = tizadoSearchInDialog.toLowerCase();
+        if (!searchLower) return true;
+        
+        // Search by ancho
+        const anchoMatch = t.ancho?.toString().includes(searchLower);
+        
+        // Search by curva
+        const curvaMatch = t.curva?.toLowerCase().includes(searchLower);
+        
+        // Search by otras bases names
+        const otherBasesNames = (t.bases_ids || [])
+            .filter(id => id !== currentBaseForFiles?.id)
+            .map(id => {
+                const base = data.find(b => b.id === id);
+                return base?.nombre?.toLowerCase() || '';
+            });
+        const basesMatch = otherBasesNames.some(name => name.includes(searchLower));
+        
+        return anchoMatch || curvaMatch || basesMatch;
+    });
+    
+    // State for editing bases of a specific tizado
+    const [editingTizadoBases, setEditingTizadoBases] = useState(null);
+    const [tempBasesIds, setTempBasesIds] = useState([]);
 
     const handleDeleteConfirm = async () => {
         setSubmitting(true);
