@@ -509,10 +509,11 @@ export default function BasesPage() {
                     </Button>
                 </div>
                 <div className="overflow-x-auto">
-                    <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '900px' }}>
+                    <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '1000px' }}>
                         <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
                                 <ResizableTableHead columnKey="muestraBase" width={columnWidths.muestraBase} onResize={updateWidth}>Muestra Base</ResizableTableHead>
+                                <ResizableTableHead columnKey="nombre" width={columnWidths.nombre} onResize={updateWidth}>Nombre</ResizableTableHead>
                                 <ResizableTableHead columnKey="hilo" width={columnWidths.hilo} onResize={updateWidth}>Hilo</ResizableTableHead>
                                 <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
                                 <ResizableTableHead columnKey="imagen" width={columnWidths.imagen} onResize={updateWidth}>Imagen</ResizableTableHead>
@@ -524,14 +525,17 @@ export default function BasesPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
                             ) : data.length === 0 ? (
-                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
                             ) : (
                                 data.map((item) => (
                                     <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
                                         <ResizableTableCell width={columnWidths.muestraBase}>
                                             {getMuestraBaseName(item.muestra_base_id)}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.nombre}>
+                                            {item.nombre || '-'}
                                         </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.hilo}>
                                             {getHiloName(item.hilo_id)}
