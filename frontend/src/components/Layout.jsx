@@ -7,14 +7,22 @@ import {
     Layers,
     Palette,
     Menu,
-    X
+    X,
+    FileBox,
+    ClipboardList,
+    FileText,
+    Scissors
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Toaster } from './ui/sonner';
+import { Separator } from './ui/separator';
 
-const navItems = [
+const navItemsBase = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+];
+
+const navItemsCatalogo = [
     { to: '/marcas', icon: Tags, label: 'Marcas' },
     { to: '/tipos-producto', icon: Package, label: 'Tipo Producto' },
     { to: '/entalles', icon: Ruler, label: 'Entalles' },
@@ -22,8 +30,35 @@ const navItems = [
     { to: '/hilos', icon: Palette, label: 'Hilos' },
 ];
 
+const navItemsMuestras = [
+    { to: '/muestras-base', icon: FileBox, label: 'Muestras Base' },
+    { to: '/bases', icon: ClipboardList, label: 'Bases' },
+    { to: '/fichas', icon: FileText, label: 'Fichas' },
+    { to: '/tizados', icon: Scissors, label: 'Tizados' },
+];
+
 export const Layout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const renderNavItems = (items) => items.map((item) => (
+        <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={() => setSidebarOpen(false)}
+            data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
+            className={({ isActive }) => `
+                flex items-center gap-3 px-4 py-2.5 rounded-lg
+                transition-all duration-150
+                ${isActive 
+                    ? 'bg-slate-700 text-white' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                }
+            `}
+        >
+            <item.icon className="w-4 h-4" strokeWidth={1.5} />
+            <span className="font-medium text-sm">{item.label}</span>
+        </NavLink>
+    ));
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -51,7 +86,7 @@ export const Layout = () => {
             {/* Sidebar */}
             <aside className={`
                 fixed top-0 left-0 z-40 h-full w-64 
-                bg-slate-800 sidebar-texture
+                bg-slate-800 sidebar-texture overflow-y-auto
                 transform transition-transform duration-200 ease-in-out
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                 lg:translate-x-0
@@ -69,32 +104,37 @@ export const Layout = () => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-4 space-y-1">
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.to}
-                            to={item.to}
-                            onClick={() => setSidebarOpen(false)}
-                            data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
-                            className={({ isActive }) => `
-                                flex items-center gap-3 px-4 py-3 rounded-lg
-                                transition-all duration-150
-                                ${isActive 
-                                    ? 'bg-slate-700 text-white' 
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                                }
-                            `}
-                        >
-                            <item.icon className="w-5 h-5" strokeWidth={1.5} />
-                            <span className="font-medium text-sm">{item.label}</span>
-                        </NavLink>
-                    ))}
+                <nav className="p-4 space-y-6">
+                    {/* Dashboard */}
+                    <div className="space-y-1">
+                        {renderNavItems(navItemsBase)}
+                    </div>
+
+                    {/* Catálogo Section */}
+                    <div>
+                        <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            Catálogo
+                        </p>
+                        <div className="space-y-1">
+                            {renderNavItems(navItemsCatalogo)}
+                        </div>
+                    </div>
+
+                    {/* Muestras Section */}
+                    <div>
+                        <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            Muestras
+                        </p>
+                        <div className="space-y-1">
+                            {renderNavItems(navItemsMuestras)}
+                        </div>
+                    </div>
                 </nav>
 
                 {/* Footer */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
                     <p className="text-xs text-slate-500 text-center">
-                        Módulo Muestras v1.0
+                        Módulo Muestras v2.0
                     </p>
                 </div>
             </aside>
@@ -103,7 +143,7 @@ export const Layout = () => {
             <main className="lg:ml-64 min-h-screen">
                 {/* Header */}
                 <header className="sticky top-0 z-30 h-16 glass-header border-b border-slate-200 flex items-center px-6 lg:px-8">
-                    <div className="lg:hidden w-10" /> {/* Spacer for mobile menu button */}
+                    <div className="lg:hidden w-10" />
                     <h1 
                         className="text-lg font-semibold text-slate-700"
                         style={{ fontFamily: 'Manrope' }}

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Query, UploadFile, File
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -9,9 +10,14 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
+import shutil
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Create uploads directory
+UPLOADS_DIR = ROOT_DIR / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -106,6 +112,138 @@ class HiloUpdate(BaseItemUpdate):
     color: Optional[str] = None
     grosor: Optional[str] = None
 
+# ============ MUESTRA BASE MODELS ============
+
+class MuestraBase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nombre: str
+    marca_id: Optional[str] = None
+    tipo_producto_id: Optional[str] = None
+    entalle_id: Optional[str] = None
+    tela_id: Optional[str] = None
+    consumo_tela: Optional[float] = None
+    costo_estimado: Optional[float] = None
+    precio_estimado: Optional[float] = None
+    rentabilidad_esperada: Optional[float] = None  # Calculated field
+    aprobado: bool = False
+    archivo_costos: Optional[str] = None  # File path
+    descripcion: Optional[str] = None
+    activo: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MuestraBaseCreate(BaseModel):
+    nombre: str
+    marca_id: Optional[str] = None
+    tipo_producto_id: Optional[str] = None
+    entalle_id: Optional[str] = None
+    tela_id: Optional[str] = None
+    consumo_tela: Optional[float] = None
+    costo_estimado: Optional[float] = None
+    precio_estimado: Optional[float] = None
+    aprobado: bool = False
+    descripcion: Optional[str] = None
+    activo: bool = True
+
+class MuestraBaseUpdate(BaseModel):
+    nombre: Optional[str] = None
+    marca_id: Optional[str] = None
+    tipo_producto_id: Optional[str] = None
+    entalle_id: Optional[str] = None
+    tela_id: Optional[str] = None
+    consumo_tela: Optional[float] = None
+    costo_estimado: Optional[float] = None
+    precio_estimado: Optional[float] = None
+    aprobado: Optional[bool] = None
+    descripcion: Optional[str] = None
+    activo: Optional[bool] = None
+
+# ============ FICHA MODELS ============
+
+class Ficha(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nombre: str
+    archivo: Optional[str] = None
+    descripcion: Optional[str] = None
+    activo: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class FichaCreate(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    activo: bool = True
+
+class FichaUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    activo: Optional[bool] = None
+
+# ============ TIZADO MODELS ============
+
+class Tizado(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nombre: str
+    ancho: Optional[float] = None
+    curva: Optional[str] = None
+    archivo_tizado: Optional[str] = None
+    descripcion: Optional[str] = None
+    activo: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TizadoCreate(BaseModel):
+    nombre: str
+    ancho: Optional[float] = None
+    curva: Optional[str] = None
+    descripcion: Optional[str] = None
+    activo: bool = True
+
+class TizadoUpdate(BaseModel):
+    nombre: Optional[str] = None
+    ancho: Optional[float] = None
+    curva: Optional[str] = None
+    descripcion: Optional[str] = None
+    activo: Optional[bool] = None
+
+# ============ BASE MODELS ============
+
+class Base(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nombre: str
+    muestra_base_id: Optional[str] = None
+    patron_archivo: Optional[str] = None
+    imagen_archivo: Optional[str] = None
+    fichas_ids: List[str] = Field(default_factory=list)
+    tizados_ids: List[str] = Field(default_factory=list)
+    aprobado: bool = False
+    descripcion: Optional[str] = None
+    activo: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BaseCreate(BaseModel):
+    nombre: str
+    muestra_base_id: Optional[str] = None
+    fichas_ids: List[str] = Field(default_factory=list)
+    tizados_ids: List[str] = Field(default_factory=list)
+    aprobado: bool = False
+    descripcion: Optional[str] = None
+    activo: bool = True
+
+class BaseUpdate(BaseModel):
+    nombre: Optional[str] = None
+    muestra_base_id: Optional[str] = None
+    fichas_ids: Optional[List[str]] = None
+    tizados_ids: Optional[List[str]] = None
+    aprobado: Optional[bool] = None
+    descripcion: Optional[str] = None
+    activo: Optional[bool] = None
+
 # ============ HELPER FUNCTIONS ============
 
 def serialize_item(item: BaseModel) -> dict:
@@ -123,9 +261,15 @@ def deserialize_item(doc: dict) -> dict:
         doc['updated_at'] = datetime.fromisoformat(doc['updated_at'])
     return doc
 
+def calculate_rentabilidad(precio: float, costo: float) -> float:
+    """Calculate expected profitability"""
+    if costo and costo > 0 and precio:
+        return round(((precio - costo) / costo) * 100, 2)
+    return 0.0
+
 # ============ GENERIC CRUD FUNCTIONS ============
 
-async def create_item(collection_name: str, item_data: BaseItemCreate, model_class):
+async def create_item(collection_name: str, item_data: BaseModel, model_class):
     """Generic create function"""
     item_dict = item_data.model_dump()
     item_obj = model_class(**item_dict)
@@ -141,7 +285,7 @@ async def get_items(collection_name: str, search: Optional[str] = None, activo: 
     if activo is not None:
         query["activo"] = activo
     
-    cursor = db[collection_name].find(query, {"_id": 0}).skip(skip).limit(limit).sort("nombre", 1)
+    cursor = db[collection_name].find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1)
     items = await cursor.to_list(limit)
     for item in items:
         deserialize_item(item)
@@ -154,7 +298,7 @@ async def get_item_by_id(collection_name: str, item_id: str):
         raise HTTPException(status_code=404, detail="Item no encontrado")
     return deserialize_item(doc)
 
-async def update_item(collection_name: str, item_id: str, item_update: BaseItemUpdate):
+async def update_item(collection_name: str, item_id: str, item_update: BaseModel):
     """Generic update function"""
     update_data = {k: v for k, v in item_update.model_dump().items() if v is not None}
     if not update_data:
@@ -187,11 +331,48 @@ async def count_items(collection_name: str, search: Optional[str] = None, activo
         query["activo"] = activo
     return await db[collection_name].count_documents(query)
 
+# ============ FILE UPLOAD HELPER ============
+
+async def save_upload_file(file: UploadFile, subfolder: str) -> str:
+    """Save uploaded file and return the path"""
+    folder = UPLOADS_DIR / subfolder
+    folder.mkdir(exist_ok=True)
+    
+    file_id = str(uuid.uuid4())
+    ext = Path(file.filename).suffix if file.filename else ""
+    filename = f"{file_id}{ext}"
+    file_path = folder / filename
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    return f"{subfolder}/{filename}"
+
 # ============ ROUTES ============
 
 @api_router.get("/")
 async def root():
     return {"message": "API Módulo Muestras Textil"}
+
+# ============ FILE ROUTES ============
+
+@api_router.post("/upload/{category}")
+async def upload_file(category: str, file: UploadFile = File(...)):
+    """Upload a file to the specified category"""
+    allowed_categories = ["costos", "patrones", "imagenes", "fichas", "tizados"]
+    if category not in allowed_categories:
+        raise HTTPException(status_code=400, detail=f"Categoría no válida. Use: {allowed_categories}")
+    
+    file_path = await save_upload_file(file, category)
+    return {"file_path": file_path, "filename": file.filename}
+
+@api_router.get("/files/{category}/{filename}")
+async def get_file(category: str, filename: str):
+    """Get a file by category and filename"""
+    file_path = UPLOADS_DIR / category / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    return FileResponse(file_path)
 
 # ============ MARCAS ROUTES ============
 
@@ -368,6 +549,267 @@ async def actualizar_hilo(hilo_id: str, hilo: HiloUpdate):
 async def eliminar_hilo(hilo_id: str):
     return await delete_item("hilos", hilo_id)
 
+# ============ MUESTRA BASE ROUTES ============
+
+@api_router.post("/muestras-base", response_model=MuestraBase)
+async def crear_muestra_base(muestra: MuestraBaseCreate):
+    muestra_dict = muestra.model_dump()
+    # Calculate rentabilidad
+    rentabilidad = calculate_rentabilidad(
+        muestra_dict.get('precio_estimado') or 0,
+        muestra_dict.get('costo_estimado') or 0
+    )
+    muestra_obj = MuestraBase(**muestra_dict, rentabilidad_esperada=rentabilidad)
+    doc = serialize_item(muestra_obj)
+    await db.muestras_base.insert_one(doc)
+    return muestra_obj
+
+@api_router.get("/muestras-base", response_model=List[MuestraBase])
+async def listar_muestras_base(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None),
+    aprobado: Optional[bool] = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    skip: int = Query(0, ge=0)
+):
+    query = {}
+    if search:
+        query["nombre"] = {"$regex": search, "$options": "i"}
+    if activo is not None:
+        query["activo"] = activo
+    if aprobado is not None:
+        query["aprobado"] = aprobado
+    
+    cursor = db.muestras_base.find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1)
+    items = await cursor.to_list(limit)
+    for item in items:
+        deserialize_item(item)
+    return items
+
+@api_router.get("/muestras-base/count")
+async def contar_muestras_base(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None)
+):
+    count = await count_items("muestras_base", search, activo)
+    return {"count": count}
+
+@api_router.get("/muestras-base/{muestra_id}", response_model=MuestraBase)
+async def obtener_muestra_base(muestra_id: str):
+    return await get_item_by_id("muestras_base", muestra_id)
+
+@api_router.put("/muestras-base/{muestra_id}", response_model=MuestraBase)
+async def actualizar_muestra_base(muestra_id: str, muestra: MuestraBaseUpdate):
+    update_data = {k: v for k, v in muestra.model_dump().items() if v is not None}
+    
+    # Recalculate rentabilidad if precio or costo changed
+    current = await get_item_by_id("muestras_base", muestra_id)
+    precio = update_data.get('precio_estimado', current.get('precio_estimado'))
+    costo = update_data.get('costo_estimado', current.get('costo_estimado'))
+    if precio and costo:
+        update_data['rentabilidad_esperada'] = calculate_rentabilidad(precio, costo)
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.muestras_base.update_one(
+        {"id": muestra_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Muestra no encontrada")
+    
+    return await get_item_by_id("muestras_base", muestra_id)
+
+@api_router.delete("/muestras-base/{muestra_id}")
+async def eliminar_muestra_base(muestra_id: str):
+    return await delete_item("muestras_base", muestra_id)
+
+@api_router.post("/muestras-base/{muestra_id}/archivo")
+async def subir_archivo_costos(muestra_id: str, file: UploadFile = File(...)):
+    """Upload cost file for a muestra base"""
+    await get_item_by_id("muestras_base", muestra_id)
+    file_path = await save_upload_file(file, "costos")
+    await db.muestras_base.update_one(
+        {"id": muestra_id},
+        {"$set": {"archivo_costos": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"file_path": file_path}
+
+# ============ FICHA ROUTES ============
+
+@api_router.post("/fichas", response_model=Ficha)
+async def crear_ficha(ficha: FichaCreate):
+    return await create_item("fichas", ficha, Ficha)
+
+@api_router.get("/fichas", response_model=List[Ficha])
+async def listar_fichas(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    skip: int = Query(0, ge=0)
+):
+    return await get_items("fichas", search, activo, limit, skip)
+
+@api_router.get("/fichas/count")
+async def contar_fichas(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None)
+):
+    count = await count_items("fichas", search, activo)
+    return {"count": count}
+
+@api_router.get("/fichas/{ficha_id}", response_model=Ficha)
+async def obtener_ficha(ficha_id: str):
+    return await get_item_by_id("fichas", ficha_id)
+
+@api_router.put("/fichas/{ficha_id}", response_model=Ficha)
+async def actualizar_ficha(ficha_id: str, ficha: FichaUpdate):
+    return await update_item("fichas", ficha_id, ficha)
+
+@api_router.delete("/fichas/{ficha_id}")
+async def eliminar_ficha(ficha_id: str):
+    return await delete_item("fichas", ficha_id)
+
+@api_router.post("/fichas/{ficha_id}/archivo")
+async def subir_archivo_ficha(ficha_id: str, file: UploadFile = File(...)):
+    """Upload file for a ficha"""
+    await get_item_by_id("fichas", ficha_id)
+    file_path = await save_upload_file(file, "fichas")
+    await db.fichas.update_one(
+        {"id": ficha_id},
+        {"$set": {"archivo": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"file_path": file_path}
+
+# ============ TIZADO ROUTES ============
+
+@api_router.post("/tizados", response_model=Tizado)
+async def crear_tizado(tizado: TizadoCreate):
+    return await create_item("tizados", tizado, Tizado)
+
+@api_router.get("/tizados", response_model=List[Tizado])
+async def listar_tizados(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    skip: int = Query(0, ge=0)
+):
+    return await get_items("tizados", search, activo, limit, skip)
+
+@api_router.get("/tizados/count")
+async def contar_tizados(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None)
+):
+    count = await count_items("tizados", search, activo)
+    return {"count": count}
+
+@api_router.get("/tizados/{tizado_id}", response_model=Tizado)
+async def obtener_tizado(tizado_id: str):
+    return await get_item_by_id("tizados", tizado_id)
+
+@api_router.put("/tizados/{tizado_id}", response_model=Tizado)
+async def actualizar_tizado(tizado_id: str, tizado: TizadoUpdate):
+    return await update_item("tizados", tizado_id, tizado)
+
+@api_router.delete("/tizados/{tizado_id}")
+async def eliminar_tizado(tizado_id: str):
+    return await delete_item("tizados", tizado_id)
+
+@api_router.post("/tizados/{tizado_id}/archivo")
+async def subir_archivo_tizado(tizado_id: str, file: UploadFile = File(...)):
+    """Upload file for a tizado"""
+    await get_item_by_id("tizados", tizado_id)
+    file_path = await save_upload_file(file, "tizados")
+    await db.tizados.update_one(
+        {"id": tizado_id},
+        {"$set": {"archivo_tizado": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"file_path": file_path}
+
+# ============ BASE ROUTES ============
+
+@api_router.post("/bases", response_model=Base)
+async def crear_base(base: BaseCreate):
+    return await create_item("bases", base, Base)
+
+@api_router.get("/bases", response_model=List[Base])
+async def listar_bases(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None),
+    aprobado: Optional[bool] = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    skip: int = Query(0, ge=0)
+):
+    query = {}
+    if search:
+        query["nombre"] = {"$regex": search, "$options": "i"}
+    if activo is not None:
+        query["activo"] = activo
+    if aprobado is not None:
+        query["aprobado"] = aprobado
+    
+    cursor = db.bases.find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1)
+    items = await cursor.to_list(limit)
+    for item in items:
+        deserialize_item(item)
+    return items
+
+@api_router.get("/bases/count")
+async def contar_bases(
+    search: Optional[str] = Query(None),
+    activo: Optional[bool] = Query(None)
+):
+    count = await count_items("bases", search, activo)
+    return {"count": count}
+
+@api_router.get("/bases/{base_id}", response_model=Base)
+async def obtener_base(base_id: str):
+    return await get_item_by_id("bases", base_id)
+
+@api_router.put("/bases/{base_id}", response_model=Base)
+async def actualizar_base(base_id: str, base: BaseUpdate):
+    update_data = {k: v for k, v in base.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No hay datos para actualizar")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.bases.update_one(
+        {"id": base_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Base no encontrada")
+    
+    return await get_item_by_id("bases", base_id)
+
+@api_router.delete("/bases/{base_id}")
+async def eliminar_base(base_id: str):
+    return await delete_item("bases", base_id)
+
+@api_router.post("/bases/{base_id}/patron")
+async def subir_patron(base_id: str, file: UploadFile = File(...)):
+    """Upload patron file for a base"""
+    await get_item_by_id("bases", base_id)
+    file_path = await save_upload_file(file, "patrones")
+    await db.bases.update_one(
+        {"id": base_id},
+        {"$set": {"patron_archivo": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"file_path": file_path}
+
+@api_router.post("/bases/{base_id}/imagen")
+async def subir_imagen(base_id: str, file: UploadFile = File(...)):
+    """Upload image file for a base"""
+    await get_item_by_id("bases", base_id)
+    file_path = await save_upload_file(file, "imagenes")
+    await db.bases.update_one(
+        {"id": base_id},
+        {"$set": {"imagen_archivo": file_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"file_path": file_path}
+
 # ============ DASHBOARD STATS ============
 
 @api_router.get("/dashboard/stats")
@@ -378,7 +820,11 @@ async def obtener_estadisticas():
         "tipos_producto": await db.tipos_producto.count_documents({}),
         "entalles": await db.entalles.count_documents({}),
         "telas": await db.telas.count_documents({}),
-        "hilos": await db.hilos.count_documents({})
+        "hilos": await db.hilos.count_documents({}),
+        "muestras_base": await db.muestras_base.count_documents({}),
+        "bases": await db.bases.count_documents({}),
+        "fichas": await db.fichas.count_documents({}),
+        "tizados": await db.tizados.count_documents({})
     }
     return stats
 

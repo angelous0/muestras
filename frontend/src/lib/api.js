@@ -53,4 +53,74 @@ export const createHilo = (data) => api.post('/hilos', data);
 export const updateHilo = (id, data) => api.put(`/hilos/${id}`, data);
 export const deleteHilo = (id) => api.delete(`/hilos/${id}`);
 
+// Muestras Base
+export const getMuestrasBase = (params) => api.get('/muestras-base', { params });
+export const getMuestrasBaseCount = (params) => api.get('/muestras-base/count', { params });
+export const getMuestraBase = (id) => api.get(`/muestras-base/${id}`);
+export const createMuestraBase = (data) => api.post('/muestras-base', data);
+export const updateMuestraBase = (id, data) => api.put(`/muestras-base/${id}`, data);
+export const deleteMuestraBase = (id) => api.delete(`/muestras-base/${id}`);
+export const uploadArchivoCostos = (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/muestras-base/${id}/archivo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+};
+
+// Fichas
+export const getFichas = (params) => api.get('/fichas', { params });
+export const getFichasCount = (params) => api.get('/fichas/count', { params });
+export const getFicha = (id) => api.get(`/fichas/${id}`);
+export const createFicha = (data) => api.post('/fichas', data);
+export const updateFicha = (id, data) => api.put(`/fichas/${id}`, data);
+export const deleteFicha = (id) => api.delete(`/fichas/${id}`);
+export const uploadArchivoFicha = (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/fichas/${id}/archivo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+};
+
+// Tizados
+export const getTizados = (params) => api.get('/tizados', { params });
+export const getTizadosCount = (params) => api.get('/tizados/count', { params });
+export const getTizado = (id) => api.get(`/tizados/${id}`);
+export const createTizado = (data) => api.post('/tizados', data);
+export const updateTizado = (id, data) => api.put(`/tizados/${id}`, data);
+export const deleteTizado = (id) => api.delete(`/tizados/${id}`);
+export const uploadArchivoTizado = (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/tizados/${id}/archivo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+};
+
+// Bases
+export const getBases = (params) => api.get('/bases', { params });
+export const getBasesCount = (params) => api.get('/bases/count', { params });
+export const getBase = (id) => api.get(`/bases/${id}`);
+export const createBase = (data) => api.post('/bases', data);
+export const updateBase = (id, data) => api.put(`/bases/${id}`, data);
+export const deleteBase = (id) => api.delete(`/bases/${id}`);
+export const uploadPatron = (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/bases/${id}/patron`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+};
+export const uploadImagen = (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/bases/${id}/imagen`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+};
+
+// File download URL helper
+export const getFileUrl = (filePath) => `${API_BASE}/files/${filePath}`;
+
 export default api;
