@@ -1,12 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { DataTable, StatusBadge, ApprovalBadge } from '../components/DataTable';
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 import { 
     getBases, createBase, updateBase, deleteBase, 
-    uploadPatron, uploadImagen, getFileUrl,
-    getMuestrasBase, getFichas, getTizados
+    uploadPatron, uploadImagen, uploadFichasBase, uploadTizadosBase,
+    deleteFichaBase, deleteTizadoBase, getFileUrl,
+    getMuestrasBase, getHilos, getMarcas, getTiposProducto, getEntalles, getTelas
 } from '../lib/api';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '../components/ui/table';
 import {
     Dialog,
     DialogContent,
@@ -18,7 +26,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
-import { Textarea } from '../components/ui/textarea';
+import { Badge } from '../components/ui/badge';
 import {
     Select,
     SelectContent,
@@ -26,27 +34,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from '../components/ui/select';
-import { Checkbox } from '../components/ui/checkbox';
-import { Upload, FileText, Image, Download } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import { ScrollArea } from '../components/ui/scroll-area';
+import { 
+    Search, Plus, Pencil, Trash2, Filter, X, Upload, 
+    FileSpreadsheet, Download, Image, Check, Clock, File, FolderOpen
+} from 'lucide-react';
 
-const tableColumns = [
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'patron_archivo', label: 'Patrón', render: (val) => val ? (
-        <span className="text-blue-600 text-xs flex items-center gap-1">
-            <FileText className="w-3 h-3" />
-            Sí
-        </span>
-    ) : '-' },
-    { key: 'imagen_archivo', label: 'Imagen', render: (val) => val ? (
-        <span className="text-emerald-600 text-xs flex items-center gap-1">
-            <Image className="w-3 h-3" />
-            Sí
-        </span>
-    ) : '-' },
-    { key: 'aprobado', label: 'Aprobado', render: (val) => <ApprovalBadge aprobado={val} /> },
-    { key: 'activo', label: 'Estado', render: (val) => <StatusBadge activo={val} /> },
-];
+const ApprovalBadge = ({ aprobado }) => (
+    <Badge className={aprobado ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-100 text-amber-700 hover:bg-amber-100'}>
+        {aprobado ? <><Check className="w-3 h-3 mr-1" />Aprobado</> : <><Clock className="w-3 h-3 mr-1" />Pendiente</>}
+    </Badge>
+);
 
 export default function BasesPage() {
     const [data, setData] = useState([]);
@@ -59,23 +63,42 @@ export default function BasesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({});
     
-    const [muestrasBase, setMuestrasBase] = useState([]);
-    const [fichas, setFichas] = useState([]);
-    const [tizados, setTizados] = useState([]);
+    // File upload dialogs
+    const [fichasDialogOpen, setFichasDialogOpen] = useState(false);
+    const [tizadosDialogOpen, setTizadosDialogOpen] = useState(false);
+    const [currentBaseForFiles, setCurrentBaseForFiles] = useState(null);
+    const [uploadingFiles, setUploadingFiles] = useState(false);
     
-    const patronInputRef = useRef(null);
-    const imagenInputRef = useRef(null);
+    // Catalogs
+    const [muestrasBase, setMuestrasBase] = useState([]);
+    const [hilos, setHilos] = useState([]);
+    const [marcas, setMarcas] = useState([]);
+    const [tiposProducto, setTiposProducto] = useState([]);
+    const [entalles, setEntalles] = useState([]);
+    const [telas, setTelas] = useState([]);
+    
+    // File input refs
+    const patronInputRefs = useRef({});
+    const imagenInputRefs = useRef({});
+    const fichasInputRef = useRef(null);
+    const tizadosInputRef = useRef(null);
 
     const fetchCatalogs = async () => {
         try {
-            const [muestrasRes, fichasRes, tizadosRes] = await Promise.all([
+            const [muestrasRes, hilosRes, marcasRes, tiposRes, entallesRes, telasRes] = await Promise.all([
                 getMuestrasBase({ activo: true }),
-                getFichas({ activo: true }),
-                getTizados({ activo: true })
+                getHilos({ activo: true }),
+                getMarcas({ activo: true }),
+                getTiposProducto({ activo: true }),
+                getEntalles({ activo: true }),
+                getTelas({ activo: true })
             ]);
             setMuestrasBase(muestrasRes.data);
-            setFichas(fichasRes.data);
-            setTizados(tizadosRes.data);
+            setHilos(hilosRes.data);
+            setMarcas(marcasRes.data);
+            setTiposProducto(tiposRes.data);
+            setEntalles(entallesRes.data);
+            setTelas(telasRes.data);
         } catch (error) {
             console.error('Error loading catalogs:', error);
         }
@@ -105,9 +128,25 @@ export default function BasesPage() {
         return () => clearTimeout(debounce);
     }, [fetchData]);
 
+    // Helper to get muestra base display name
+    const getMuestraBaseName = (muestraId) => {
+        const muestra = muestrasBase.find(m => m.id === muestraId);
+        if (!muestra) return '-';
+        
+        const marca = marcas.find(m => m.id === muestra.marca_id)?.nombre || '';
+        const tipo = tiposProducto.find(t => t.id === muestra.tipo_producto_id)?.nombre || '';
+        const entalle = entalles.find(e => e.id === muestra.entalle_id)?.nombre || '';
+        const tela = telas.find(t => t.id === muestra.tela_id)?.nombre || '';
+        
+        const parts = [marca, tipo, entalle, tela].filter(p => p);
+        return parts.length > 0 ? parts.join(' - ') : muestra.nombre;
+    };
+
+    const getHiloName = (hiloId) => hilos.find(h => h.id === hiloId)?.nombre || '-';
+
     const handleAdd = () => {
         setSelectedItem(null);
-        setFormData({ activo: true, aprobado: false, fichas_ids: [], tizados_ids: [] });
+        setFormData({ activo: true, aprobado: false });
         setFormOpen(true);
     };
 
@@ -126,26 +165,34 @@ export default function BasesPage() {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
-    const handleCheckboxChange = (key, id, checked) => {
-        setFormData(prev => {
-            const current = prev[key] || [];
-            if (checked) {
-                return { ...prev, [key]: [...current, id] };
-            } else {
-                return { ...prev, [key]: current.filter(i => i !== id) };
-            }
-        });
+    // Generate automatic name
+    const generateNombre = (data) => {
+        const muestra = muestrasBase.find(m => m.id === data.muestra_base_id);
+        if (!muestra) return 'Nueva Base';
+        
+        const marca = marcas.find(m => m.id === muestra.marca_id)?.nombre || '';
+        const tipo = tiposProducto.find(t => t.id === muestra.tipo_producto_id)?.nombre || '';
+        const entalle = entalles.find(e => e.id === muestra.entalle_id)?.nombre || '';
+        const tela = telas.find(t => t.id === muestra.tela_id)?.nombre || '';
+        
+        const parts = [marca, tipo, entalle, tela].filter(p => p);
+        return parts.length > 0 ? parts.join(' - ') : 'Nueva Base';
     };
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
         try {
+            const submitData = {
+                ...formData,
+                nombre: generateNombre(formData)
+            };
+            
             if (selectedItem) {
-                await updateBase(selectedItem.id, formData);
+                await updateBase(selectedItem.id, submitData);
                 toast.success('Base actualizada correctamente');
             } else {
-                await createBase(formData);
+                await createBase(submitData);
                 toast.success('Base creada correctamente');
             }
             setFormOpen(false);
@@ -157,11 +204,12 @@ export default function BasesPage() {
         }
     };
 
-    const handlePatronUpload = async (e) => {
+    // File uploads
+    const handlePatronUpload = async (itemId, e) => {
         const file = e.target.files?.[0];
-        if (!file || !selectedItem) return;
+        if (!file) return;
         try {
-            await uploadPatron(selectedItem.id, file);
+            await uploadPatron(itemId, file);
             toast.success('Patrón subido correctamente');
             fetchData();
         } catch (error) {
@@ -169,15 +217,95 @@ export default function BasesPage() {
         }
     };
 
-    const handleImagenUpload = async (e) => {
+    const handleImagenUpload = async (itemId, e) => {
         const file = e.target.files?.[0];
-        if (!file || !selectedItem) return;
+        if (!file) return;
         try {
-            await uploadImagen(selectedItem.id, file);
+            await uploadImagen(itemId, file);
             toast.success('Imagen subida correctamente');
             fetchData();
         } catch (error) {
             toast.error('Error al subir imagen');
+        }
+    };
+
+    // Fichas dialog
+    const openFichasDialog = (item) => {
+        setCurrentBaseForFiles(item);
+        setFichasDialogOpen(true);
+    };
+
+    const handleFichasUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0 || !currentBaseForFiles) return;
+        
+        setUploadingFiles(true);
+        try {
+            await uploadFichasBase(currentBaseForFiles.id, files);
+            toast.success(`${files.length} archivo(s) subido(s)`);
+            fetchData();
+            // Refresh current base
+            const updated = await getBases({});
+            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+            if (refreshed) setCurrentBaseForFiles(refreshed);
+        } catch (error) {
+            toast.error('Error al subir archivos');
+        } finally {
+            setUploadingFiles(false);
+        }
+    };
+
+    const handleDeleteFicha = async (fileIndex) => {
+        if (!currentBaseForFiles) return;
+        try {
+            await deleteFichaBase(currentBaseForFiles.id, fileIndex);
+            toast.success('Archivo eliminado');
+            fetchData();
+            // Refresh current base
+            const updated = await getBases({});
+            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+            if (refreshed) setCurrentBaseForFiles(refreshed);
+        } catch (error) {
+            toast.error('Error al eliminar archivo');
+        }
+    };
+
+    // Tizados dialog
+    const openTizadosDialog = (item) => {
+        setCurrentBaseForFiles(item);
+        setTizadosDialogOpen(true);
+    };
+
+    const handleTizadosUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0 || !currentBaseForFiles) return;
+        
+        setUploadingFiles(true);
+        try {
+            await uploadTizadosBase(currentBaseForFiles.id, files);
+            toast.success(`${files.length} archivo(s) subido(s)`);
+            fetchData();
+            const updated = await getBases({});
+            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+            if (refreshed) setCurrentBaseForFiles(refreshed);
+        } catch (error) {
+            toast.error('Error al subir archivos');
+        } finally {
+            setUploadingFiles(false);
+        }
+    };
+
+    const handleDeleteTizado = async (fileIndex) => {
+        if (!currentBaseForFiles) return;
+        try {
+            await deleteTizadoBase(currentBaseForFiles.id, fileIndex);
+            toast.success('Archivo eliminado');
+            fetchData();
+            const updated = await getBases({});
+            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+            if (refreshed) setCurrentBaseForFiles(refreshed);
+        } catch (error) {
+            toast.error('Error al eliminar archivo');
         }
     };
 
@@ -195,212 +323,271 @@ export default function BasesPage() {
         }
     };
 
+    const getFileName = (path) => path?.split('/').pop() || '';
+
     return (
         <div className="space-y-6 animate-fade-in" data-testid="bases-page">
             <div>
-                <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'Manrope' }}>
-                    Bases
-                </h1>
-                <p className="text-slate-500 text-sm mt-1">
-                    Gestiona las bases con patrones, imágenes, fichas y tizados
-                </p>
+                <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'Manrope' }}>Bases</h1>
+                <p className="text-slate-500 text-sm mt-1">Gestión de bases con patrones, imágenes, fichas y tizados</p>
             </div>
 
-            <DataTable
-                data={data}
-                columns={tableColumns}
-                onAdd={handleAdd}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                searchValue={search}
-                onSearchChange={setSearch}
-                filterActive={filterActive}
-                onFilterChange={setFilterActive}
-                loading={loading}
-                emptyMessage="No hay bases registradas"
-                addButtonText="Nueva Base"
-                testIdPrefix="bases"
-            />
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 bg-white" />
+                    {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>}
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="bg-white">
+                                <Filter className="h-4 w-4 mr-2" />
+                                {filterActive === null ? 'Todos' : filterActive ? 'Activos' : 'Inactivos'}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setFilterActive(null)}>Todos</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterActive(true)}>Activos</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterActive(false)}>Inactivos</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button onClick={handleAdd} className="bg-slate-800 hover:bg-slate-700 text-white">
+                        <Plus className="h-4 w-4 mr-2" />Nueva Base
+                    </Button>
+                </div>
+            </div>
 
+            {/* Table */}
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 hover:bg-slate-50">
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Muestra Base</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Hilo</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Patrón</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Imagen</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Fichas</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Tizados</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Estado</TableHead>
+                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4 w-28">Acciones</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
+                        ) : data.length === 0 ? (
+                            <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
+                        ) : (
+                            data.map((item) => (
+                                <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700 max-w-xs truncate">
+                                        {getMuestraBaseName(item.muestra_base_id)}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm text-slate-700">
+                                        {getHiloName(item.hilo_id)}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm">
+                                        <input type="file" ref={el => patronInputRefs.current[item.id] = el} onChange={(e) => handlePatronUpload(item.id, e)} accept=".xlsx,.xls,.pdf" className="hidden" />
+                                        {item.patron_archivo ? (
+                                            <div className="flex items-center gap-1">
+                                                <a href={getFileUrl(item.patron_archivo)} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                    <FileSpreadsheet className="w-4 h-4" /><Download className="w-3 h-3" />
+                                                </a>
+                                                <Button variant="ghost" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
+                                            </div>
+                                        ) : (
+                                            <Button variant="outline" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-7 text-xs">
+                                                <Upload className="w-3 h-3 mr-1" />Subir
+                                            </Button>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm">
+                                        <input type="file" ref={el => imagenInputRefs.current[item.id] = el} onChange={(e) => handleImagenUpload(item.id, e)} accept="image/*" className="hidden" />
+                                        {item.imagen_archivo ? (
+                                            <div className="flex items-center gap-1">
+                                                <a href={getFileUrl(item.imagen_archivo)} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
+                                                    <Image className="w-4 h-4" /><Download className="w-3 h-3" />
+                                                </a>
+                                                <Button variant="ghost" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
+                                            </div>
+                                        ) : (
+                                            <Button variant="outline" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-7 text-xs">
+                                                <Image className="w-3 h-3 mr-1" />Subir
+                                            </Button>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm">
+                                        <Button variant="outline" size="sm" onClick={() => openFichasDialog(item)} className="h-7 text-xs">
+                                            <FolderOpen className="w-3 h-3 mr-1" />
+                                            {(item.fichas_archivos?.length || 0)} archivo(s)
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-sm">
+                                        <Button variant="outline" size="sm" onClick={() => openTizadosDialog(item)} className="h-7 text-xs">
+                                            <FolderOpen className="w-3 h-3 mr-1" />
+                                            {(item.tizados_archivos?.length || 0)} archivo(s)
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4"><ApprovalBadge aprobado={item.aprobado} /></TableCell>
+                                    <TableCell className="py-3 px-4">
+                                        <div className="flex gap-1">
+                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"><Pencil className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Form Dialog */}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
-                <DialogContent className="sm:max-w-lg bg-white max-h-[90vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-md bg-white">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
                             {selectedItem ? 'Editar Base' : 'Nueva Base'}
                         </DialogTitle>
                     </DialogHeader>
-
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium text-slate-700">
-                                Nombre <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                value={formData.nombre || ''}
-                                onChange={(e) => handleChange('nombre', e.target.value)}
-                                placeholder="Nombre de la base"
-                                required
-                                data-testid="base-form-nombre"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium text-slate-700">Muestra Base</Label>
+                            <Label>Muestra Base <span className="text-red-500">*</span></Label>
                             <Select value={formData.muestra_base_id || ''} onValueChange={(v) => handleChange('muestra_base_id', v)}>
-                                <SelectTrigger data-testid="base-form-muestra">
-                                    <SelectValue placeholder="Seleccionar muestra base" />
-                                </SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Seleccionar muestra base" /></SelectTrigger>
                                 <SelectContent>
                                     {muestrasBase.map(m => (
-                                        <SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>
+                                        <SelectItem key={m.id} value={m.id}>{getMuestraBaseName(m.id)}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
-
-                        {/* Fichas Selection */}
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium text-slate-700">Fichas</Label>
-                            <ScrollArea className="h-32 border rounded-md p-2">
-                                {fichas.length === 0 ? (
-                                    <p className="text-sm text-slate-500">No hay fichas disponibles</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {fichas.map(ficha => (
-                                            <div key={ficha.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={`ficha-${ficha.id}`}
-                                                    checked={(formData.fichas_ids || []).includes(ficha.id)}
-                                                    onCheckedChange={(checked) => handleCheckboxChange('fichas_ids', ficha.id, checked)}
-                                                />
-                                                <label htmlFor={`ficha-${ficha.id}`} className="text-sm text-slate-700 cursor-pointer">
-                                                    {ficha.nombre}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </ScrollArea>
+                            <Label>Hilo</Label>
+                            <Select value={formData.hilo_id || ''} onValueChange={(v) => handleChange('hilo_id', v)}>
+                                <SelectTrigger><SelectValue placeholder="Seleccionar hilo" /></SelectTrigger>
+                                <SelectContent>
+                                    {hilos.map(h => (
+                                        <SelectItem key={h.id} value={h.id}>{h.nombre}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
-
-                        {/* Tizados Selection */}
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium text-slate-700">Tizados</Label>
-                            <ScrollArea className="h-32 border rounded-md p-2">
-                                {tizados.length === 0 ? (
-                                    <p className="text-sm text-slate-500">No hay tizados disponibles</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {tizados.map(tizado => (
-                                            <div key={tizado.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={`tizado-${tizado.id}`}
-                                                    checked={(formData.tizados_ids || []).includes(tizado.id)}
-                                                    onCheckedChange={(checked) => handleCheckboxChange('tizados_ids', tizado.id, checked)}
-                                                />
-                                                <label htmlFor={`tizado-${tizado.id}`} className="text-sm text-slate-700 cursor-pointer">
-                                                    {tizado.nombre} {tizado.ancho && `(${tizado.ancho}cm)`}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </ScrollArea>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium text-slate-700">Descripción</Label>
-                            <Textarea
-                                value={formData.descripcion || ''}
-                                onChange={(e) => handleChange('descripcion', e.target.value)}
-                                placeholder="Descripción de la base..."
-                                rows={2}
-                                data-testid="base-form-descripcion"
-                            />
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-6 pt-2">
                             <div className="flex items-center gap-3">
-                                <Switch
-                                    checked={formData.aprobado || false}
-                                    onCheckedChange={(checked) => handleChange('aprobado', checked)}
-                                    data-testid="base-form-aprobado"
-                                />
+                                <Switch checked={formData.aprobado || false} onCheckedChange={(checked) => handleChange('aprobado', checked)} />
                                 <span className="text-sm text-slate-600">Aprobado</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Switch
-                                    checked={formData.activo ?? true}
-                                    onCheckedChange={(checked) => handleChange('activo', checked)}
-                                    data-testid="base-form-activo"
-                                />
+                                <Switch checked={formData.activo ?? true} onCheckedChange={(checked) => handleChange('activo', checked)} />
                                 <span className="text-sm text-slate-600">Activo</span>
                             </div>
                         </div>
-
-                        {/* File uploads (only for edit) */}
-                        {selectedItem && (
-                            <div className="border-t pt-4 mt-4 space-y-4">
-                                {/* Patrón */}
-                                <div>
-                                    <Label className="text-sm font-medium text-slate-700 mb-2 block">Archivo Patrón</Label>
-                                    <div className="flex gap-2">
-                                        <input type="file" ref={patronInputRef} onChange={handlePatronUpload} className="hidden" />
-                                        <Button type="button" variant="outline" onClick={() => patronInputRef.current?.click()} className="flex-1" data-testid="base-form-upload-patron">
-                                            <Upload className="w-4 h-4 mr-2" />
-                                            Subir Patrón
-                                        </Button>
-                                        {selectedItem.patron_archivo && (
-                                            <Button type="button" variant="outline" asChild>
-                                                <a href={getFileUrl(selectedItem.patron_archivo)} target="_blank" rel="noreferrer">
-                                                    <Download className="w-4 h-4" />
-                                                </a>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Imagen */}
-                                <div>
-                                    <Label className="text-sm font-medium text-slate-700 mb-2 block">Imagen</Label>
-                                    <div className="flex gap-2">
-                                        <input type="file" ref={imagenInputRef} onChange={handleImagenUpload} accept="image/*" className="hidden" />
-                                        <Button type="button" variant="outline" onClick={() => imagenInputRef.current?.click()} className="flex-1" data-testid="base-form-upload-imagen">
-                                            <Image className="w-4 h-4 mr-2" />
-                                            Subir Imagen
-                                        </Button>
-                                        {selectedItem.imagen_archivo && (
-                                            <Button type="button" variant="outline" asChild>
-                                                <a href={getFileUrl(selectedItem.imagen_archivo)} target="_blank" rel="noreferrer">
-                                                    <Download className="w-4 h-4" />
-                                                </a>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         <DialogFooter className="gap-2 pt-4">
-                            <Button type="button" variant="outline" onClick={() => setFormOpen(false)} data-testid="base-form-cancel">
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={submitting} className="bg-slate-800 hover:bg-slate-700" data-testid="base-form-submit">
-                                {submitting ? 'Guardando...' : 'Guardar'}
-                            </Button>
+                            <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
+                            <Button type="submit" disabled={submitting} className="bg-slate-800 hover:bg-slate-700">{submitting ? 'Guardando...' : 'Guardar'}</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            <DeleteConfirmDialog
-                open={deleteOpen}
-                onClose={() => setDeleteOpen(false)}
-                onConfirm={handleDeleteConfirm}
-                itemName={selectedItem?.nombre}
-                loading={submitting}
-                testIdPrefix="base-delete"
-            />
+            {/* Fichas Dialog */}
+            <Dialog open={fichasDialogOpen} onOpenChange={setFichasDialogOpen}>
+                <DialogContent className="sm:max-w-md bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
+                            Fichas - {currentBaseForFiles?.nombre || 'Base'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div>
+                            <input type="file" ref={fichasInputRef} onChange={handleFichasUpload} multiple className="hidden" />
+                            <Button variant="outline" onClick={() => fichasInputRef.current?.click()} disabled={uploadingFiles} className="w-full">
+                                <Upload className="w-4 h-4 mr-2" />
+                                {uploadingFiles ? 'Subiendo...' : 'Subir Archivos'}
+                            </Button>
+                        </div>
+                        <ScrollArea className="h-48 border rounded-md p-2">
+                            {(currentBaseForFiles?.fichas_archivos?.length || 0) === 0 ? (
+                                <p className="text-sm text-slate-500 text-center py-4">No hay archivos</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {currentBaseForFiles?.fichas_archivos?.map((file, index) => (
+                                        <div key={index} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                <File className="w-4 h-4 text-slate-500 shrink-0" />
+                                                <span className="text-sm text-slate-700 truncate">{getFileName(file)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <a href={getFileUrl(file)} target="_blank" rel="noreferrer" className="p-1 hover:bg-slate-200 rounded">
+                                                    <Download className="w-4 h-4 text-blue-600" />
+                                                </a>
+                                                <button onClick={() => handleDeleteFicha(index)} className="p-1 hover:bg-red-100 rounded">
+                                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setFichasDialogOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Tizados Dialog */}
+            <Dialog open={tizadosDialogOpen} onOpenChange={setTizadosDialogOpen}>
+                <DialogContent className="sm:max-w-md bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
+                            Tizados - {currentBaseForFiles?.nombre || 'Base'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div>
+                            <input type="file" ref={tizadosInputRef} onChange={handleTizadosUpload} multiple className="hidden" />
+                            <Button variant="outline" onClick={() => tizadosInputRef.current?.click()} disabled={uploadingFiles} className="w-full">
+                                <Upload className="w-4 h-4 mr-2" />
+                                {uploadingFiles ? 'Subiendo...' : 'Subir Archivos'}
+                            </Button>
+                        </div>
+                        <ScrollArea className="h-48 border rounded-md p-2">
+                            {(currentBaseForFiles?.tizados_archivos?.length || 0) === 0 ? (
+                                <p className="text-sm text-slate-500 text-center py-4">No hay archivos</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {currentBaseForFiles?.tizados_archivos?.map((file, index) => (
+                                        <div key={index} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                <File className="w-4 h-4 text-slate-500 shrink-0" />
+                                                <span className="text-sm text-slate-700 truncate">{getFileName(file)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <a href={getFileUrl(file)} target="_blank" rel="noreferrer" className="p-1 hover:bg-slate-200 rounded">
+                                                    <Download className="w-4 h-4 text-blue-600" />
+                                                </a>
+                                                <button onClick={() => handleDeleteTizado(index)} className="p-1 hover:bg-red-100 rounded">
+                                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setTizadosDialogOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <DeleteConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDeleteConfirm} itemName={selectedItem?.nombre} loading={submitting} />
         </div>
     );
 }
