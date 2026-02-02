@@ -375,19 +375,11 @@ export default function BasesPage() {
 
     // Create new ficha with name and file
     const handleCreateFicha = async () => {
-        if (!newFichaName || !currentBaseForFiles) return;
+        if (!newFichaName || !newFichaFile || !currentBaseForFiles) return;
         
         setUploadingFiles(true);
         try {
-            const files = newFichaFile ? [newFichaFile] : [];
-            const nombres = [newFichaName];
-            
-            if (files.length > 0) {
-                await uploadFichasBase(currentBaseForFiles.id, files, nombres);
-            } else {
-                // Create ficha without file
-                await uploadFichasBase(currentBaseForFiles.id, [], nombres);
-            }
+            await uploadFichasBase(currentBaseForFiles.id, [newFichaFile], [newFichaName]);
             
             toast.success('Ficha creada correctamente');
             
@@ -410,18 +402,11 @@ export default function BasesPage() {
 
     // Create new tizado with name and file
     const handleCreateTizado = async () => {
-        if (!newTizadoName || !currentBaseForFiles) return;
+        if (!newTizadoName || !newTizadoFile || !currentBaseForFiles) return;
         
         setUploadingFiles(true);
         try {
-            const files = newTizadoFile ? [newTizadoFile] : [];
-            const nombres = [newTizadoName];
-            
-            if (files.length > 0) {
-                await uploadTizadosBase(currentBaseForFiles.id, files, nombres);
-            } else {
-                await uploadTizadosBase(currentBaseForFiles.id, [], nombres);
-            }
+            await uploadTizadosBase(currentBaseForFiles.id, [newTizadoFile], [newTizadoName]);
             
             toast.success('Tizado creado correctamente');
             
