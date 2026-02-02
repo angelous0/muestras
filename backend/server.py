@@ -87,16 +87,31 @@ class EntalleUpdate(BaseItemUpdate):
 # ============ TELA MODELS ============
 
 class Tela(BaseItem):
-    composicion: Optional[str] = None
-    peso_gsm: Optional[float] = None
+    gramaje: Optional[float] = None  # Onzas
+    elasticidad: Optional[str] = None
+    proveedor: Optional[str] = None
+    ancho: Optional[float] = None  # cm
+    color: Optional[str] = None  # Azul, Negro, Color, Crudo
+    precio: Optional[float] = None  # S/
+    clasificacion: Optional[str] = None
 
 class TelaCreate(BaseItemCreate):
-    composicion: Optional[str] = None
-    peso_gsm: Optional[float] = None
+    gramaje: Optional[float] = None
+    elasticidad: Optional[str] = None
+    proveedor: Optional[str] = None
+    ancho: Optional[float] = None
+    color: Optional[str] = None
+    precio: Optional[float] = None
+    clasificacion: Optional[str] = None
 
 class TelaUpdate(BaseItemUpdate):
-    composicion: Optional[str] = None
-    peso_gsm: Optional[float] = None
+    gramaje: Optional[float] = None
+    elasticidad: Optional[str] = None
+    proveedor: Optional[str] = None
+    ancho: Optional[float] = None
+    color: Optional[str] = None
+    precio: Optional[float] = None
+    clasificacion: Optional[str] = None
 
 # ============ HILO MODELS ============
 
