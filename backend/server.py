@@ -967,13 +967,22 @@ async def eliminar_tizado_base(base_id: str, file_index: int):
         raise HTTPException(status_code=404, detail="Base no encontrada")
     
     tizados = current.get("tizados_archivos", [])
+    nombres = current.get("tizados_nombres", [])
+    
     if file_index < 0 or file_index >= len(tizados):
         raise HTTPException(status_code=400, detail="Índice de archivo inválido")
     
     tizados.pop(file_index)
+    if file_index < len(nombres):
+        nombres.pop(file_index)
+    
     await db.bases.update_one(
         {"id": base_id},
-        {"$set": {"tizados_archivos": tizados, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "tizados_archivos": tizados,
+            "tizados_nombres": nombres,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     return {"message": "Archivo eliminado"}
 
