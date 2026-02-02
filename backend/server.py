@@ -1048,16 +1048,19 @@ async def upload_fichas(base_id: str, files: List[UploadFile] = File(...), nombr
             raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
         
         file_paths = []
-        for file in files:
-            file_path = await save_upload_file(file, "fichas_bases")
-            file_paths.append(file_path)
-        
         new_nombres = []
-        for i, file_path in enumerate(file_paths):
-            if i < len(nombres) and nombres[i]:
-                new_nombres.append(nombres[i])
+        for i, file in enumerate(files):
+            # Use custom name if provided, otherwise use original filename
+            custom_name = nombres[i] if i < len(nombres) and nombres[i] else None
+            file_path = await save_upload_file(file, "fichas_bases", custom_name)
+            file_paths.append(file_path)
+            
+            # Store the display name
+            if custom_name:
+                new_nombres.append(custom_name)
             else:
-                new_nombres.append(file_path.split('/')[-1])
+                # Use original filename as display name
+                new_nombres.append(file.filename or file_path.split('/')[-1])
         
         item.fichas_archivos = (item.fichas_archivos or []) + file_paths
         item.fichas_nombres = (item.fichas_nombres or []) + new_nombres
