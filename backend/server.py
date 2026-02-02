@@ -462,6 +462,44 @@ def get_r2_presigned_url(key: str, expiration: int = 3600) -> str:
         logging.error(f"Error generating presigned URL: {e}")
         return None
 
+def delete_r2_file(file_path: str) -> bool:
+    """Delete a file from R2 storage"""
+    if not file_path:
+        return True
+    
+    try:
+        # Extract the key from the path
+        if file_path.startswith("r2://"):
+            key = file_path[5:]
+        else:
+            key = file_path
+        
+        if r2_client:
+            r2_client.delete_object(Bucket=R2_BUCKET_NAME, Key=key)
+            logging.info(f"Deleted file from R2: {key}")
+            return True
+        else:
+            # Local storage fallback
+            local_path = UPLOADS_DIR / key
+            if local_path.exists():
+                local_path.unlink()
+                logging.info(f"Deleted local file: {local_path}")
+            return True
+    except Exception as e:
+        logging.error(f"Error deleting file {file_path}: {e}")
+        return False
+
+def delete_multiple_r2_files(file_paths: List[str]) -> bool:
+    """Delete multiple files from R2 storage"""
+    if not file_paths:
+        return True
+    
+    success = True
+    for file_path in file_paths:
+        if not delete_r2_file(file_path):
+            success = False
+    return success
+
 # ============ Helper Functions ============
 
 def calculate_rentabilidad(costo: float, precio: float) -> float:
