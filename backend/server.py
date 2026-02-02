@@ -859,9 +859,13 @@ async def subir_imagen(base_id: str, file: UploadFile = File(...)):
     return {"file_path": file_path}
 
 @api_router.post("/bases/{base_id}/fichas")
-async def subir_fichas(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = Form(default=[])):
+async def subir_fichas(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
     """Upload multiple ficha files for a base with optional names"""
     await get_item_by_id("bases", base_id)
+    
+    if not files:
+        raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
+    
     file_paths = []
     for file in files:
         file_path = await save_upload_file(file, "fichas_bases")
@@ -880,15 +884,10 @@ async def subir_fichas(base_id: str, files: List[UploadFile] = File(default=[]),
         else:
             new_nombres.append(file_path.split('/')[-1])
     
-    # If only nombres without files (creating entry without file)
-    if not file_paths and nombres:
-        new_nombres = list(nombres)
-        file_paths = [None] * len(nombres)  # Placeholder for files to be uploaded later
-    
     await db.bases.update_one(
         {"id": base_id},
         {"$set": {
-            "fichas_archivos": existing_fichas + [f for f in file_paths if f],
+            "fichas_archivos": existing_fichas + file_paths,
             "fichas_nombres": existing_nombres + new_nombres,
             "updated_at": datetime.now(timezone.utc).isoformat()
         }}
