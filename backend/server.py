@@ -386,19 +386,60 @@ async def reorder_items(collection_name: str, items: List[dict]):
 # ============ FILE UPLOAD HELPER ============
 
 async def save_upload_file(file: UploadFile, subfolder: str) -> str:
-    """Save uploaded file and return the path"""
-    folder = UPLOADS_DIR / subfolder
-    folder.mkdir(exist_ok=True)
-    
+    """Save uploaded file to R2 (or local if R2 not configured) and return the path"""
     file_id = str(uuid.uuid4())
     ext = Path(file.filename).suffix if file.filename else ""
     filename = f"{file_id}{ext}"
-    file_path = folder / filename
+    key = f"{subfolder}/{filename}"
     
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    if r2_client:
+        # Upload to R2
+        try:
+            file_content = await file.read()
+            content_type = file.content_type or 'application/octet-stream'
+            
+            r2_client.put_object(
+                Bucket=R2_BUCKET_NAME,
+                Key=key,
+                Body=file_content,
+                ContentType=content_type
+            )
+            logging.info(f"File uploaded to R2: {key}")
+            return f"r2://{key}"
+        except Exception as e:
+            logging.error(f"Error uploading to R2: {e}")
+            raise HTTPException(status_code=500, detail=f"Error al subir archivo: {str(e)}")
+    else:
+        # Fallback to local storage
+        folder = UPLOADS_DIR / subfolder
+        folder.mkdir(exist_ok=True)
+        file_path = folder / filename
+        
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        return f"{subfolder}/{filename}"
+
+def get_r2_presigned_url(key: str, expiration: int = 3600) -> str:
+    """Generate a presigned URL for R2 file access"""
+    if not r2_client:
+        return None
     
-    return f"{subfolder}/{filename}"
+    try:
+        # Remove r2:// prefix if present
+        if key.startswith("r2://"):
+            key = key[5:]
+        
+        url = r2_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': R2_BUCKET_NAME, 'Key': key},
+            ExpiresIn=expiration
+        )
+        return url
+    except Exception as e:
+        logging.error(f"Error generating presigned URL: {e}")
+        return None
 
 # ============ ROUTES ============
 
