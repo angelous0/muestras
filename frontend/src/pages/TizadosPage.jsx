@@ -42,10 +42,8 @@ export default function TizadosPage() {
             const params = {};
             if (search) params.search = search;
             if (filterActive !== null) params.activo = filterActive;
-            const [tizadosRes, basesRes] = await Promise.all([
-                getTizados(params),
-                getBases({})
-            ]);
+            const tizadosRes = await getTizados(params);
+            const basesRes = await getBases({});
             setData(tizadosRes.data);
             setBases(basesRes.data);
         } catch (error) {
@@ -83,15 +81,13 @@ export default function TizadosPage() {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
-    const handleBaseToggle = (baseId) => {
-        setFormData(prev => {
-            const currentBases = prev.bases_ids || [];
-            if (currentBases.includes(baseId)) {
-                return { ...prev, bases_ids: currentBases.filter(id => id !== baseId) };
-            } else {
-                return { ...prev, bases_ids: [...currentBases, baseId] };
-            }
-        });
+    const toggleBase = (baseId) => {
+        const currentBases = formData.bases_ids || [];
+        if (currentBases.includes(baseId)) {
+            handleChange('bases_ids', currentBases.filter(id => id !== baseId));
+        } else {
+            handleChange('bases_ids', [...currentBases, baseId]);
+        }
     };
 
     const handleFormSubmit = async (e) => {
@@ -144,13 +140,15 @@ export default function TizadosPage() {
 
     const getBaseName = (baseId) => {
         const base = bases.find(b => b.id === baseId);
-        return base?.nombre || 'Base desconocida';
+        return base?.nombre || 'Base ' + baseId.slice(-6);
     };
 
-    const filteredBases = bases.filter(base => 
-        base.nombre?.toLowerCase().includes(basesSearch.toLowerCase()) ||
-        base.id.toLowerCase().includes(basesSearch.toLowerCase())
-    );
+    const filteredBases = bases.filter(base => {
+        const searchLower = basesSearch.toLowerCase();
+        return (base.nombre || '').toLowerCase().includes(searchLower);
+    });
+
+    const selectedBasesIds = formData.bases_ids || [];
 
     const tableColumns = [
         { key: 'nombre', label: 'Nombre' },
@@ -160,21 +158,13 @@ export default function TizadosPage() {
             if (!val || val.length === 0) return '-';
             return (
                 <div className="flex flex-wrap gap-1">
-                    {val.slice(0, 2).map(id => (
-                        <Badge key={id} variant="outline" className="text-xs truncate max-w-[100px]">
-                            {getBaseName(id)}
-                        </Badge>
-                    ))}
-                    {val.length > 2 && (
-                        <Badge variant="secondary" className="text-xs">+{val.length - 2}</Badge>
-                    )}
+                    <Badge variant="secondary" className="text-xs">{val.length} base(s)</Badge>
                 </div>
             );
         }},
         { key: 'archivo_tizado', label: 'Archivo', render: (val) => val ? (
             <span className="text-blue-600 text-xs flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                {val.split('/').pop().substring(0, 15)}...
+                <FileText className="w-3 h-3" />Archivo
             </span>
         ) : '-' },
         { key: 'activo', label: 'Estado', render: (val) => <StatusBadge activo={val} /> },
@@ -236,28 +226,9 @@ export default function TizadosPage() {
                             </div>
                         </div>
 
-                        {/* Bases Selection */}
                         <div className="space-y-2">
-                            <Label>Bases Asociadas</Label>
+                            <Label>Bases Asociadas ({selectedBasesIds.length} seleccionadas)</Label>
                             <div className="border border-slate-200 rounded-lg">
-                                {/* Selected bases */}
-                                {(formData.bases_ids?.length > 0) && (
-                                    <div className="p-2 border-b border-slate-200 flex flex-wrap gap-1">
-                                        {formData.bases_ids.map(id => (
-                                            <Badge key={id} className="bg-slate-100 text-slate-700 hover:bg-slate-200 gap-1 pr-1">
-                                                <span className="truncate max-w-[150px]">{getBaseName(id)}</span>
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => handleBaseToggle(id)}
-                                                    className="ml-1 hover:bg-slate-300 rounded-full p-0.5"
-                                                >
-                                                    <X className="w-3 h-3" />
-                                                </button>
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                )}
-                                {/* Search */}
                                 <div className="p-2 border-b border-slate-100">
                                     <div className="relative">
                                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -269,30 +240,29 @@ export default function TizadosPage() {
                                         />
                                     </div>
                                 </div>
-                                {/* Bases list */}
                                 <ScrollArea className="h-[150px]">
                                     <div className="p-2 space-y-1">
                                         {filteredBases.length === 0 ? (
                                             <p className="text-sm text-slate-500 text-center py-4">No hay bases disponibles</p>
                                         ) : (
                                             filteredBases.map(base => (
-                                                <div 
+                                                <label 
                                                     key={base.id}
                                                     className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer"
-                                                    onClick={() => handleBaseToggle(base.id)}
                                                 >
                                                     <Checkbox 
-                                                        checked={formData.bases_ids?.includes(base.id)}
-                                                        onCheckedChange={() => handleBaseToggle(base.id)}
+                                                        checked={selectedBasesIds.includes(base.id)}
+                                                        onCheckedChange={() => toggleBase(base.id)}
                                                     />
-                                                    <span className="text-sm text-slate-700 truncate">{base.nombre || `Base ${base.id.slice(-6)}`}</span>
-                                                </div>
+                                                    <span className="text-sm text-slate-700 truncate">
+                                                        {base.nombre || `Base ${base.id.slice(-6)}`}
+                                                    </span>
+                                                </label>
                                             ))
                                         )}
                                     </div>
                                 </ScrollArea>
                             </div>
-                            <p className="text-xs text-slate-500">{formData.bases_ids?.length || 0} base(s) seleccionada(s)</p>
                         </div>
 
                         {selectedItem && (
@@ -313,14 +283,12 @@ export default function TizadosPage() {
                                                 Ver archivo
                                             </a>
                                             <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                                <Upload className="w-4 h-4 mr-1" />
-                                                Cambiar
+                                                <Upload className="w-4 h-4 mr-1" />Cambiar
                                             </Button>
                                         </>
                                     ) : (
                                         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                            <Upload className="w-4 h-4 mr-2" />
-                                            Subir archivo
+                                            <Upload className="w-4 h-4 mr-2" />Subir archivo
                                         </Button>
                                     )}
                                 </div>
