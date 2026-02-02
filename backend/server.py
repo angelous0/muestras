@@ -312,6 +312,7 @@ class MuestraBase(BaseModel):
     orden: int = 0
 
 class BaseCreate(BaseModel):
+    nombre: Optional[str] = None
     muestra_base_id: Optional[str] = None
     hilo_id: Optional[str] = None
     aprobado: bool = False
