@@ -1198,6 +1198,10 @@ async def delete_tizado(base_id: str, file_index: int):
         if file_index < 0 or file_index >= len(tizados):
             raise HTTPException(status_code=400, detail="Índice inválido")
         
+        # Delete file from R2
+        file_to_delete = tizados[file_index]
+        delete_r2_file(file_to_delete)
+        
         tizados.pop(file_index)
         if file_index < len(nombres):
             nombres.pop(file_index)
