@@ -219,7 +219,7 @@ export default function BasesPage() {
         try {
             const submitData = {
                 ...formData,
-                nombre: generateNombre(formData)
+                nombre: formData.nombre || ''
             };
             
             if (selectedItem) {
