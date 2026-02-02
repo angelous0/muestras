@@ -235,7 +235,9 @@ class Base(BaseModel):
     patron_archivo: Optional[str] = None
     imagen_archivo: Optional[str] = None
     fichas_archivos: List[str] = Field(default_factory=list)
+    fichas_nombres: List[str] = Field(default_factory=list)
     tizados_archivos: List[str] = Field(default_factory=list)
+    tizados_nombres: List[str] = Field(default_factory=list)
     aprobado: bool = False
     activo: bool = True
     orden: int = 0
