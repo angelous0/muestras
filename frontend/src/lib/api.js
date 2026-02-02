@@ -143,7 +143,18 @@ export const uploadTizadosBase = (id, files, nombres = []) => {
 };
 export const deleteTizadoBase = (id, fileIndex) => api.delete(`/bases/${id}/tizados/${fileIndex}`);
 
-// File download URL helper
-export const getFileUrl = (filePath) => `${API_BASE}/files/${filePath}`;
+// File download URL helper - handles both local and R2 paths
+export const getFileUrl = (filePath) => {
+    if (!filePath) return '';
+    
+    // If path starts with r2://, use the R2 endpoint
+    if (filePath.startsWith('r2://')) {
+        const key = filePath.substring(5); // Remove 'r2://' prefix
+        return `${API_BASE}/files/${key}`;
+    }
+    
+    // Regular local file path
+    return `${API_BASE}/files/${filePath}`;
+};
 
 export default api;
