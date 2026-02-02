@@ -495,94 +495,140 @@ export default function BasesPage() {
 
             {/* Fichas Dialog */}
             <Dialog open={fichasDialogOpen} onOpenChange={setFichasDialogOpen}>
-                <DialogContent className="sm:max-w-md bg-white">
+                <DialogContent className="sm:max-w-lg bg-white">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
-                            Fichas - {currentBaseForFiles?.nombre || 'Base'}
+                            Fichas Técnicas
                         </DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
-                        <div>
+                        {/* Drop zone */}
+                        <div 
+                            className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors cursor-pointer"
+                            onClick={() => fichasInputRef.current?.click()}
+                        >
                             <input type="file" ref={fichasInputRef} onChange={handleFichasUpload} multiple className="hidden" />
-                            <Button variant="outline" onClick={() => fichasInputRef.current?.click()} disabled={uploadingFiles} className="w-full">
-                                <Upload className="w-4 h-4 mr-2" />
-                                {uploadingFiles ? 'Subiendo...' : 'Subir Archivos'}
-                            </Button>
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                                    <Upload className="w-6 h-6 text-slate-400" />
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    {uploadingFiles ? 'Subiendo archivos...' : 'Arrastra archivos aquí o haz clic para seleccionar'}
+                                </p>
+                                <p className="text-xs text-slate-400">PDF, Excel, Word, Imágenes</p>
+                            </div>
                         </div>
-                        <ScrollArea className="h-48 border rounded-md p-2">
-                            {(currentBaseForFiles?.fichas_archivos?.length || 0) === 0 ? (
-                                <p className="text-sm text-slate-500 text-center py-4">No hay archivos</p>
-                            ) : (
-                                <div className="space-y-2">
+
+                        {/* Files list */}
+                        {(currentBaseForFiles?.fichas_archivos?.length || 0) > 0 && (
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium text-slate-700">Archivos subidos ({currentBaseForFiles?.fichas_archivos?.length})</p>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
                                     {currentBaseForFiles?.fichas_archivos?.map((file, index) => (
-                                        <div key={index} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                <File className="w-4 h-4 text-slate-500 shrink-0" />
+                                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center shrink-0">
+                                                    <File className="w-4 h-4 text-blue-600" />
+                                                </div>
                                                 <span className="text-sm text-slate-700 truncate">{getFileName(file)}</span>
                                             </div>
                                             <div className="flex items-center gap-1 shrink-0">
-                                                <a href={getFileUrl(file)} target="_blank" rel="noreferrer" className="p-1 hover:bg-slate-200 rounded">
-                                                    <Download className="w-4 h-4 text-blue-600" />
+                                                <a 
+                                                    href={getFileUrl(file)} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                                                    title="Descargar"
+                                                >
+                                                    <Download className="w-4 h-4 text-slate-600" />
                                                 </a>
-                                                <button onClick={() => handleDeleteFicha(index)} className="p-1 hover:bg-red-100 rounded">
-                                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                                <button 
+                                                    onClick={() => handleDeleteFicha(index)} 
+                                                    className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                                    title="Eliminar"
+                                                >
+                                                    <X className="w-4 h-4 text-red-500" />
                                                 </button>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                            )}
-                        </ScrollArea>
+                            </div>
+                        )}
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setFichasDialogOpen(false)}>Cerrar</Button>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setFichasDialogOpen(false)}>Cancelar</Button>
+                        <Button onClick={() => setFichasDialogOpen(false)} className="bg-slate-800 hover:bg-slate-700">Guardar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             {/* Tizados Dialog */}
             <Dialog open={tizadosDialogOpen} onOpenChange={setTizadosDialogOpen}>
-                <DialogContent className="sm:max-w-md bg-white">
+                <DialogContent className="sm:max-w-lg bg-white">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
-                            Tizados - {currentBaseForFiles?.nombre || 'Base'}
+                            Tizados
                         </DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
-                        <div>
+                        {/* Drop zone */}
+                        <div 
+                            className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors cursor-pointer"
+                            onClick={() => tizadosInputRef.current?.click()}
+                        >
                             <input type="file" ref={tizadosInputRef} onChange={handleTizadosUpload} multiple className="hidden" />
-                            <Button variant="outline" onClick={() => tizadosInputRef.current?.click()} disabled={uploadingFiles} className="w-full">
-                                <Upload className="w-4 h-4 mr-2" />
-                                {uploadingFiles ? 'Subiendo...' : 'Subir Archivos'}
-                            </Button>
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                                    <Upload className="w-6 h-6 text-slate-400" />
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    {uploadingFiles ? 'Subiendo archivos...' : 'Arrastra archivos aquí o haz clic para seleccionar'}
+                                </p>
+                                <p className="text-xs text-slate-400">PDF, Excel, Word, Imágenes</p>
+                            </div>
                         </div>
-                        <ScrollArea className="h-48 border rounded-md p-2">
-                            {(currentBaseForFiles?.tizados_archivos?.length || 0) === 0 ? (
-                                <p className="text-sm text-slate-500 text-center py-4">No hay archivos</p>
-                            ) : (
-                                <div className="space-y-2">
+
+                        {/* Files list */}
+                        {(currentBaseForFiles?.tizados_archivos?.length || 0) > 0 && (
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium text-slate-700">Archivos subidos ({currentBaseForFiles?.tizados_archivos?.length})</p>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
                                     {currentBaseForFiles?.tizados_archivos?.map((file, index) => (
-                                        <div key={index} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                <File className="w-4 h-4 text-slate-500 shrink-0" />
+                                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center shrink-0">
+                                                    <File className="w-4 h-4 text-blue-600" />
+                                                </div>
                                                 <span className="text-sm text-slate-700 truncate">{getFileName(file)}</span>
                                             </div>
                                             <div className="flex items-center gap-1 shrink-0">
-                                                <a href={getFileUrl(file)} target="_blank" rel="noreferrer" className="p-1 hover:bg-slate-200 rounded">
-                                                    <Download className="w-4 h-4 text-blue-600" />
+                                                <a 
+                                                    href={getFileUrl(file)} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                                                    title="Descargar"
+                                                >
+                                                    <Download className="w-4 h-4 text-slate-600" />
                                                 </a>
-                                                <button onClick={() => handleDeleteTizado(index)} className="p-1 hover:bg-red-100 rounded">
-                                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                                <button 
+                                                    onClick={() => handleDeleteTizado(index)} 
+                                                    className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                                    title="Eliminar"
+                                                >
+                                                    <X className="w-4 h-4 text-red-500" />
                                                 </button>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                            )}
-                        </ScrollArea>
+                            </div>
+                        )}
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setTizadosDialogOpen(false)}>Cerrar</Button>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setTizadosDialogOpen(false)}>Cancelar</Button>
+                        <Button onClick={() => setTizadosDialogOpen(false)} className="bg-slate-800 hover:bg-slate-700">Guardar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
