@@ -94,6 +94,8 @@ export default function BasesPage() {
     const imagenInputRefs = useRef({});
     const fichasInputRef = useRef(null);
     const tizadosInputRef = useRef(null);
+    const newFichaFileRef = useRef(null);
+    const newTizadoFileRef = useRef(null);
 
     const fetchCatalogs = async () => {
         try {
