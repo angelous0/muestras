@@ -1037,10 +1037,29 @@ export default function BasesPage() {
                             Ancho: {editingTizadoBases?.ancho || '-'} cm | Curva: {editingTizadoBases?.curva || '-'}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="flex-1 overflow-y-auto py-4">
-                        <p className="text-sm text-slate-500 mb-3">Selecciona las bases a vincular con este tizado:</p>
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                            {data.map((base) => (
+                    <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                        <p className="text-sm text-slate-500">Selecciona las bases a vincular con este tizado:</p>
+                        
+                        {/* Buscador de bases */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input 
+                                placeholder="Buscar bases..."
+                                value={basesEditorSearch}
+                                onChange={(e) => setBasesEditorSearch(e.target.value)}
+                                className="pl-10 bg-white"
+                            />
+                        </div>
+                        
+                        <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                            {data
+                                .filter(base => {
+                                    if (!basesEditorSearch) return true;
+                                    const searchLower = basesEditorSearch.toLowerCase();
+                                    const baseName = base.nombre || getMuestraBaseName(base.muestra_base_id);
+                                    return baseName.toLowerCase().includes(searchLower);
+                                })
+                                .map((base) => (
                                 <label 
                                     key={base.id}
                                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -1058,6 +1077,14 @@ export default function BasesPage() {
                                     </span>
                                 </label>
                             ))}
+                            {data.filter(base => {
+                                if (!basesEditorSearch) return true;
+                                const searchLower = basesEditorSearch.toLowerCase();
+                                const baseName = base.nombre || getMuestraBaseName(base.muestra_base_id);
+                                return baseName.toLowerCase().includes(searchLower);
+                            }).length === 0 && (
+                                <p className="text-center text-slate-400 py-4 text-sm">No se encontraron bases</p>
+                            )}
                         </div>
                     </div>
                     <div className="border-t border-slate-200 pt-4 flex justify-end gap-2">
