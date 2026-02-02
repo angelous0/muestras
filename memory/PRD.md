@@ -1,4 +1,4 @@
-# PRD - Módulo Muestras Textil v2.1
+# PRD - Módulo Muestras Textil v2.2
 
 ## Problema Original
 Crear un módulo de muestras textil con diseño minimalista y corporativo para gestionar catálogos base, muestras y bases con sus archivos asociados.
@@ -36,11 +36,19 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 - ✅ Upload de archivos (Excel, imágenes, patrones)
 - ✅ Cálculo automático de rentabilidad: ((precio - costo) / costo) * 100
 - ✅ Drag-and-drop para reordenar catálogos base
-- ✅ **Popup rediseñado para Fichas y Tizados** (v2.1)
-  - Formulario para crear con nombre personalizado
-  - Campo de búsqueda
-  - Tabla con numeración (#), nombre, badge de archivo, acciones
-  - Nombres personalizados para cada archivo
+- ✅ Popup rediseñado para Fichas y Tizados (v2.1)
+- ✅ **Columnas redimensionables en Muestras Base y Bases** (v2.2)
+  - Arrastrar bordes de columnas para ajustar ancho
+  - Persistencia de anchos en localStorage
+  - Botón "Restaurar" para resetear anchos
+
+## Completado en esta sesión (v2.2) - 2026-02-02
+- ✅ Creado componente `ResizableTable.jsx` reutilizable
+- ✅ Implementado hook `useResizableColumns` para gestionar anchos
+- ✅ Aplicado columnas redimensionables a página Muestras Base
+- ✅ Aplicado columnas redimensionables a página Bases
+- ✅ Persistencia de anchos de columna en localStorage
+- ✅ Botón para restaurar anchos por defecto
 
 ## Endpoints API (55+ endpoints)
 - `/api/marcas` - CRUD + count + reorder
@@ -55,14 +63,6 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 - `/api/upload/{category}` - Upload genérico
 - `/api/files/{category}/{filename}` - Descarga
 - `/api/dashboard/stats` - Estadísticas
-
-## Completado en esta sesión (v2.1) - 2026-02-02
-- ✅ Rediseño del popup de Fichas según imagen de referencia del usuario
-- ✅ Rediseño del popup de Tizados con el mismo diseño
-- ✅ Soporte para nombres personalizados en fichas y tizados
-- ✅ Campo de búsqueda para filtrar fichas/tizados
-- ✅ Tabla con numeración secuencial y badge de tipo de archivo
-- ✅ Mejoras de accesibilidad (DialogDescription)
 
 ## Backlog Pendiente
 
@@ -87,3 +87,4 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 - v1.0: 2026-02-02 (5 tablas base)
 - v2.0: 2026-02-02 (4 tablas adicionales + archivos + drag-and-drop)
 - v2.1: 2026-02-02 (Rediseño popups Fichas/Tizados)
+- v2.2: 2026-02-02 (Columnas redimensionables)
