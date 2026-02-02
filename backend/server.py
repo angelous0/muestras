@@ -392,11 +392,34 @@ app.add_middleware(
 
 # ============ FILE UPLOAD HELPER ============
 
-async def save_upload_file(file: UploadFile, subfolder: str) -> str:
-    """Save uploaded file to R2 (or local if R2 not configured)"""
-    file_id = str(uuid.uuid4())
+async def save_upload_file(file: UploadFile, subfolder: str, custom_name: str = None) -> str:
+    """Save uploaded file to R2 (or local if R2 not configured)
+    
+    Args:
+        file: The uploaded file
+        subfolder: Category folder (costos, patrones, etc.)
+        custom_name: Optional custom name for the file (without extension)
+    """
     ext = Path(file.filename).suffix if file.filename else ""
-    filename = f"{file_id}{ext}"
+    
+    # Use custom name if provided, otherwise use original filename (sanitized)
+    if custom_name and custom_name.strip():
+        # Sanitize custom name: remove special chars, keep alphanumeric, spaces, hyphens, underscores
+        safe_name = "".join(c for c in custom_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_name = safe_name.replace(' ', '_')
+        if not safe_name:
+            safe_name = str(uuid.uuid4())
+    else:
+        # Use original filename without extension, sanitized
+        original_name = Path(file.filename).stem if file.filename else str(uuid.uuid4())
+        safe_name = "".join(c for c in original_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_name = safe_name.replace(' ', '_')
+        if not safe_name:
+            safe_name = str(uuid.uuid4())
+    
+    # Add UUID suffix to avoid collisions
+    file_id = str(uuid.uuid4())[:8]
+    filename = f"{safe_name}_{file_id}{ext}"
     key = f"{subfolder}/{filename}"
     
     if r2_client:
