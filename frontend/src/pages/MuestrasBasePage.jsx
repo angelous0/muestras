@@ -284,129 +284,143 @@ export default function MuestrasBasePage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50 hover:bg-slate-50">
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Marca</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Tipo</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Entalle</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Tela</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Costo</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Precio</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Rentabilidad</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Archivo</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Aprobado</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4 w-32">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={10} className="text-center py-8 text-slate-500">Cargando...</TableCell>
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div className="flex justify-end p-2 border-b border-slate-100 bg-slate-50">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={resetWidths}
+                        className="text-xs text-slate-500 hover:text-slate-700"
+                        title="Restaurar anchos de columna"
+                    >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        Restaurar
+                    </Button>
+                </div>
+                <div className="overflow-x-auto">
+                    <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '1000px' }}>
+                        <TableHeader>
+                            <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                <ResizableTableHead columnKey="marca" width={columnWidths.marca} onResize={updateWidth}>Marca</ResizableTableHead>
+                                <ResizableTableHead columnKey="tipo" width={columnWidths.tipo} onResize={updateWidth}>Tipo</ResizableTableHead>
+                                <ResizableTableHead columnKey="entalle" width={columnWidths.entalle} onResize={updateWidth}>Entalle</ResizableTableHead>
+                                <ResizableTableHead columnKey="tela" width={columnWidths.tela} onResize={updateWidth}>Tela</ResizableTableHead>
+                                <ResizableTableHead columnKey="costo" width={columnWidths.costo} onResize={updateWidth}>Costo</ResizableTableHead>
+                                <ResizableTableHead columnKey="precio" width={columnWidths.precio} onResize={updateWidth}>Precio</ResizableTableHead>
+                                <ResizableTableHead columnKey="rentabilidad" width={columnWidths.rentabilidad} onResize={updateWidth}>Rentabilidad</ResizableTableHead>
+                                <ResizableTableHead columnKey="archivo" width={columnWidths.archivo} onResize={updateWidth}>Archivo</ResizableTableHead>
+                                <ResizableTableHead columnKey="aprobado" width={columnWidths.aprobado} onResize={updateWidth}>Aprobado</ResizableTableHead>
+                                <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
                             </TableRow>
-                        ) : data.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={10} className="text-center py-8 text-slate-500">No hay muestras registradas</TableCell>
-                            </TableRow>
-                        ) : (
-                            data.map((item) => (
-                                <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.marca_id, marcas)}</TableCell>
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.tipo_producto_id, tiposProducto)}</TableCell>
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.entalle_id, entalles)}</TableCell>
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700">{getCatalogName(item.tela_id, telas)}</TableCell>
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700">
-                                        {item.costo_estimado ? `S/ ${item.costo_estimado.toFixed(2)}` : '-'}
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700">
-                                        {item.precio_estimado ? `S/ ${item.precio_estimado.toFixed(2)}` : '-'}
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm">
-                                        {item.rentabilidad_esperada ? (
-                                            <span className={`font-semibold ${
-                                                item.rentabilidad_esperada >= 30 ? 'text-emerald-600' : 
-                                                item.rentabilidad_esperada >= 15 ? 'text-amber-600' : 'text-red-600'
-                                            }`}>
-                                                {item.rentabilidad_esperada}%
-                                            </span>
-                                        ) : '-'}
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm">
-                                        <div className="flex items-center gap-1">
-                                            <input
-                                                type="file"
-                                                ref={el => fileInputRefs.current[item.id] = el}
-                                                onChange={(e) => handleFileUpload(item.id, e)}
-                                                accept=".xlsx,.xls,.csv"
-                                                className="hidden"
-                                            />
-                                            {item.archivo_costos ? (
-                                                <div className="flex items-center gap-1">
-                                                    <a 
-                                                        href={getFileUrl(item.archivo_costos)} 
-                                                        target="_blank" 
-                                                        rel="noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                                                    >
-                                                        <FileSpreadsheet className="w-4 h-4" />
-                                                        <Download className="w-3 h-3" />
-                                                    </a>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={10} className="text-center py-8 text-slate-500">Cargando...</TableCell>
+                                </TableRow>
+                            ) : data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={10} className="text-center py-8 text-slate-500">No hay muestras registradas</TableCell>
+                                </TableRow>
+                            ) : (
+                                data.map((item) => (
+                                    <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
+                                        <ResizableTableCell width={columnWidths.marca}>{getCatalogName(item.marca_id, marcas)}</ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.tipo}>{getCatalogName(item.tipo_producto_id, tiposProducto)}</ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.entalle}>{getCatalogName(item.entalle_id, entalles)}</ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.tela}>{getCatalogName(item.tela_id, telas)}</ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.costo}>
+                                            {item.costo_estimado ? `S/ ${item.costo_estimado.toFixed(2)}` : '-'}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.precio}>
+                                            {item.precio_estimado ? `S/ ${item.precio_estimado.toFixed(2)}` : '-'}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.rentabilidad}>
+                                            {item.rentabilidad_esperada ? (
+                                                <span className={`font-semibold ${
+                                                    item.rentabilidad_esperada >= 30 ? 'text-emerald-600' : 
+                                                    item.rentabilidad_esperada >= 15 ? 'text-amber-600' : 'text-red-600'
+                                                }`}>
+                                                    {item.rentabilidad_esperada}%
+                                                </span>
+                                            ) : '-'}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.archivo}>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="file"
+                                                    ref={el => fileInputRefs.current[item.id] = el}
+                                                    onChange={(e) => handleFileUpload(item.id, e)}
+                                                    accept=".xlsx,.xls,.csv"
+                                                    className="hidden"
+                                                />
+                                                {item.archivo_costos ? (
+                                                    <div className="flex items-center gap-1">
+                                                        <a 
+                                                            href={getFileUrl(item.archivo_costos)} 
+                                                            target="_blank" 
+                                                            rel="noreferrer"
+                                                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                        >
+                                                            <FileSpreadsheet className="w-4 h-4" />
+                                                            <Download className="w-3 h-3" />
+                                                        </a>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => fileInputRefs.current[item.id]?.click()}
+                                                            className="h-6 px-1 text-slate-500 hover:text-slate-700"
+                                                            disabled={uploadingId === item.id}
+                                                        >
+                                                            <Upload className="w-3 h-3" />
+                                                        </Button>
+                                                    </div>
+                                                ) : (
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => fileInputRefs.current[item.id]?.click()}
-                                                        className="h-6 px-1 text-slate-500 hover:text-slate-700"
+                                                        className="h-7 text-xs"
                                                         disabled={uploadingId === item.id}
                                                     >
-                                                        <Upload className="w-3 h-3" />
+                                                        {uploadingId === item.id ? (
+                                                            'Subiendo...'
+                                                        ) : (
+                                                            <><Upload className="w-3 h-3 mr-1" />Excel</>
+                                                        )}
                                                     </Button>
-                                                </div>
-                                            ) : (
-                                                <Button
-                                                    variant="outline"
+                                                )}
+                                            </div>
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.aprobado}>
+                                            <ApprovalBadge aprobado={item.aprobado} />
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.acciones}>
+                                            <div className="flex gap-1">
+                                                <Button 
+                                                    variant="ghost" 
                                                     size="sm"
-                                                    onClick={() => fileInputRefs.current[item.id]?.click()}
-                                                    className="h-7 text-xs"
-                                                    disabled={uploadingId === item.id}
+                                                    onClick={() => handleEdit(item)}
+                                                    className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                                                 >
-                                                    {uploadingId === item.id ? (
-                                                        'Subiendo...'
-                                                    ) : (
-                                                        <><Upload className="w-3 h-3 mr-1" />Excel</>
-                                                    )}
+                                                    <Pencil className="h-4 w-4" />
                                                 </Button>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4">
-                                        <ApprovalBadge aprobado={item.aprobado} />
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4">
-                                        <div className="flex gap-1">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm"
-                                                onClick={() => handleEdit(item)}
-                                                className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm"
-                                                onClick={() => handleDelete(item)}
-                                                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
+                                                    onClick={() => handleDelete(item)}
+                                                    className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </ResizableTableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
 
             {/* Form Dialog */}
