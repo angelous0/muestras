@@ -1139,6 +1139,10 @@ async def delete_ficha(base_id: str, file_index: int):
         if file_index < 0 or file_index >= len(fichas):
             raise HTTPException(status_code=400, detail="Índice inválido")
         
+        # Delete file from R2
+        file_to_delete = fichas[file_index]
+        delete_r2_file(file_to_delete)
+        
         fichas.pop(file_index)
         if file_index < len(nombres):
             nombres.pop(file_index)
