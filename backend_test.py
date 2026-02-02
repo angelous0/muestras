@@ -13,7 +13,11 @@ class TextileSamplesAPITester:
             'tipos_producto': [],
             'entalles': [],
             'telas': [],
-            'hilos': []
+            'hilos': [],
+            'muestras_base': [],
+            'fichas': [],
+            'tizados': [],
+            'bases': []
         }
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
