@@ -619,20 +619,10 @@ export default function BasesPage() {
                                             </Button>
                                         </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.tizados}>
-                                            {(item.tizados_relacionados?.length || 0) > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {item.tizados_relacionados.slice(0, 2).map(t => (
-                                                        <Badge key={t.id} variant="outline" className="text-xs truncate max-w-[80px]">
-                                                            {t.nombre}
-                                                        </Badge>
-                                                    ))}
-                                                    {item.tizados_relacionados.length > 2 && (
-                                                        <Badge variant="secondary" className="text-xs">+{item.tizados_relacionados.length - 2}</Badge>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <span className="text-slate-400 text-xs">Sin tizados</span>
-                                            )}
+                                            <Button variant="outline" size="sm" onClick={() => openTizadosDialog(item)} className="h-7 text-xs">
+                                                <Link2 className="w-3 h-3 mr-1" />
+                                                {(item.tizados_relacionados?.length || 0)} tizado(s)
+                                            </Button>
                                         </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.estado}>
                                             <ApprovalBadge aprobado={item.aprobado} />
