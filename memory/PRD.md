@@ -1,67 +1,71 @@
-# PRD - Módulo Muestras Textil
+# PRD - Módulo Muestras Textil v2.0
 
 ## Problema Original
-Crear un módulo de muestras textil con diseño minimalista y corporativo, agradable a la vista. Incluye tablas base: Marcas, Tipo Producto, Entalle, Tela, Hilos (todas con campo Nombre).
-
-## Decisiones del Usuario
-- **Funcionalidades**: CRUD completo + búsqueda/filtros
-- **Autenticación**: Sin autenticación por ahora
-- **Paleta de colores**: Azul corporativo con acentos (Slate)
+Crear un módulo de muestras textil con diseño minimalista y corporativo. 
 
 ## Arquitectura
 - **Backend**: FastAPI + MongoDB (Motor async driver)
 - **Frontend**: React + Tailwind CSS + Shadcn/UI
-- **Base de datos**: MongoDB con 5 colecciones (marcas, tipos_producto, entalles, telas, hilos)
-
-## User Personas
-- Gestores de catálogo textil
-- Personal de producción de muestras
-- Administradores de inventario
-
-## Requisitos Core
-1. Dashboard con estadísticas de todas las tablas
-2. CRUD completo para cada tabla
-3. Búsqueda por nombre
-4. Filtro por estado (activo/inactivo)
-5. Diseño minimalista corporativo
-
-## Lo Implementado (Fecha: 2026-02-02)
-- ✅ Backend completo con 30 endpoints REST
-- ✅ Frontend con dashboard y 5 páginas CRUD
-- ✅ Componentes reutilizables (DataTable, ItemFormDialog, DeleteConfirmDialog)
-- ✅ Sistema de navegación con sidebar
-- ✅ Diseño con tipografía Manrope/Public Sans
-- ✅ Paleta Slate corporativa
+- **Base de datos**: MongoDB con 9 colecciones
 
 ## Tablas Implementadas
-| Tabla | Campos Adicionales |
-|-------|-------------------|
+
+### Catálogo Base (5 tablas)
+| Tabla | Campos |
+|-------|--------|
 | Marcas | nombre, descripcion, activo |
 | Tipo Producto | nombre, descripcion, activo |
 | Entalles | nombre, descripcion, activo |
 | Telas | nombre, composicion, peso_gsm, descripcion, activo |
 | Hilos | nombre, color, grosor, descripcion, activo |
 
-## Backlog Priorizado
+### Gestión de Muestras (4 tablas)
+| Tabla | Campos |
+|-------|--------|
+| Muestras Base | nombre, marca_id, tipo_producto_id, entalle_id, tela_id, consumo_tela, costo_estimado, precio_estimado, **rentabilidad_esperada** (auto-calculada), aprobado, archivo_costos |
+| Bases | nombre, muestra_base_id, patron_archivo, imagen_archivo, fichas_ids[], tizados_ids[], aprobado |
+| Fichas | nombre, archivo, descripcion |
+| Tizados | nombre, ancho, curva, archivo_tizado |
 
-### P0 - Próxima Fase
-- [ ] Muestra Base (relaciona Marca, Tipo Producto, Entalle, Tela + costos)
-- [ ] Bases (relaciona Muestra Base + archivos)
-- [ ] Upload de archivos (Excel, Imágenes, PDFs)
+## Funcionalidades Implementadas
+- ✅ Dashboard con estadísticas de 9 tablas
+- ✅ CRUD completo para todas las tablas
+- ✅ Búsqueda por nombre
+- ✅ Filtro por estado activo/inactivo
+- ✅ Relaciones entre tablas (selects dinámicos)
+- ✅ Upload de archivos (Excel, imágenes, patrones)
+- ✅ Cálculo automático de rentabilidad: ((precio - costo) / costo) * 100
+- ✅ Checkboxes múltiples para Fichas y Tizados en Bases
 
-### P1 - Futuro
-- [ ] Fichas (Nombre + Archivo)
-- [ ] Tizados (Ancho, Curva, Archivo)
-- [ ] Cálculo de rentabilidad (fórmula precio-costo)
-- [ ] Histórico de tizados
+## Endpoints API (51 endpoints)
+- `/api/marcas` - CRUD + count
+- `/api/tipos-producto` - CRUD + count
+- `/api/entalles` - CRUD + count
+- `/api/telas` - CRUD + count
+- `/api/hilos` - CRUD + count
+- `/api/muestras-base` - CRUD + count + archivo
+- `/api/bases` - CRUD + count + patron + imagen
+- `/api/fichas` - CRUD + count + archivo
+- `/api/tizados` - CRUD + count + archivo
+- `/api/upload/{category}` - Upload genérico
+- `/api/files/{category}/{filename}` - Descarga
+- `/api/dashboard/stats` - Estadísticas
 
-### P2 - Mejoras
+## Backlog Restante
+
+### P1 - Mejoras
+- [ ] Vista detallada de Muestra Base con relaciones expandidas
+- [ ] Exportación a Excel
+- [ ] Importación masiva desde Excel
+- [ ] Preview de imágenes en Bases
+- [ ] Historial de cambios
+
+### P2 - Futuro
 - [ ] Autenticación de usuarios
 - [ ] Roles y permisos
-- [ ] Exportación a Excel
-- [ ] Importación masiva
+- [ ] Reportes de rentabilidad
+- [ ] Dashboard con gráficos
 
-## Próximos Pasos
-1. Implementar tabla Muestra Base con relaciones
-2. Agregar upload de archivos
-3. Implementar tabla Bases
+## Fecha de Implementación
+- v1.0: 2026-02-02 (5 tablas base)
+- v2.0: 2026-02-02 (4 tablas adicionales + archivos)
