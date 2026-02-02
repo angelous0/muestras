@@ -920,7 +920,26 @@ async def get_bases(search: str = "", activo: Optional[bool] = None):
             query = query.where(BaseDB.activo == activo)
         query = query.order_by(BaseDB.orden)
         result = await session.execute(query)
-        return [BaseModel_.model_validate(m) for m in result.scalars().all()]
+        bases = result.scalars().all()
+        
+        # Get all tizados to find relationships
+        tizados_result = await session.execute(select(TizadoDB))
+        all_tizados = tizados_result.scalars().all()
+        
+        # Build response with tizados_relacionados
+        response = []
+        for base in bases:
+            base_dict = BaseModel_.model_validate(base).model_dump()
+            # Find tizados that have this base in their bases_ids
+            tizados_rel = [
+                {"id": t.id, "nombre": t.nombre}
+                for t in all_tizados 
+                if base.id in (t.bases_ids or [])
+            ]
+            base_dict["tizados_relacionados"] = tizados_rel
+            response.append(base_dict)
+        
+        return response
 
 @api_router.post("/bases", response_model=BaseModel_)
 async def create_base(data: BaseCreate):
