@@ -124,6 +124,22 @@ export const uploadImagen = (id, file) => {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 };
+export const uploadFichasBase = (id, files) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return api.post(`/bases/${id}/fichas`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+};
+export const deleteFichaBase = (id, fileIndex) => api.delete(`/bases/${id}/fichas/${fileIndex}`);
+export const uploadTizadosBase = (id, files) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return api.post(`/bases/${id}/tizados`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+};
+export const deleteTizadoBase = (id, fileIndex) => api.delete(`/bases/${id}/tizados/${fileIndex}`);
 
 // File download URL helper
 export const getFileUrl = (filePath) => `${API_BASE}/files/${filePath}`;
