@@ -200,6 +200,7 @@ class TizadoDB(Base):
     ancho: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     curva: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     archivo_tizado: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    bases_ids: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     orden: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
