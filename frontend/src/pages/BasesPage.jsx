@@ -941,8 +941,6 @@ export default function BasesPage() {
                     </div>
                 </DialogContent>
             </Dialog>
-                </DialogContent>
-            </Dialog>
 
             <DeleteConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDeleteConfirm} itemName={selectedItem?.nombre} loading={submitting} />
         </div>
