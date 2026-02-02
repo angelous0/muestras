@@ -1,4 +1,5 @@
 import { Badge } from './ui/badge';
+export { DataTable } from './DataTableBase';
 
 export const StatusBadge = ({ activo }) => (
     <Badge 
@@ -23,7 +24,3 @@ export const ApprovalBadge = ({ aprobado }) => (
         {aprobado ? 'Aprobado' : 'Pendiente'}
     </Badge>
 );
-
-// Import and re-export DataTable
-import { DataTable as DataTableComponent } from './DataTableBase';
-export const DataTable = DataTableComponent;
