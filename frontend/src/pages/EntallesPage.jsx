@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { DataTable, StatusBadge } from '../components/DataTable';
+import { SortableDataTable } from '../components/SortableDataTable';
+import { StatusBadge } from '../components/DataTable';
 import { ItemFormDialog } from '../components/ItemFormDialog';
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
-import { getEntalles, createEntalle, updateEntalle, deleteEntalle } from '../lib/api';
+import { getEntalles, createEntalle, updateEntalle, deleteEntalle, reorderEntalles } from '../lib/api';
 
 const formFields = [
     { key: 'nombre', label: 'Nombre', type: 'text', required: true, placeholder: 'Ej: Regular, Slim Fit, Oversize...' },
@@ -60,6 +61,16 @@ export default function EntallesPage() {
         setDeleteOpen(true);
     };
 
+    const handleReorder = async (newData, reorderItems) => {
+        setData(newData);
+        try {
+            await reorderEntalles(reorderItems);
+        } catch (error) {
+            toast.error('Error al reordenar');
+            fetchData();
+        }
+    };
+
     const handleFormSubmit = async (formData) => {
         setSubmitting(true);
         try {
@@ -96,10 +107,7 @@ export default function EntallesPage() {
     return (
         <div className="space-y-6 animate-fade-in" data-testid="entalles-page">
             <div>
-                <h1 
-                    className="text-2xl font-bold text-slate-800"
-                    style={{ fontFamily: 'Manrope' }}
-                >
+                <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'Manrope' }}>
                     Entalles
                 </h1>
                 <p className="text-slate-500 text-sm mt-1">
@@ -107,12 +115,13 @@ export default function EntallesPage() {
                 </p>
             </div>
 
-            <DataTable
+            <SortableDataTable
                 data={data}
                 columns={tableColumns}
                 onAdd={handleAdd}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onReorder={handleReorder}
                 searchValue={search}
                 onSearchChange={setSearch}
                 filterActive={filterActive}
