@@ -925,7 +925,8 @@ async def upload_archivo_costos(item_id: str, file: UploadFile = File(...)):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        file_path = await save_upload_file(file, "costos")
+        # Use original filename
+        file_path = await save_upload_file(file, "costos", None)
         item.archivo_costos = file_path
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
