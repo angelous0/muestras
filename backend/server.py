@@ -922,9 +922,13 @@ async def eliminar_ficha_base(base_id: str, file_index: int):
     return {"message": "Archivo eliminado"}
 
 @api_router.post("/bases/{base_id}/tizados")
-async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = Form(default=[])):
+async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
     """Upload multiple tizado files for a base with optional names"""
     await get_item_by_id("bases", base_id)
+    
+    if not files:
+        raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
+    
     file_paths = []
     for file in files:
         file_path = await save_upload_file(file, "tizados_bases")
@@ -943,15 +947,10 @@ async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(defaul
         else:
             new_nombres.append(file_path.split('/')[-1])
     
-    # If only nombres without files
-    if not file_paths and nombres:
-        new_nombres = list(nombres)
-        file_paths = [None] * len(nombres)
-    
     await db.bases.update_one(
         {"id": base_id},
         {"$set": {
-            "tizados_archivos": existing_tizados + [f for f in file_paths if f],
+            "tizados_archivos": existing_tizados + file_paths,
             "tizados_nombres": existing_nombres + new_nombres,
             "updated_at": datetime.now(timezone.utc).isoformat()
         }}
