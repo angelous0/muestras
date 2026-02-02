@@ -298,45 +298,6 @@ export default function BasesPage() {
         }
     };
 
-    // Tizados dialog
-    const openTizadosDialog = (item) => {
-        setCurrentBaseForFiles(item);
-        setTizadosDialogOpen(true);
-    };
-
-    const handleTizadosUpload = async (e) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0 || !currentBaseForFiles) return;
-        
-        setUploadingFiles(true);
-        try {
-            await uploadTizadosBase(currentBaseForFiles.id, files);
-            toast.success(`${files.length} archivo(s) subido(s)`);
-            fetchData();
-            const updated = await getBases({});
-            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
-            if (refreshed) setCurrentBaseForFiles(refreshed);
-        } catch (error) {
-            toast.error('Error al subir archivos');
-        } finally {
-            setUploadingFiles(false);
-        }
-    };
-
-    const handleDeleteTizado = async (fileIndex) => {
-        if (!currentBaseForFiles) return;
-        try {
-            await deleteTizadoBase(currentBaseForFiles.id, fileIndex);
-            toast.success('Archivo eliminado');
-            fetchData();
-            const updated = await getBases({});
-            const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
-            if (refreshed) setCurrentBaseForFiles(refreshed);
-        } catch (error) {
-            toast.error('Error al eliminar archivo');
-        }
-    };
-
     // Open tizados dialog for a base
     const openTizadosDialog = (base) => {
         setCurrentBaseForFiles(base);
