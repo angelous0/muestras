@@ -504,11 +504,11 @@ async def root():
 # ============ FILE ROUTES ============
 
 @api_router.post("/upload/{category}")
-async def upload_file(category: str, file: UploadFile = File(...)):
+async def upload_file(category: str, file: UploadFile = File(...), custom_name: str = Form(None)):
     allowed_categories = ["costos", "patrones", "imagenes", "fichas", "tizados", "fichas_bases", "tizados_bases"]
     if category not in allowed_categories:
         raise HTTPException(status_code=400, detail="Categoría no válida")
-    file_path = await save_upload_file(file, category)
+    file_path = await save_upload_file(file, category, custom_name)
     return {"file_path": file_path, "filename": file.filename}
 
 @api_router.get("/files/{category}/{filename}")
