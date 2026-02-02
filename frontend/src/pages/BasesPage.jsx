@@ -337,6 +337,54 @@ export default function BasesPage() {
         }
     };
 
+    // Open tizados dialog for a base
+    const openTizadosDialog = (base) => {
+        setCurrentBaseForFiles(base);
+        setTizadoSearchInDialog('');
+        setTizadosDialogOpen(true);
+    };
+
+    // Toggle tizado association with base
+    const handleToggleTizadoAssociation = async (tizado) => {
+        if (!currentBaseForFiles) return;
+        
+        const baseId = currentBaseForFiles.id;
+        const currentBasesIds = tizado.bases_ids || [];
+        const isAssociated = currentBasesIds.includes(baseId);
+        
+        let newBasesIds;
+        if (isAssociated) {
+            newBasesIds = currentBasesIds.filter(id => id !== baseId);
+        } else {
+            newBasesIds = [...currentBasesIds, baseId];
+        }
+        
+        try {
+            await updateTizado(tizado.id, { ...tizado, bases_ids: newBasesIds });
+            toast.success(isAssociated ? 'Tizado desvinculado' : 'Tizado vinculado');
+            
+            // Refresh data
+            fetchData();
+            fetchCatalogs();
+            const updated = await getBases({});
+            const refreshed = updated.data.find(b => b.id === baseId);
+            if (refreshed) setCurrentBaseForFiles(refreshed);
+        } catch (error) {
+            toast.error('Error al actualizar asociación');
+        }
+    };
+
+    // Get tizados associated with current base
+    const getTizadosForCurrentBase = () => {
+        if (!currentBaseForFiles) return [];
+        return allTizados.filter(t => (t.bases_ids || []).includes(currentBaseForFiles.id));
+    };
+
+    // Filter tizados by search
+    const filteredTizadosInDialog = allTizados.filter(t => 
+        t.nombre?.toLowerCase().includes(tizadoSearchInDialog.toLowerCase())
+    );
+
     const handleDeleteConfirm = async () => {
         setSubmitting(true);
         try {
