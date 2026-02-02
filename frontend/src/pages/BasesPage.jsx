@@ -199,20 +199,6 @@ export default function BasesPage() {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
-    // Generate automatic name
-    const generateNombre = (data) => {
-        const muestra = muestrasBase.find(m => m.id === data.muestra_base_id);
-        if (!muestra) return 'Nueva Base';
-        
-        const marca = marcas.find(m => m.id === muestra.marca_id)?.nombre || '';
-        const tipo = tiposProducto.find(t => t.id === muestra.tipo_producto_id)?.nombre || '';
-        const entalle = entalles.find(e => e.id === muestra.entalle_id)?.nombre || '';
-        const tela = telas.find(t => t.id === muestra.tela_id)?.nombre || '';
-        
-        const parts = [marca, tipo, entalle, tela].filter(p => p);
-        return parts.length > 0 ? parts.join(' - ') : 'Nueva Base';
-    };
-
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
