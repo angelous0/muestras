@@ -923,8 +923,8 @@ async def eliminar_ficha_base(base_id: str, file_index: int):
     return {"message": "Archivo eliminado"}
 
 @api_router.post("/bases/{base_id}/tizados")
-async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(...)):
-    """Upload multiple tizado files for a base"""
+async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = []):
+    """Upload multiple tizado files for a base with optional names"""
     await get_item_by_id("bases", base_id)
     file_paths = []
     for file in files:
@@ -934,11 +934,30 @@ async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(...)):
     # Append to existing tizados
     current = await db.bases.find_one({"id": base_id}, {"_id": 0})
     existing_tizados = current.get("tizados_archivos", [])
+    existing_nombres = current.get("tizados_nombres", [])
+    
+    # If nombres provided, use them; otherwise use filenames
+    new_nombres = []
+    for i, file_path in enumerate(file_paths):
+        if i < len(nombres) and nombres[i]:
+            new_nombres.append(nombres[i])
+        else:
+            new_nombres.append(file_path.split('/')[-1])
+    
+    # If only nombres without files
+    if not file_paths and nombres:
+        new_nombres = list(nombres)
+        file_paths = [None] * len(nombres)
+    
     await db.bases.update_one(
         {"id": base_id},
-        {"$set": {"tizados_archivos": existing_tizados + file_paths, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "tizados_archivos": existing_tizados + [f for f in file_paths if f],
+            "tizados_nombres": existing_nombres + new_nombres,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
-    return {"file_paths": file_paths}
+    return {"file_paths": file_paths, "nombres": new_nombres}
 
 @api_router.delete("/bases/{base_id}/tizados/{file_index}")
 async def eliminar_tizado_base(base_id: str, file_index: int):
