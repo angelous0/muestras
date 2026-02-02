@@ -438,6 +438,10 @@ async def actualizar_marca(marca_id: str, marca: MarcaUpdate):
 async def eliminar_marca(marca_id: str):
     return await delete_item("marcas", marca_id)
 
+@api_router.put("/marcas/reorder")
+async def reordenar_marcas(request: ReorderRequest):
+    return await reorder_items("marcas", request.items)
+
 # ============ TIPO PRODUCTO ROUTES ============
 
 @api_router.post("/tipos-producto", response_model=TipoProducto)
