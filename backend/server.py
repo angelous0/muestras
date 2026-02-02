@@ -856,6 +856,78 @@ async def subir_imagen(base_id: str, file: UploadFile = File(...)):
     )
     return {"file_path": file_path}
 
+@api_router.post("/bases/{base_id}/fichas")
+async def subir_fichas(base_id: str, files: List[UploadFile] = File(...)):
+    """Upload multiple ficha files for a base"""
+    await get_item_by_id("bases", base_id)
+    file_paths = []
+    for file in files:
+        file_path = await save_upload_file(file, "fichas_bases")
+        file_paths.append(file_path)
+    
+    # Append to existing fichas
+    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
+    existing_fichas = current.get("fichas_archivos", [])
+    await db.bases.update_one(
+        {"id": base_id},
+        {"$set": {"fichas_archivos": existing_fichas + file_paths, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"file_paths": file_paths}
+
+@api_router.delete("/bases/{base_id}/fichas/{file_index}")
+async def eliminar_ficha_base(base_id: str, file_index: int):
+    """Remove a ficha file from a base"""
+    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
+    if not current:
+        raise HTTPException(status_code=404, detail="Base no encontrada")
+    
+    fichas = current.get("fichas_archivos", [])
+    if file_index < 0 or file_index >= len(fichas):
+        raise HTTPException(status_code=400, detail="Índice de archivo inválido")
+    
+    fichas.pop(file_index)
+    await db.bases.update_one(
+        {"id": base_id},
+        {"$set": {"fichas_archivos": fichas, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "Archivo eliminado"}
+
+@api_router.post("/bases/{base_id}/tizados")
+async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(...)):
+    """Upload multiple tizado files for a base"""
+    await get_item_by_id("bases", base_id)
+    file_paths = []
+    for file in files:
+        file_path = await save_upload_file(file, "tizados_bases")
+        file_paths.append(file_path)
+    
+    # Append to existing tizados
+    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
+    existing_tizados = current.get("tizados_archivos", [])
+    await db.bases.update_one(
+        {"id": base_id},
+        {"$set": {"tizados_archivos": existing_tizados + file_paths, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"file_paths": file_paths}
+
+@api_router.delete("/bases/{base_id}/tizados/{file_index}")
+async def eliminar_tizado_base(base_id: str, file_index: int):
+    """Remove a tizado file from a base"""
+    current = await db.bases.find_one({"id": base_id}, {"_id": 0})
+    if not current:
+        raise HTTPException(status_code=404, detail="Base no encontrada")
+    
+    tizados = current.get("tizados_archivos", [])
+    if file_index < 0 or file_index >= len(tizados):
+        raise HTTPException(status_code=400, detail="Índice de archivo inválido")
+    
+    tizados.pop(file_index)
+    await db.bases.update_one(
+        {"id": base_id},
+        {"$set": {"tizados_archivos": tizados, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": "Archivo eliminado"}
+
 # ============ DASHBOARD STATS ============
 
 @api_router.get("/dashboard/stats")
