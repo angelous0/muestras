@@ -493,88 +493,104 @@ export default function BasesPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50 hover:bg-slate-50">
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Muestra Base</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Hilo</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Patrón</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Imagen</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Fichas</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Tizados</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4">Estado</TableHead>
-                            <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4 w-28">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
-                        ) : data.length === 0 ? (
-                            <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
-                        ) : (
-                            data.map((item) => (
-                                <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700 max-w-xs truncate">
-                                        {getMuestraBaseName(item.muestra_base_id)}
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm text-slate-700">
-                                        {getHiloName(item.hilo_id)}
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm">
-                                        <input type="file" ref={el => patronInputRefs.current[item.id] = el} onChange={(e) => handlePatronUpload(item.id, e)} accept=".xlsx,.xls,.pdf" className="hidden" />
-                                        {item.patron_archivo ? (
-                                            <div className="flex items-center gap-1">
-                                                <a href={getFileUrl(item.patron_archivo)} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                                    <FileSpreadsheet className="w-4 h-4" /><Download className="w-3 h-3" />
-                                                </a>
-                                                <Button variant="ghost" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
-                                            </div>
-                                        ) : (
-                                            <Button variant="outline" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-7 text-xs">
-                                                <Upload className="w-3 h-3 mr-1" />Subir
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div className="flex justify-end p-2 border-b border-slate-100 bg-slate-50">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={resetWidths}
+                        className="text-xs text-slate-500 hover:text-slate-700"
+                        title="Restaurar anchos de columna"
+                    >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        Restaurar
+                    </Button>
+                </div>
+                <div className="overflow-x-auto">
+                    <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '900px' }}>
+                        <TableHeader>
+                            <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                <ResizableTableHead columnKey="muestraBase" width={columnWidths.muestraBase} onResize={updateWidth}>Muestra Base</ResizableTableHead>
+                                <ResizableTableHead columnKey="hilo" width={columnWidths.hilo} onResize={updateWidth}>Hilo</ResizableTableHead>
+                                <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
+                                <ResizableTableHead columnKey="imagen" width={columnWidths.imagen} onResize={updateWidth}>Imagen</ResizableTableHead>
+                                <ResizableTableHead columnKey="fichas" width={columnWidths.fichas} onResize={updateWidth}>Fichas</ResizableTableHead>
+                                <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
+                                <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
+                                <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
+                            ) : data.length === 0 ? (
+                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
+                            ) : (
+                                data.map((item) => (
+                                    <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
+                                        <ResizableTableCell width={columnWidths.muestraBase}>
+                                            {getMuestraBaseName(item.muestra_base_id)}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.hilo}>
+                                            {getHiloName(item.hilo_id)}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.patron}>
+                                            <input type="file" ref={el => patronInputRefs.current[item.id] = el} onChange={(e) => handlePatronUpload(item.id, e)} accept=".xlsx,.xls,.pdf" className="hidden" />
+                                            {item.patron_archivo ? (
+                                                <div className="flex items-center gap-1">
+                                                    <a href={getFileUrl(item.patron_archivo)} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                        <FileSpreadsheet className="w-4 h-4" /><Download className="w-3 h-3" />
+                                                    </a>
+                                                    <Button variant="ghost" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
+                                                </div>
+                                            ) : (
+                                                <Button variant="outline" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-7 text-xs">
+                                                    <Upload className="w-3 h-3 mr-1" />Subir
+                                                </Button>
+                                            )}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.imagen}>
+                                            <input type="file" ref={el => imagenInputRefs.current[item.id] = el} onChange={(e) => handleImagenUpload(item.id, e)} accept="image/*" className="hidden" />
+                                            {item.imagen_archivo ? (
+                                                <div className="flex items-center gap-1">
+                                                    <a href={getFileUrl(item.imagen_archivo)} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
+                                                        <Image className="w-4 h-4" /><Download className="w-3 h-3" />
+                                                    </a>
+                                                    <Button variant="ghost" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
+                                                </div>
+                                            ) : (
+                                                <Button variant="outline" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-7 text-xs">
+                                                    <Image className="w-3 h-3 mr-1" />Subir
+                                                </Button>
+                                            )}
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.fichas}>
+                                            <Button variant="outline" size="sm" onClick={() => openFichasDialog(item)} className="h-7 text-xs">
+                                                <FolderOpen className="w-3 h-3 mr-1" />
+                                                {(item.fichas_archivos?.length || 0)} archivo(s)
                                             </Button>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm">
-                                        <input type="file" ref={el => imagenInputRefs.current[item.id] = el} onChange={(e) => handleImagenUpload(item.id, e)} accept="image/*" className="hidden" />
-                                        {item.imagen_archivo ? (
-                                            <div className="flex items-center gap-1">
-                                                <a href={getFileUrl(item.imagen_archivo)} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
-                                                    <Image className="w-4 h-4" /><Download className="w-3 h-3" />
-                                                </a>
-                                                <Button variant="ghost" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
-                                            </div>
-                                        ) : (
-                                            <Button variant="outline" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-7 text-xs">
-                                                <Image className="w-3 h-3 mr-1" />Subir
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.tizados}>
+                                            <Button variant="outline" size="sm" onClick={() => openTizadosDialog(item)} className="h-7 text-xs">
+                                                <FolderOpen className="w-3 h-3 mr-1" />
+                                                {(item.tizados_archivos?.length || 0)} archivo(s)
                                             </Button>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm">
-                                        <Button variant="outline" size="sm" onClick={() => openFichasDialog(item)} className="h-7 text-xs">
-                                            <FolderOpen className="w-3 h-3 mr-1" />
-                                            {(item.fichas_archivos?.length || 0)} archivo(s)
-                                        </Button>
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4 text-sm">
-                                        <Button variant="outline" size="sm" onClick={() => openTizadosDialog(item)} className="h-7 text-xs">
-                                            <FolderOpen className="w-3 h-3 mr-1" />
-                                            {(item.tizados_archivos?.length || 0)} archivo(s)
-                                        </Button>
-                                    </TableCell>
-                                    <TableCell className="py-3 px-4"><ApprovalBadge aprobado={item.aprobado} /></TableCell>
-                                    <TableCell className="py-3 px-4">
-                                        <div className="flex gap-1">
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"><Pencil className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.estado}>
+                                            <ApprovalBadge aprobado={item.aprobado} />
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.acciones}>
+                                            <div className="flex gap-1">
+                                                <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"><Pencil className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
+                                        </ResizableTableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
 
             {/* Form Dialog */}
