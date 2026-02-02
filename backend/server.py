@@ -352,6 +352,7 @@ class TizadoCreate(BaseModel):
     nombre: str
     ancho: Optional[float] = None
     curva: Optional[str] = None
+    bases_ids: List[str] = []
     activo: bool = True
 
 class Tizado(BaseModel):
@@ -361,6 +362,7 @@ class Tizado(BaseModel):
     ancho: Optional[float] = None
     curva: Optional[str] = None
     archivo_tizado: Optional[str] = None
+    bases_ids: List[str] = []
     activo: bool = True
     orden: int = 0
 
