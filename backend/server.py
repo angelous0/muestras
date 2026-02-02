@@ -38,6 +38,7 @@ class BaseItem(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
     activo: bool = True
+    orden: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -45,11 +46,13 @@ class BaseItemCreate(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
     activo: bool = True
+    orden: int = 0
 
 class BaseItemUpdate(BaseModel):
     nombre: Optional[str] = None
     descripcion: Optional[str] = None
     activo: Optional[bool] = None
+    orden: Optional[int] = None
 
 # ============ MARCA MODELS ============
 
@@ -297,7 +300,7 @@ async def get_items(collection_name: str, search: Optional[str] = None, activo: 
     if activo is not None:
         query["activo"] = activo
     
-    cursor = db[collection_name].find(query, {"_id": 0}).skip(skip).limit(limit).sort("created_at", -1)
+    cursor = db[collection_name].find(query, {"_id": 0}).skip(skip).limit(limit).sort("orden", 1)
     items = await cursor.to_list(limit)
     for item in items:
         deserialize_item(item)
