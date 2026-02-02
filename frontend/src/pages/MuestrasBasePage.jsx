@@ -239,6 +239,7 @@ export default function MuestrasBasePage() {
                 </h1>
                 <p className="text-slate-500 text-sm mt-1">
                     Gestiona las muestras base con costos y rentabilidad
+                    <span className="ml-2 text-slate-400 text-xs">(Arrastra los bordes de las columnas para ajustar el ancho)</span>
                 </p>
             </div>
 
