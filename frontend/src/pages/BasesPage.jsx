@@ -836,7 +836,7 @@ export default function BasesPage() {
                                         <Button 
                                             type="button"
                                             onClick={handleCreateTizado}
-                                            disabled={!newTizadoName || uploadingFiles}
+                                            disabled={!newTizadoName || !newTizadoFile || uploadingFiles}
                                             className="bg-emerald-600 hover:bg-emerald-700 text-white"
                                         >
                                             {uploadingFiles ? 'Guardando...' : 'Guardar Tizado'}
