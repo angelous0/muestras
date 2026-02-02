@@ -20,6 +20,7 @@ export const getMarca = (id) => api.get(`/marcas/${id}`);
 export const createMarca = (data) => api.post('/marcas', data);
 export const updateMarca = (id, data) => api.put(`/marcas/${id}`, data);
 export const deleteMarca = (id) => api.delete(`/marcas/${id}`);
+export const reorderMarcas = (items) => api.put('/marcas/reorder', { items });
 
 // Tipos Producto
 export const getTiposProducto = (params) => api.get('/tipos-producto', { params });
@@ -28,6 +29,7 @@ export const getTipoProducto = (id) => api.get(`/tipos-producto/${id}`);
 export const createTipoProducto = (data) => api.post('/tipos-producto', data);
 export const updateTipoProducto = (id, data) => api.put(`/tipos-producto/${id}`, data);
 export const deleteTipoProducto = (id) => api.delete(`/tipos-producto/${id}`);
+export const reorderTiposProducto = (items) => api.put('/tipos-producto/reorder', { items });
 
 // Entalles
 export const getEntalles = (params) => api.get('/entalles', { params });
@@ -36,6 +38,7 @@ export const getEntalle = (id) => api.get(`/entalles/${id}`);
 export const createEntalle = (data) => api.post('/entalles', data);
 export const updateEntalle = (id, data) => api.put(`/entalles/${id}`, data);
 export const deleteEntalle = (id) => api.delete(`/entalles/${id}`);
+export const reorderEntalles = (items) => api.put('/entalles/reorder', { items });
 
 // Telas
 export const getTelas = (params) => api.get('/telas', { params });
@@ -44,6 +47,7 @@ export const getTela = (id) => api.get(`/telas/${id}`);
 export const createTela = (data) => api.post('/telas', data);
 export const updateTela = (id, data) => api.put(`/telas/${id}`, data);
 export const deleteTela = (id) => api.delete(`/telas/${id}`);
+export const reorderTelas = (items) => api.put('/telas/reorder', { items });
 
 // Hilos
 export const getHilos = (params) => api.get('/hilos', { params });
@@ -52,6 +56,7 @@ export const getHilo = (id) => api.get(`/hilos/${id}`);
 export const createHilo = (data) => api.post('/hilos', data);
 export const updateHilo = (id, data) => api.put(`/hilos/${id}`, data);
 export const deleteHilo = (id) => api.delete(`/hilos/${id}`);
+export const reorderHilos = (items) => api.put('/hilos/reorder', { items });
 
 // Muestras Base
 export const getMuestrasBase = (params) => api.get('/muestras-base', { params });
