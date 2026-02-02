@@ -69,11 +69,15 @@ export default function BasesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({});
     
+    // All tizados for selection
+    const [allTizados, setAllTizados] = useState([]);
+    
     // File upload dialogs
     const [fichasDialogOpen, setFichasDialogOpen] = useState(false);
     const [tizadosDialogOpen, setTizadosDialogOpen] = useState(false);
     const [currentBaseForFiles, setCurrentBaseForFiles] = useState(null);
     const [uploadingFiles, setUploadingFiles] = useState(false);
+    const [tizadoSearchInDialog, setTizadoSearchInDialog] = useState('');
     
     // New Ficha form states
     const [showNewFichaForm, setShowNewFichaForm] = useState(false);
