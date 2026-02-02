@@ -443,6 +443,7 @@ export default function BasesPage() {
     const openBasesEditor = (tizado) => {
         setEditingTizadoBases(tizado);
         setTempBasesIds([...(tizado.bases_ids || [])]);
+        setBasesEditorSearch('');
     };
     
     // Toggle base in temp list
