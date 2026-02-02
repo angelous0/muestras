@@ -72,6 +72,21 @@ export default function MuestrasBasePage() {
     const [uploadingId, setUploadingId] = useState(null);
     const fileInputRefs = useRef({});
 
+    // Columnas redimensionables
+    const defaultColumnWidths = {
+        marca: 120,
+        tipo: 120,
+        entalle: 100,
+        tela: 120,
+        costo: 100,
+        precio: 100,
+        rentabilidad: 110,
+        archivo: 100,
+        aprobado: 100,
+        acciones: 100
+    };
+    const { columnWidths, updateWidth, resetWidths } = useResizableColumns('muestras-base', defaultColumnWidths);
+
     const fetchCatalogs = async () => {
         try {
             const [marcasRes, tiposRes, entallesRes, telasRes] = await Promise.all([
