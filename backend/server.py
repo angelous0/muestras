@@ -469,21 +469,6 @@ async def generate_muestra_base_name(session: AsyncSession, marca_id: str, tipo_
             parts.append(entalle.nombre)
     return "-".join(parts) if parts else "Nueva Muestra"
 
-async def generate_base_name(session: AsyncSession, muestra_base_id: str, hilo_id: str) -> str:
-    """Generate automatic name for Base"""
-    parts = []
-    if muestra_base_id:
-        result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == muestra_base_id))
-        muestra = result.scalar_one_or_none()
-        if muestra:
-            parts.append(muestra.nombre)
-    if hilo_id:
-        result = await session.execute(select(HiloDB).where(HiloDB.id == hilo_id))
-        hilo = result.scalar_one_or_none()
-        if hilo:
-            parts.append(hilo.nombre)
-    return "-".join(parts) if parts else "Nueva Base"
-
 # ============ ROUTES ============
 
 @api_router.get("/")
