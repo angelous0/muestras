@@ -461,11 +461,34 @@ async def upload_file(category: str, file: UploadFile = File(...)):
 
 @api_router.get("/files/{category}/{filename}")
 async def get_file(category: str, filename: str):
-    """Get a file by category and filename"""
+    """Get a file by category and filename - supports both local and R2 storage"""
+    key = f"{category}/{filename}"
+    
+    # Check if R2 is configured and file exists in R2
+    if r2_client:
+        presigned_url = get_r2_presigned_url(key)
+        if presigned_url:
+            return RedirectResponse(url=presigned_url)
+    
+    # Fallback to local file
     file_path = UPLOADS_DIR / category / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     return FileResponse(file_path)
+
+@api_router.get("/files/r2/{category}/{filename}")
+async def get_r2_file(category: str, filename: str):
+    """Get a file from R2 storage directly"""
+    if not r2_client:
+        raise HTTPException(status_code=503, detail="R2 no está configurado")
+    
+    key = f"{category}/{filename}"
+    presigned_url = get_r2_presigned_url(key)
+    
+    if not presigned_url:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado en R2")
+    
+    return RedirectResponse(url=presigned_url)
 
 # ============ MARCAS ROUTES ============
 
