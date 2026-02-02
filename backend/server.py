@@ -1333,6 +1333,11 @@ async def delete_tizado_item(item_id: str):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Delete associated file from R2
+        if item.archivo_tizado:
+            delete_r2_file(item.archivo_tizado)
+        
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
