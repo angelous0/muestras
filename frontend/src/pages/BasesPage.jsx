@@ -69,6 +69,18 @@ export default function BasesPage() {
     const [currentBaseForFiles, setCurrentBaseForFiles] = useState(null);
     const [uploadingFiles, setUploadingFiles] = useState(false);
     
+    // New Ficha form states
+    const [showNewFichaForm, setShowNewFichaForm] = useState(false);
+    const [newFichaName, setNewFichaName] = useState('');
+    const [newFichaFile, setNewFichaFile] = useState(null);
+    const [fichaSearch, setFichaSearch] = useState('');
+    
+    // New Tizado form states
+    const [showNewTizadoForm, setShowNewTizadoForm] = useState(false);
+    const [newTizadoName, setNewTizadoName] = useState('');
+    const [newTizadoFile, setNewTizadoFile] = useState(null);
+    const [tizadoSearch, setTizadoSearch] = useState('');
+    
     // Catalogs
     const [muestrasBase, setMuestrasBase] = useState([]);
     const [hilos, setHilos] = useState([]);
