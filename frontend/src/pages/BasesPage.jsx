@@ -367,6 +367,7 @@ export default function BasesPage() {
     // State for editing bases of a specific tizado
     const [editingTizadoBases, setEditingTizadoBases] = useState(null);
     const [tempBasesIds, setTempBasesIds] = useState([]);
+    const [basesEditorSearch, setBasesEditorSearch] = useState('');
 
     const handleDeleteConfirm = async () => {
         setSubmitting(true);
