@@ -923,7 +923,7 @@ async def eliminar_ficha_base(base_id: str, file_index: int):
     return {"message": "Archivo eliminado"}
 
 @api_router.post("/bases/{base_id}/tizados")
-async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = []):
+async def subir_tizados_base(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = Form(default=[])):
     """Upload multiple tizado files for a base with optional names"""
     await get_item_by_id("bases", base_id)
     file_paths = []
