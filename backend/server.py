@@ -1045,6 +1045,17 @@ async def delete_base(item_id: str):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Delete all associated files from R2
+        if item.patron_archivo:
+            delete_r2_file(item.patron_archivo)
+        if item.imagen_archivo:
+            delete_r2_file(item.imagen_archivo)
+        if item.fichas_archivos:
+            delete_multiple_r2_files(item.fichas_archivos)
+        if item.tizados_archivos:
+            delete_multiple_r2_files(item.tizados_archivos)
+        
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
