@@ -102,6 +102,19 @@ export default function BasesPage() {
     const newFichaFileRef = useRef(null);
     const newTizadoFileRef = useRef(null);
 
+    // Columnas redimensionables
+    const defaultColumnWidths = {
+        muestraBase: 200,
+        hilo: 100,
+        patron: 100,
+        imagen: 100,
+        fichas: 120,
+        tizados: 120,
+        estado: 100,
+        acciones: 100
+    };
+    const { columnWidths, updateWidth, resetWidths } = useResizableColumns('bases', defaultColumnWidths);
+
     const fetchCatalogs = async () => {
         try {
             const [muestrasRes, hilosRes, marcasRes, tiposRes, entallesRes, telasRes] = await Promise.all([
