@@ -493,73 +493,164 @@ export default function BasesPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Fichas Dialog */}
+            {/* Fichas Dialog - Rediseñado según imagen de referencia */}
             <Dialog open={fichasDialogOpen} onOpenChange={setFichasDialogOpen}>
-                <DialogContent className="sm:max-w-lg bg-white">
-                    <DialogHeader>
+                <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
+                    <DialogHeader className="border-b border-slate-200 pb-4">
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
-                            Fichas Técnicas
+                            Fichas de Base #{currentBaseForFiles?.id?.slice(-4) || ''}
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        {/* Drop zone */}
-                        <div 
-                            className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors cursor-pointer"
-                            onClick={() => fichasInputRef.current?.click()}
-                        >
-                            <input type="file" ref={fichasInputRef} onChange={handleFichasUpload} multiple className="hidden" />
-                            <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                                    <Upload className="w-6 h-6 text-slate-400" />
+                    <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                        {/* Formulario para crear nueva ficha */}
+                        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                            <Button 
+                                type="button"
+                                onClick={() => setShowNewFichaForm(!showNewFichaForm)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white mb-3"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Crear Nueva Ficha
+                            </Button>
+                            
+                            {showNewFichaForm && (
+                                <div className="space-y-3 mt-3 pt-3 border-t border-slate-200">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-sm text-slate-600">Nombre de Ficha <span className="text-red-500">*</span></Label>
+                                            <Input 
+                                                placeholder="Ej: Ficha de Medidas"
+                                                value={newFichaName}
+                                                onChange={(e) => setNewFichaName(e.target.value)}
+                                                className="bg-white"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-sm text-slate-600">Archivo</Label>
+                                            <div 
+                                                className="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-md bg-white cursor-pointer hover:bg-slate-50"
+                                                onClick={() => newFichaFileRef.current?.click()}
+                                            >
+                                                <Upload className="w-4 h-4 text-slate-400" />
+                                                <span className="text-sm text-slate-500 truncate">
+                                                    {newFichaFile ? newFichaFile.name : 'Seleccionar archivo'}
+                                                </span>
+                                            </div>
+                                            <input 
+                                                type="file" 
+                                                ref={newFichaFileRef} 
+                                                onChange={(e) => setNewFichaFile(e.target.files?.[0] || null)}
+                                                className="hidden" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            type="button"
+                                            onClick={handleCreateFicha}
+                                            disabled={!newFichaName || uploadingFiles}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        >
+                                            {uploadingFiles ? 'Guardando...' : 'Guardar Ficha'}
+                                        </Button>
+                                        <Button 
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setShowNewFichaForm(false);
+                                                setNewFichaName('');
+                                                setNewFichaFile(null);
+                                            }}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-slate-600">
-                                    {uploadingFiles ? 'Subiendo archivos...' : 'Arrastra archivos aquí o haz clic para seleccionar'}
-                                </p>
-                                <p className="text-xs text-slate-400">PDF, Excel, Word, Imágenes</p>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Files list */}
-                        {(currentBaseForFiles?.fichas_archivos?.length || 0) > 0 && (
-                            <div className="space-y-2">
-                                <p className="text-sm font-medium text-slate-700">Archivos subidos ({currentBaseForFiles?.fichas_archivos?.length})</p>
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                    {currentBaseForFiles?.fichas_archivos?.map((file, index) => (
-                                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center shrink-0">
-                                                    <File className="w-4 h-4 text-blue-600" />
-                                                </div>
-                                                <span className="text-sm text-slate-700 truncate">{getFileName(file)}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                <a 
-                                                    href={getFileUrl(file)} 
-                                                    target="_blank" 
-                                                    rel="noreferrer" 
-                                                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-                                                    title="Descargar"
-                                                >
-                                                    <Download className="w-4 h-4 text-slate-600" />
-                                                </a>
-                                                <button 
-                                                    onClick={() => handleDeleteFicha(index)} 
-                                                    className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                                                    title="Eliminar"
-                                                >
-                                                    <X className="w-4 h-4 text-red-500" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        {/* Campo de búsqueda */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input 
+                                placeholder="Buscar por nombre..."
+                                value={fichaSearch}
+                                onChange={(e) => setFichaSearch(e.target.value)}
+                                className="pl-10 bg-white"
+                            />
+                        </div>
+
+                        {/* Tabla de fichas */}
+                        <div className="border border-slate-200 rounded-lg overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-12">#</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Nombre de Ficha</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-32">Archivo</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredFichas.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                                                No hay fichas registradas
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredFichas.map((ficha, index) => (
+                                            <TableRow key={index} className="border-b border-slate-100 hover:bg-slate-50">
+                                                <TableCell className="py-2 px-3 text-sm text-slate-600">{index + 1}</TableCell>
+                                                <TableCell className="py-2 px-3 text-sm text-slate-700 font-medium">
+                                                    {ficha.nombre || getFileName(ficha.archivo)}
+                                                </TableCell>
+                                                <TableCell className="py-2 px-3 text-sm">
+                                                    {ficha.archivo ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-xs px-2">
+                                                                {getFileExtension(ficha.archivo)}
+                                                            </Badge>
+                                                            <a 
+                                                                href={getFileUrl(ficha.archivo)} 
+                                                                target="_blank" 
+                                                                rel="noreferrer"
+                                                                className="text-slate-400 hover:text-slate-600"
+                                                                title="Descargar"
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </a>
+                                                        </div>
+                                                    ) : (
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            className="h-6 text-xs text-slate-500"
+                                                            onClick={() => handleUploadToExistingFicha(index)}
+                                                        >
+                                                            <Upload className="w-3 h-3 mr-1" />Subir
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="py-2 px-3">
+                                                    <button 
+                                                        onClick={() => handleDeleteFicha(index)} 
+                                                        className="p-1.5 hover:bg-red-100 rounded transition-colors"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 text-red-500" />
+                                                    </button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </div>
-                    <DialogFooter className="gap-2">
-                        <Button variant="outline" onClick={() => setFichasDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={() => setFichasDialogOpen(false)} className="bg-slate-800 hover:bg-slate-700">Guardar</Button>
-                    </DialogFooter>
+                    <div className="border-t border-slate-200 pt-4 flex justify-end">
+                        <Button variant="outline" onClick={() => setFichasDialogOpen(false)}>Cerrar</Button>
+                    </div>
                 </DialogContent>
             </Dialog>
 
