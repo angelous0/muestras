@@ -125,13 +125,14 @@ export default function BasesPage() {
 
     const fetchCatalogs = async () => {
         try {
-            const [muestrasRes, hilosRes, marcasRes, tiposRes, entallesRes, telasRes] = await Promise.all([
+            const [muestrasRes, hilosRes, marcasRes, tiposRes, entallesRes, telasRes, tizadosRes] = await Promise.all([
                 getMuestrasBase({ activo: true }),
                 getHilos({ activo: true }),
                 getMarcas({ activo: true }),
                 getTiposProducto({ activo: true }),
                 getEntalles({ activo: true }),
-                getTelas({ activo: true })
+                getTelas({ activo: true }),
+                getTizados({})
             ]);
             setMuestrasBase(muestrasRes.data);
             setHilos(hilosRes.data);
@@ -139,6 +140,7 @@ export default function BasesPage() {
             setTiposProducto(tiposRes.data);
             setEntalles(entallesRes.data);
             setTelas(telasRes.data);
+            setAllTizados(tizadosRes.data);
         } catch (error) {
             console.error('Error loading catalogs:', error);
         }
