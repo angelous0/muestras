@@ -859,8 +859,8 @@ async def subir_imagen(base_id: str, file: UploadFile = File(...)):
     return {"file_path": file_path}
 
 @api_router.post("/bases/{base_id}/fichas")
-async def subir_fichas(base_id: str, files: List[UploadFile] = File(...)):
-    """Upload multiple ficha files for a base"""
+async def subir_fichas(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = []):
+    """Upload multiple ficha files for a base with optional names"""
     await get_item_by_id("bases", base_id)
     file_paths = []
     for file in files:
@@ -870,11 +870,30 @@ async def subir_fichas(base_id: str, files: List[UploadFile] = File(...)):
     # Append to existing fichas
     current = await db.bases.find_one({"id": base_id}, {"_id": 0})
     existing_fichas = current.get("fichas_archivos", [])
+    existing_nombres = current.get("fichas_nombres", [])
+    
+    # If nombres provided, use them; otherwise use filenames
+    new_nombres = []
+    for i, file_path in enumerate(file_paths):
+        if i < len(nombres) and nombres[i]:
+            new_nombres.append(nombres[i])
+        else:
+            new_nombres.append(file_path.split('/')[-1])
+    
+    # If only nombres without files (creating entry without file)
+    if not file_paths and nombres:
+        new_nombres = list(nombres)
+        file_paths = [None] * len(nombres)  # Placeholder for files to be uploaded later
+    
     await db.bases.update_one(
         {"id": base_id},
-        {"$set": {"fichas_archivos": existing_fichas + file_paths, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "fichas_archivos": existing_fichas + [f for f in file_paths if f],
+            "fichas_nombres": existing_nombres + new_nombres,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
-    return {"file_paths": file_paths}
+    return {"file_paths": file_paths, "nombres": new_nombres}
 
 @api_router.delete("/bases/{base_id}/fichas/{file_index}")
 async def eliminar_ficha_base(base_id: str, file_index: int):
