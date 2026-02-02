@@ -859,7 +859,7 @@ async def subir_imagen(base_id: str, file: UploadFile = File(...)):
     return {"file_path": file_path}
 
 @api_router.post("/bases/{base_id}/fichas")
-async def subir_fichas(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = []):
+async def subir_fichas(base_id: str, files: List[UploadFile] = File(default=[]), nombres: List[str] = Form(default=[])):
     """Upload multiple ficha files for a base with optional names"""
     await get_item_by_id("bases", base_id)
     file_paths = []
