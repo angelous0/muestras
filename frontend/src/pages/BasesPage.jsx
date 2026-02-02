@@ -949,17 +949,6 @@ export default function BasesPage() {
                     </div>
                 </DialogContent>
             </Dialog>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </div>
-                    <div className="border-t border-slate-200 pt-4 flex justify-end">
-                        <Button variant="outline" onClick={() => setTizadosDialogOpen(false)}>Cerrar</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
 
             <DeleteConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDeleteConfirm} itemName={selectedItem?.nombre} loading={submitting} />
         </div>
