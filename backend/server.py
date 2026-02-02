@@ -946,6 +946,11 @@ async def delete_muestra_base(item_id: str):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Delete associated file from R2
+        if item.archivo_costos:
+            delete_r2_file(item.archivo_costos)
+        
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
