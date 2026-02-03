@@ -1,8 +1,7 @@
 // PDF Generator utility - isolated module to avoid webpack bundling conflicts
 export const generateChecklistDocument = async (items, title, baseName) => {
-    // Dynamic import with explicit chunk name
-    const jsPDFModule = await import(/* webpackChunkName: "jspdf" */ 'jspdf');
-    const jsPDF = jsPDFModule.default || jsPDFModule.jsPDF || jsPDFModule;
+    // Use require to avoid webpack dynamic import issues
+    const jsPDF = require('jspdf').default;
     
     // A6 size: 105mm x 148mm
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [105, 148] });
