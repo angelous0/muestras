@@ -1528,7 +1528,8 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                 "base_fichas_archivos": [],
                 "base_fichas_nombres": [],
                 "base_tizados": [],
-                "muestra_base_nombre": None  # Nombre de la muestra base asociada
+                "muestra_base_nombre": None,
+                "base_patron_archivo": None  # Patron de la base
             }
             
             # Add base's fichas, related tizados, and muestra_base name
@@ -1536,6 +1537,7 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                 base = bases_dict[m.base_id]
                 modelo_dict["base_fichas_archivos"] = base.fichas_archivos or []
                 modelo_dict["base_fichas_nombres"] = base.fichas_nombres or []
+                modelo_dict["base_patron_archivo"] = base.patron_archivo
                 
                 # Get muestra_base name from base
                 if base.muestra_base_id and base.muestra_base_id in muestras_dict:
