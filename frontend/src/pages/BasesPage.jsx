@@ -123,9 +123,8 @@ export default function BasesPage() {
 
     const fetchCatalogs = async () => {
         try {
-            const [muestrasRes, hilosRes, marcasRes, tiposRes, entallesRes, telasRes, tizadosRes] = await Promise.all([
+            const [muestrasRes, marcasRes, tiposRes, entallesRes, telasRes, tizadosRes] = await Promise.all([
                 getMuestrasBase({ activo: true }),
-                getHilos({ activo: true }),
                 getMarcas({ activo: true }),
                 getTiposProducto({ activo: true }),
                 getEntalles({ activo: true }),
@@ -133,7 +132,6 @@ export default function BasesPage() {
                 getTizados({})
             ]);
             setMuestrasBase(muestrasRes.data);
-            setHilos(hilosRes.data);
             setMarcas(marcasRes.data);
             setTiposProducto(tiposRes.data);
             setEntalles(entallesRes.data);
