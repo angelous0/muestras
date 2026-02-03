@@ -7,7 +7,7 @@ import {
     deleteFichaBase, deleteTizadoBase, getFileUrl,
     getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
     getTizados, updateTizado, createTizado, uploadArchivoTizado,
-    getEstadosCostura, getAviosCostura, uploadFichaChecklist
+    getEstadosCostura, getAviosCostura, generateChecklistPdf
 } from '../lib/api';
 import {
     Table,
