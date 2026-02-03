@@ -360,7 +360,6 @@ class MuestraBase(BaseModel):
 class BaseCreate(BaseModel):
     nombre: Optional[str] = None
     muestra_base_id: Optional[str] = None
-    hilo_id: Optional[str] = None
     aprobado: bool = False
 
 class BaseModel_(BaseModel):
@@ -368,13 +367,30 @@ class BaseModel_(BaseModel):
     id: str
     nombre: str
     muestra_base_id: Optional[str] = None
-    hilo_id: Optional[str] = None
     patron_archivo: Optional[str] = None
     imagen_archivo: Optional[str] = None
     fichas_archivos: List[str] = []
     fichas_nombres: List[str] = []
     tizados_archivos: List[str] = []
     tizados_nombres: List[str] = []
+    aprobado: bool = False
+    activo: bool = True
+    orden: int = 0
+
+class ModeloCreate(BaseModel):
+    nombre: Optional[str] = None
+    base_id: Optional[str] = None
+    hilo_id: Optional[str] = None
+    aprobado: bool = False
+
+class Modelo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
+    base_id: Optional[str] = None
+    hilo_id: Optional[str] = None
+    fichas_archivos: List[str] = []
+    fichas_nombres: List[str] = []
     aprobado: bool = False
     activo: bool = True
     orden: int = 0
