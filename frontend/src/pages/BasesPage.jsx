@@ -1080,7 +1080,7 @@ export default function BasesPage() {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input 
-                                placeholder="Buscar bases..."
+                                placeholder="Buscar por nombre, marca, tipo, entalle, tela..."
                                 value={basesEditorSearch}
                                 onChange={(e) => setBasesEditorSearch(e.target.value)}
                                 className="pl-10 bg-white"
@@ -1089,12 +1089,7 @@ export default function BasesPage() {
                         
                         <div className="space-y-2 max-h-[280px] overflow-y-auto">
                             {data
-                                .filter(base => {
-                                    if (!basesEditorSearch) return true;
-                                    const searchLower = basesEditorSearch.toLowerCase();
-                                    const baseName = base.nombre || getMuestraBaseName(base.muestra_base_id);
-                                    return baseName.toLowerCase().includes(searchLower);
-                                })
+                                .filter(base => searchBase(base, basesEditorSearch))
                                 .map((base) => (
                                 <label 
                                     key={base.id}
@@ -1113,12 +1108,7 @@ export default function BasesPage() {
                                     </span>
                                 </label>
                             ))}
-                            {data.filter(base => {
-                                if (!basesEditorSearch) return true;
-                                const searchLower = basesEditorSearch.toLowerCase();
-                                const baseName = base.nombre || getMuestraBaseName(base.muestra_base_id);
-                                return baseName.toLowerCase().includes(searchLower);
-                            }).length === 0 && (
+                            {data.filter(base => searchBase(base, basesEditorSearch)).length === 0 && (
                                 <p className="text-center text-slate-400 py-4 text-sm">No se encontraron bases</p>
                             )}
                         </div>
