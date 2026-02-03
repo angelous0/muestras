@@ -27,6 +27,11 @@ function ModelosPage() {
     const [fichaName, setFichaName] = useState('');
     const [uploadingFicha, setUploadingFicha] = useState(false);
     const fichaInputRef = useRef(null);
+    
+    // Dialogs for viewing base's files
+    const [baseFichasDialog, setBaseFichasDialog] = useState(false);
+    const [baseTizadosDialog, setBaseTizadosDialog] = useState(false);
+    const [viewingModelo, setViewingModelo] = useState(null);
 
     const fetchData = async () => {
         setLoading(true);
