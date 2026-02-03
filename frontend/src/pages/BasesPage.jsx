@@ -900,17 +900,19 @@ export default function BasesPage() {
                                 <ResizableTableHead columnKey="muestraBase" width={columnWidths.muestraBase} onResize={updateWidth}>Muestra Base</ResizableTableHead>
                                 <ResizableTableHead columnKey="nombre" width={columnWidths.nombre} onResize={updateWidth}>Nombre</ResizableTableHead>
                                 <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
-                                <ResizableTableHead columnKey="fichas_generales" width={columnWidths.fichas_generales} onResize={updateWidth}>Fichas Generales</ResizableTableHead>
+                                <ResizableTableHead columnKey="fichas_generales" width={columnWidths.fichas_generales} onResize={updateWidth}>Fichas Gen.</ResizableTableHead>
                                 <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
+                                <ResizableTableHead columnKey="estadosCostura" width={columnWidths.estadosCostura} onResize={updateWidth}>Est. Costura</ResizableTableHead>
+                                <ResizableTableHead columnKey="aviosCostura" width={columnWidths.aviosCostura} onResize={updateWidth}>Avíos Cost.</ResizableTableHead>
                                 <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
                                 <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
                             ) : data.length === 0 ? (
-                                <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
                             ) : (
                                 data.map((item) => (
                                     <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
