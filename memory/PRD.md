@@ -137,4 +137,5 @@ JWT_SECRET_KEY="..." (opcional, tiene default)
 - v2.3: Integración Cloudflare R2
 - v2.4: Migración a PostgreSQL + Relación M-M
 - v2.5: Rediseño popup Tizados
-- **v3.0**: Sistema de autenticación completo con JWT + Gestión de usuarios
+- v3.0: Sistema de autenticación completo con JWT + Gestión de usuarios
+- **v3.1**: Nueva entidad Modelos + Campo N Muestra + Visualización de Fichas/Tizados en Modelos
