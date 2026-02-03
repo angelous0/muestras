@@ -193,7 +193,7 @@ function ModelosPage() {
                                         onClick={() => { setViewingModelo(item); setBaseTizadosDialog(true); }} 
                                         className="text-orange-600 hover:text-orange-800"
                                     >
-                                        <Scissors className="w-4 h-4 mr-1" />{item.base_tizados_archivos?.length || 0}
+                                        <Scissors className="w-4 h-4 mr-1" />{item.base_tizados?.length || 0}
                                     </Button>
                                 </TableCell>
                                 <TableCell>
