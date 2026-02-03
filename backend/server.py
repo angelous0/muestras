@@ -652,6 +652,101 @@ async def generate_muestra_base_name(session: AsyncSession, marca_id: str, tipo_
 async def root():
     return {"message": "API Módulo Muestras Textil - PostgreSQL"}
 
+# ============ AUTH ROUTES ============
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login(data: LoginRequest):
+    async with async_session() as session:
+        result = await session.execute(select(UsuarioDB).where(UsuarioDB.username == data.username))
+        user = result.scalar_one_or_none()
+        
+        if not user or not verify_password(data.password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+        
+        if not user.activo:
+            raise HTTPException(status_code=401, detail="Usuario desactivado")
+        
+        access_token = create_access_token(data={"sub": user.id})
+        return TokenResponse(
+            access_token=access_token,
+            user=Usuario.model_validate(user)
+        )
+
+@api_router.get("/auth/me", response_model=Usuario)
+async def get_me(current_user: UsuarioDB = Depends(get_current_user)):
+    return Usuario.model_validate(current_user)
+
+@api_router.get("/usuarios", response_model=List[Usuario])
+async def get_usuarios(current_user: UsuarioDB = Depends(get_admin_user)):
+    async with async_session() as session:
+        result = await session.execute(select(UsuarioDB).order_by(UsuarioDB.created_at))
+        return [Usuario.model_validate(u) for u in result.scalars().all()]
+
+@api_router.post("/usuarios", response_model=Usuario)
+async def create_usuario(data: UsuarioCreate, current_user: UsuarioDB = Depends(get_admin_user)):
+    async with async_session() as session:
+        # Check if username exists
+        result = await session.execute(select(UsuarioDB).where(UsuarioDB.username == data.username))
+        if result.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="El nombre de usuario ya existe")
+        
+        user = UsuarioDB(
+            username=data.username,
+            password_hash=get_password_hash(data.password),
+            nombre_completo=data.nombre_completo,
+            rol=data.rol,
+            activo=True
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return Usuario.model_validate(user)
+
+@api_router.put("/usuarios/{user_id}", response_model=Usuario)
+async def update_usuario(user_id: str, data: UsuarioUpdate, current_user: UsuarioDB = Depends(get_admin_user)):
+    async with async_session() as session:
+        result = await session.execute(select(UsuarioDB).where(UsuarioDB.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        if data.username and data.username != user.username:
+            # Check if new username exists
+            existing = await session.execute(select(UsuarioDB).where(UsuarioDB.username == data.username))
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail="El nombre de usuario ya existe")
+            user.username = data.username
+        
+        if data.password:
+            user.password_hash = get_password_hash(data.password)
+        if data.nombre_completo:
+            user.nombre_completo = data.nombre_completo
+        if data.rol:
+            user.rol = data.rol
+        if data.activo is not None:
+            user.activo = data.activo
+        
+        user.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(user)
+        return Usuario.model_validate(user)
+
+@api_router.delete("/usuarios/{user_id}")
+async def delete_usuario(user_id: str, current_user: UsuarioDB = Depends(get_admin_user)):
+    async with async_session() as session:
+        result = await session.execute(select(UsuarioDB).where(UsuarioDB.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        # Prevent deleting self
+        if user.id == current_user.id:
+            raise HTTPException(status_code=400, detail="No puedes eliminar tu propio usuario")
+        
+        await session.delete(user)
+        await session.commit()
+        return {"message": "Usuario eliminado"}
+
 # ============ FILE ROUTES ============
 
 @api_router.post("/upload/{category}")
