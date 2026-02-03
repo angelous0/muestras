@@ -1475,7 +1475,7 @@ export default function BasesPage() {
                     <div className="flex justify-between border-t border-slate-200 pt-4">
                         <Button 
                             variant="outline" 
-                            onClick={() => generateChecklistPdf('estados')}
+                            onClick={() => handleGenerateChecklistPdf('estados')}
                             disabled={generatingPdf || selectedEstadosCostura.length === 0}
                             className="text-purple-600 border-purple-200 hover:bg-purple-50"
                         >
