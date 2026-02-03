@@ -1,4 +1,4 @@
-# PRD - Módulo Muestras v3.0
+# PRD - Módulo Muestras v3.1
 
 ## Problema Original
 Crear un módulo de muestras textil con diseño minimalista y corporativo para gestionar catálogos base, muestras y bases con sus archivos asociados.
