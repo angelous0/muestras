@@ -369,6 +369,51 @@ export default function BasesPage() {
         }
     };
 
+    // Create new tizado and link to current base
+    const handleCreateNewTizado = async () => {
+        if (!newTizadoAncho || !newTizadoCurva) {
+            toast.error('Ancho y Curva son requeridos');
+            return;
+        }
+        
+        setCreatingTizado(true);
+        try {
+            // Create tizado with current base linked
+            const tizadoData = {
+                nombre: newTizadoName || `${newTizadoAncho}-${newTizadoCurva}`,
+                ancho: parseFloat(newTizadoAncho),
+                curva: newTizadoCurva,
+                bases_ids: currentBaseForFiles ? [currentBaseForFiles.id] : []
+            };
+            
+            const response = await createTizado(tizadoData);
+            const newTizadoId = response.data.id;
+            
+            // Upload file if provided
+            if (newTizadoFile) {
+                await uploadArchivoTizado(newTizadoId, newTizadoFile);
+            }
+            
+            toast.success('Tizado creado y vinculado');
+            
+            // Reset form
+            setShowNewTizadoForm(false);
+            setNewTizadoName('');
+            setNewTizadoAncho('');
+            setNewTizadoCurva('');
+            setNewTizadoFile(null);
+            if (newTizadoFileRef.current) newTizadoFileRef.current.value = '';
+            
+            // Refresh data
+            fetchData();
+            fetchCatalogs();
+        } catch (error) {
+            toast.error('Error al crear tizado');
+        } finally {
+            setCreatingTizado(false);
+        }
+    };
+
     // Get tizados associated with current base
     const getTizadosForCurrentBase = () => {
         if (!currentBaseForFiles) return [];
