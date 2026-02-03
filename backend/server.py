@@ -181,7 +181,6 @@ class BaseDB(Base):
     nombre: Mapped[str] = mapped_column(String(500), nullable=False)
     muestra_base_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     patron_archivo: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    imagen_archivo: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     fichas_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     fichas_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     tizados_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
