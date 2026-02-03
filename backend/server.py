@@ -1503,6 +1503,10 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
         bases_result = await session.execute(select(BaseDB))
         bases_dict = {b.id: b for b in bases_result.scalars().all()}
         
+        # Get all muestras_base to get name from base's muestra_base_id
+        muestras_result = await session.execute(select(MuestraBaseDB))
+        muestras_dict = {m.id: m for m in muestras_result.scalars().all()}
+        
         # Get all tizados to find which ones are related to each base
         tizados_result = await session.execute(select(TizadoDB))
         all_tizados = tizados_result.scalars().all()
@@ -1521,14 +1525,19 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                 "orden": m.orden,
                 "base_fichas_archivos": [],
                 "base_fichas_nombres": [],
-                "base_tizados": []  # List of tizado objects related to base
+                "base_tizados": [],
+                "muestra_base_nombre": None  # Nombre de la muestra base asociada
             }
             
-            # Add base's fichas and related tizados
+            # Add base's fichas, related tizados, and muestra_base name
             if m.base_id and m.base_id in bases_dict:
                 base = bases_dict[m.base_id]
                 modelo_dict["base_fichas_archivos"] = base.fichas_archivos or []
                 modelo_dict["base_fichas_nombres"] = base.fichas_nombres or []
+                
+                # Get muestra_base name from base
+                if base.muestra_base_id and base.muestra_base_id in muestras_dict:
+                    modelo_dict["muestra_base_nombre"] = muestras_dict[base.muestra_base_id].nombre
                 
                 # Find tizados related to this base (M-M relation via bases_ids)
                 related_tizados = []
