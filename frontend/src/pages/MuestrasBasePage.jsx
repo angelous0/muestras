@@ -299,9 +299,10 @@ export default function MuestrasBasePage() {
                     </Button>
                 </div>
                 <div className="overflow-x-auto">
-                    <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '1000px' }}>
+                    <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '1100px' }}>
                         <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                <ResizableTableHead columnKey="n_muestra" width={columnWidths.n_muestra} onResize={updateWidth}>N° Muestra</ResizableTableHead>
                                 <ResizableTableHead columnKey="marca" width={columnWidths.marca} onResize={updateWidth}>Marca</ResizableTableHead>
                                 <ResizableTableHead columnKey="tipo" width={columnWidths.tipo} onResize={updateWidth}>Tipo</ResizableTableHead>
                                 <ResizableTableHead columnKey="entalle" width={columnWidths.entalle} onResize={updateWidth}>Entalle</ResizableTableHead>
@@ -317,15 +318,18 @@ export default function MuestrasBasePage() {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={10} className="text-center py-8 text-slate-500">Cargando...</TableCell>
+                                    <TableCell colSpan={11} className="text-center py-8 text-slate-500">Cargando...</TableCell>
                                 </TableRow>
                             ) : data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={10} className="text-center py-8 text-slate-500">No hay muestras registradas</TableCell>
+                                    <TableCell colSpan={11} className="text-center py-8 text-slate-500">No hay muestras registradas</TableCell>
                                 </TableRow>
                             ) : (
                                 data.map((item) => (
                                     <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
+                                        <ResizableTableCell width={columnWidths.n_muestra}>
+                                            <span className="font-medium text-slate-700">{item.n_muestra || '-'}</span>
+                                        </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.marca}>{getCatalogName(item.marca_id, marcas)}</ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.tipo}>{getCatalogName(item.tipo_producto_id, tiposProducto)}</ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.entalle}>{getCatalogName(item.entalle_id, entalles)}</ResizableTableCell>
