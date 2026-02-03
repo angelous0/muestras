@@ -1493,9 +1493,13 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
         result = await session.execute(query)
         modelos = result.scalars().all()
         
-        # Get all bases to include their fichas and tizados
+        # Get all bases to include their fichas
         bases_result = await session.execute(select(BaseDB))
         bases_dict = {b.id: b for b in bases_result.scalars().all()}
+        
+        # Get all tizados to find which ones are related to each base
+        tizados_result = await session.execute(select(TizadoDB))
+        all_tizados = tizados_result.scalars().all()
         
         response = []
         for m in modelos:
@@ -1511,17 +1515,27 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                 "orden": m.orden,
                 "base_fichas_archivos": [],
                 "base_fichas_nombres": [],
-                "base_tizados_archivos": [],
-                "base_tizados_nombres": []
+                "base_tizados": []  # List of tizado objects related to base
             }
             
-            # Add base's fichas and tizados
+            # Add base's fichas and related tizados
             if m.base_id and m.base_id in bases_dict:
                 base = bases_dict[m.base_id]
                 modelo_dict["base_fichas_archivos"] = base.fichas_archivos or []
                 modelo_dict["base_fichas_nombres"] = base.fichas_nombres or []
-                modelo_dict["base_tizados_archivos"] = base.tizados_archivos or []
-                modelo_dict["base_tizados_nombres"] = base.tizados_nombres or []
+                
+                # Find tizados related to this base (M-M relation via bases_ids)
+                related_tizados = []
+                for t in all_tizados:
+                    if t.bases_ids and m.base_id in t.bases_ids:
+                        related_tizados.append({
+                            "id": t.id,
+                            "nombre": t.nombre,
+                            "ancho": t.ancho,
+                            "curva": t.curva,
+                            "archivo_tizado": t.archivo_tizado
+                        })
+                modelo_dict["base_tizados"] = related_tizados
             
             response.append(modelo_dict)
         
