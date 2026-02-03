@@ -194,6 +194,9 @@ export const uploadFichaChecklist = (id, file, nombre) => {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 };
+export const generateChecklistPdf = (baseId, items, title) => {
+    return api.post(`/bases/${baseId}/generate-checklist`, { items, title });
+};
 export const deleteFichaBase = (id, fileIndex) => api.delete(`/bases/${id}/fichas/${fileIndex}`);
 export const uploadTizadosBase = (id, files, nombres = []) => {
     const formData = new FormData();
