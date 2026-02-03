@@ -1499,6 +1499,110 @@ export default function BasesPage() {
             </Dialog>
 
             <DeleteConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDeleteConfirm} itemName={selectedItem?.nombre} loading={submitting} />
+
+            {/* Estados Costura Dialog */}
+            <Dialog open={estadosCosturaDialogOpen} onOpenChange={setEstadosCosturaDialogOpen}>
+                <DialogContent className="sm:max-w-lg bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-purple-700">
+                            <CheckSquare className="w-5 h-5" />
+                            Estados Costura - {currentBaseForFiles?.nombre}
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">Seleccionar estados de costura</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <p className="text-sm text-slate-500">Selecciona los estados de costura para esta base</p>
+                        <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg">
+                            {allEstadosCostura.length === 0 ? (
+                                <p className="text-center text-slate-400 py-4 text-sm">No hay estados de costura registrados</p>
+                            ) : (
+                                allEstadosCostura.map(estado => (
+                                    <label 
+                                        key={estado.id} 
+                                        className={`flex items-center gap-3 px-3 py-2 cursor-pointer border-b border-slate-100 last:border-0 ${selectedEstadosCostura.includes(estado.id) ? 'bg-purple-50' : 'hover:bg-slate-50'}`}
+                                    >
+                                        <Checkbox 
+                                            checked={selectedEstadosCostura.includes(estado.id)}
+                                            onCheckedChange={() => toggleEstadoCostura(estado.id)}
+                                        />
+                                        <span className="text-sm">{estado.nombre}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
+                        <div className="text-sm text-slate-500">
+                            {selectedEstadosCostura.length} estado(s) seleccionado(s)
+                        </div>
+                    </div>
+                    <div className="flex justify-between border-t border-slate-200 pt-4">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => generateChecklistPdf('estados')}
+                            disabled={generatingPdf || selectedEstadosCostura.length === 0}
+                            className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            {generatingPdf ? 'Generando...' : 'Generar PDF Checklist'}
+                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setEstadosCosturaDialogOpen(false)}>Cancelar</Button>
+                            <Button onClick={saveEstadosCostura} className="bg-purple-600 hover:bg-purple-700 text-white">Guardar</Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Avios Costura Dialog */}
+            <Dialog open={aviosCosturaDialogOpen} onOpenChange={setAviosCosturaDialogOpen}>
+                <DialogContent className="sm:max-w-lg bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-amber-700">
+                            <Sparkles className="w-5 h-5" />
+                            Avíos Costura - {currentBaseForFiles?.nombre}
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">Seleccionar avíos de costura</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <p className="text-sm text-slate-500">Selecciona los avíos de costura para esta base</p>
+                        <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg">
+                            {allAviosCostura.length === 0 ? (
+                                <p className="text-center text-slate-400 py-4 text-sm">No hay avíos de costura registrados</p>
+                            ) : (
+                                allAviosCostura.map(avio => (
+                                    <label 
+                                        key={avio.id} 
+                                        className={`flex items-center gap-3 px-3 py-2 cursor-pointer border-b border-slate-100 last:border-0 ${selectedAviosCostura.includes(avio.id) ? 'bg-amber-50' : 'hover:bg-slate-50'}`}
+                                    >
+                                        <Checkbox 
+                                            checked={selectedAviosCostura.includes(avio.id)}
+                                            onCheckedChange={() => toggleAvioCostura(avio.id)}
+                                        />
+                                        <span className="text-sm">{avio.nombre}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
+                        <div className="text-sm text-slate-500">
+                            {selectedAviosCostura.length} avío(s) seleccionado(s)
+                        </div>
+                    </div>
+                    <div className="flex justify-between border-t border-slate-200 pt-4">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => generateChecklistPdf('avios')}
+                            disabled={generatingPdf || selectedAviosCostura.length === 0}
+                            className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            {generatingPdf ? 'Generando...' : 'Generar PDF Checklist'}
+                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setAviosCosturaDialogOpen(false)}>Cancelar</Button>
+                            <Button onClick={saveAviosCostura} className="bg-amber-600 hover:bg-amber-700 text-white">Guardar</Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
