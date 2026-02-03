@@ -41,6 +41,7 @@ const navItemsCatalogo = [
 const navItemsMuestras = [
     { to: '/muestras-base', icon: FileBox, label: 'Muestras Base' },
     { to: '/bases', icon: ClipboardList, label: 'Bases' },
+    { to: '/modelos', icon: Layers, label: 'Modelos' },
     { to: '/fichas', icon: FileText, label: 'Fichas' },
     { to: '/tizados', icon: Scissors, label: 'Tizados' },
 ];
