@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { Search, Plus, Pencil, Trash2, Upload, Download, FileText, X, FolderOpen, Scissors } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Upload, Download, FileText, X, FolderOpen, Scissors, RotateCcw } from 'lucide-react';
+import { ResizableTableHead, ResizableTableCell, useResizableColumns } from '../components/ResizableTable';
 
 function ModelosPage() {
     const [data, setData] = useState([]);
