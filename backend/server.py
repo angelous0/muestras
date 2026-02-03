@@ -1122,6 +1122,14 @@ async def get_muestras_base(search: str = "", activo: Optional[bool] = None):
 @api_router.post("/muestras-base", response_model=MuestraBase)
 async def create_muestra_base(data: MuestraBaseCreate):
     async with async_session() as session:
+        # Validar unicidad de n_muestra
+        if data.n_muestra:
+            existing = await session.execute(
+                select(MuestraBaseDB).where(MuestraBaseDB.n_muestra == data.n_muestra)
+            )
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail=f"El N° Muestra '{data.n_muestra}' ya existe")
+        
         nombre = await generate_muestra_base_name(session, data.marca_id, data.tipo_producto_id, data.entalle_id, data.tela_id)
         rentabilidad = calculate_rentabilidad(data.costo_estimado, data.precio_estimado)
         result = await session.execute(select(func.coalesce(func.max(MuestraBaseDB.orden), 0)))
@@ -1139,6 +1147,18 @@ async def update_muestra_base(item_id: str, data: MuestraBaseCreate):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Validar unicidad de n_muestra (excluyendo el item actual)
+        if data.n_muestra:
+            existing = await session.execute(
+                select(MuestraBaseDB).where(
+                    MuestraBaseDB.n_muestra == data.n_muestra,
+                    MuestraBaseDB.id != item_id
+                )
+            )
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail=f"El N° Muestra '{data.n_muestra}' ya existe")
+        
         nombre = await generate_muestra_base_name(session, data.marca_id, data.tipo_producto_id, data.entalle_id, data.tela_id)
         rentabilidad = calculate_rentabilidad(data.costo_estimado, data.precio_estimado)
         for key, value in data.model_dump().items():
