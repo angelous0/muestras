@@ -119,6 +119,15 @@ export default function BasesPage() {
     // All tizados for selection
     const [allTizados, setAllTizados] = useState([]);
     
+    // Estados y Avios Costura
+    const [allEstadosCostura, setAllEstadosCostura] = useState([]);
+    const [allAviosCostura, setAllAviosCostura] = useState([]);
+    const [estadosCosturaDialogOpen, setEstadosCosturaDialogOpen] = useState(false);
+    const [aviosCosturaDialogOpen, setAviosCosturaDialogOpen] = useState(false);
+    const [selectedEstadosCostura, setSelectedEstadosCostura] = useState([]);
+    const [selectedAviosCostura, setSelectedAviosCostura] = useState([]);
+    const [generatingPdf, setGeneratingPdf] = useState(false);
+    
     // File upload dialogs
     const [fichasDialogOpen, setFichasDialogOpen] = useState(false);
     const [tizadosDialogOpen, setTizadosDialogOpen] = useState(false);
