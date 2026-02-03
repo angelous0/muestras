@@ -412,12 +412,17 @@ export default function BasesPage() {
     };
 
     // Filter available bases for new tizado (exclude current base)
-    const filteredBasesForNewTizado = data
-        .filter(b => b.id !== currentBaseForFiles?.id)
-        .filter(b => {
-            if (!newTizadoBasesSearch) return true;
-            return b.nombre.toLowerCase().includes(newTizadoBasesSearch.toLowerCase());
-        });
+    // Only show when searching and limit to 10 results
+    const filteredBasesForNewTizado = (() => {
+        if (!newTizadoBasesSearch || newTizadoBasesSearch.length < 1) return { results: [], total: 0 };
+        const filtered = data
+            .filter(b => b.id !== currentBaseForFiles?.id)
+            .filter(b => b.nombre.toLowerCase().includes(newTizadoBasesSearch.toLowerCase()));
+        return {
+            results: filtered.slice(0, 10),
+            total: filtered.length
+        };
+    })();
 
     // Get tizados associated with current base
     const getTizadosForCurrentBase = () => {
