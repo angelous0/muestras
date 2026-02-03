@@ -1323,8 +1323,6 @@ async def delete_base(item_id: str):
         # Delete all associated files from R2
         if item.patron_archivo:
             delete_r2_file(item.patron_archivo)
-        if item.imagen_archivo:
-            delete_r2_file(item.imagen_archivo)
         if item.fichas_archivos:
             delete_multiple_r2_files(item.fichas_archivos)
         if item.tizados_archivos:
@@ -1350,20 +1348,6 @@ async def upload_patron(base_id: str, file: UploadFile = File(...)):
         # Use original filename
         file_path = await save_upload_file(file, "patrones", None)
         item.patron_archivo = file_path
-        item.updated_at = datetime.now(timezone.utc)
-        await session.commit()
-        return {"file_path": file_path}
-
-@api_router.post("/bases/{base_id}/imagen")
-async def upload_imagen(base_id: str, file: UploadFile = File(...)):
-    async with async_session() as session:
-        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
-        item = result.scalar_one_or_none()
-        if not item:
-            raise HTTPException(status_code=404, detail="No encontrado")
-        # Use original filename
-        file_path = await save_upload_file(file, "imagenes", None)
-        item.imagen_archivo = file_path
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
         return {"file_path": file_path}
