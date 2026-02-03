@@ -547,69 +547,11 @@ export default function BasesPage() {
         
         setGeneratingPdf(true);
         try {
-            // Dynamic import to avoid webpack bundling conflicts with lucide-react
-            const { default: jsPDF } = await import('jspdf');
-            // A6 size: 105mm x 148mm
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [105, 148] });
-            
             const title = type === 'estados' ? 'ESTADOS COSTURA' : 'AVIOS COSTURA';
             const baseName = currentBaseForFiles.nombre || 'Base';
             
-            // Title
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, 52.5, 10, { align: 'center' });
-            
-            // Base name
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Base: ${baseName}`, 5, 18);
-            
-            // Table header
-            let y = 25;
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'bold');
-            doc.text('ITEM', 5, y);
-            doc.text('CHECK', 55, y);
-            doc.text('FECHA', 70, y);
-            doc.text('FIRMA', 90, y);
-            
-            // Draw header line
-            doc.line(5, y + 1, 100, y + 1);
-            
-            // Items
-            doc.setFont('helvetica', 'normal');
-            y += 6;
-            
-            items.forEach((item) => {
-                if (y > 135) {
-                    doc.addPage([105, 148]);
-                    y = 15;
-                }
-                
-                // Item name
-                doc.text(item.nombre.substring(0, 25), 5, y);
-                
-                // Checkbox (empty square)
-                doc.rect(57, y - 3, 4, 4);
-                
-                // Date line
-                doc.line(68, y, 85, y);
-                
-                // Signature line
-                doc.line(88, y, 100, y);
-                
-                y += 8;
-            });
-            
-            // Footer with receiver info
-            y = 138;
-            doc.setFontSize(7);
-            doc.text('Recibido por: _______________________', 5, y);
-            doc.text('Fecha: ___/___/____', 70, y);
-            
-            // Convert to blob and upload using the checklist endpoint
-            const pdfBlob = doc.output('blob');
+            // Use isolated PDF generator module to avoid webpack bundling conflicts
+            const pdfBlob = await generateChecklistDocument(items, title, baseName);
             const file = new File([pdfBlob], `${title}.pdf`, { type: 'application/pdf' });
             
             // Upload to fichas using the checklist endpoint (creates or updates)
