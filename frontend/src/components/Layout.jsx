@@ -147,10 +147,10 @@ export const Layout = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-white truncate">
-                                    {user.nombre}
+                                    {user.nombre_completo}
                                 </p>
                                 <p className="text-xs text-slate-400 truncate">
-                                    {user.email}
+                                    {user.rol === 'admin' ? 'Administrador' : 'Usuario'}
                                 </p>
                             </div>
                             <Button
