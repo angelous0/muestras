@@ -550,8 +550,48 @@ export default function BasesPage() {
             const title = type === 'estados' ? 'ESTADOS COSTURA' : 'AVIOS COSTURA';
             const baseName = currentBaseForFiles.nombre || 'Base';
             
-            // Use isolated PDF generator module to avoid webpack bundling conflicts
-            const pdfBlob = await generateChecklistDocument(items, title, baseName);
+            // Inline PDF generation to avoid any module conflict
+            const { jsPDF } = await import('jspdf');
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [105, 148] });
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, 52.5, 10, { align: 'center' });
+            
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Base: ${baseName}`, 5, 18);
+            
+            let y = 25;
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
+            doc.text('ITEM', 5, y);
+            doc.text('CHECK', 55, y);
+            doc.text('FECHA', 70, y);
+            doc.text('FIRMA', 90, y);
+            doc.line(5, y + 1, 100, y + 1);
+            
+            doc.setFont('helvetica', 'normal');
+            y += 6;
+            
+            items.forEach((item) => {
+                if (y > 135) {
+                    doc.addPage([105, 148]);
+                    y = 15;
+                }
+                doc.text(item.nombre.substring(0, 25), 5, y);
+                doc.rect(57, y - 3, 4, 4);
+                doc.line(68, y, 85, y);
+                doc.line(88, y, 100, y);
+                y += 8;
+            });
+            
+            y = 138;
+            doc.setFontSize(7);
+            doc.text('Recibido por: _______________________', 5, y);
+            doc.text('Fecha: ___/___/____', 70, y);
+            
+            const pdfBlob = doc.output('blob');
             const file = new File([pdfBlob], `${title}.pdf`, { type: 'application/pdf' });
             
             // Upload to fichas using the checklist endpoint (creates or updates)
