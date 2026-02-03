@@ -29,6 +29,20 @@ function ModelosPage() {
     const [uploadingFicha, setUploadingFicha] = useState(false);
     const fichaInputRef = useRef(null);
     
+    // Columnas redimensionables
+    const defaultColumnWidths = {
+        modelo: 150,
+        clasificacion: 200,
+        hilo: 100,
+        patron: 80,
+        fichasGenerales: 120,
+        fichasModelo: 120,
+        tizados: 100,
+        estado: 100,
+        acciones: 100
+    };
+    const { columnWidths, updateWidth, resetWidths } = useResizableColumns('modelos', defaultColumnWidths);
+    
     // Dialogs for viewing base's files
     const [baseFichasDialog, setBaseFichasDialog] = useState(false);
     const [baseTizadosDialog, setBaseTizadosDialog] = useState(false);
