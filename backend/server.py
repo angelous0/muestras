@@ -1732,11 +1732,11 @@ async def save_file_from_bytes(content: bytes, folder: str, filename: str) -> st
     new_filename = f"{Path(safe_filename).stem}_{unique_suffix}{Path(safe_filename).suffix}"
     
     # Try R2 first
-    if R2_ENABLED:
+    if r2_client:
         try:
             key = f"{folder}/{new_filename}"
-            s3_client.put_object(
-                Bucket=R2_BUCKET,
+            r2_client.put_object(
+                Bucket=R2_BUCKET_NAME,
                 Key=key,
                 Body=content,
                 ContentType='application/pdf'
