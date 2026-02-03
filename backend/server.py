@@ -180,13 +180,28 @@ class BaseDB(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     nombre: Mapped[str] = mapped_column(String(500), nullable=False)
     muestra_base_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
-    hilo_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     patron_archivo: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     imagen_archivo: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     fichas_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     fichas_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     tizados_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     tizados_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    aprobado: Mapped[bool] = mapped_column(Boolean, default=False)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class ModeloDB(Base):
+    __tablename__ = "modelos"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nombre: Mapped[str] = mapped_column(String(500), nullable=False)
+    base_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    hilo_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    fichas_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    fichas_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     aprobado: Mapped[bool] = mapped_column(Boolean, default=False)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     orden: Mapped[int] = mapped_column(Integer, default=0)
