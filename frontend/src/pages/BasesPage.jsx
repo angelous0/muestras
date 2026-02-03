@@ -6,8 +6,10 @@ import {
     uploadPatron, uploadFichasBase, uploadTizadosBase,
     deleteFichaBase, deleteTizadoBase, getFileUrl,
     getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
-    getTizados, updateTizado, createTizado, uploadArchivoTizado
+    getTizados, updateTizado, createTizado, uploadArchivoTizado,
+    getEstadosCostura, getAviosCostura
 } from '../lib/api';
+import { jsPDF } from 'jspdf';
 import {
     Table,
     TableBody,
