@@ -184,6 +184,42 @@ export default function BasesPage() {
         return parts.length > 0 ? parts.join(' - ') : muestra.nombre;
     };
 
+    // Helper to search base by nombre and muestra base components (marca, tipo, entalle, tela)
+    const searchBase = (base, searchTerm) => {
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Search by base nombre
+        if (base.nombre && base.nombre.toLowerCase().includes(searchLower)) {
+            return true;
+        }
+        
+        // Search by muestra base components
+        const muestra = muestrasBase.find(m => m.id === base.muestra_base_id);
+        if (muestra) {
+            // Search by marca
+            const marca = marcas.find(m => m.id === muestra.marca_id);
+            if (marca?.nombre?.toLowerCase().includes(searchLower)) return true;
+            
+            // Search by tipo producto
+            const tipo = tiposProducto.find(t => t.id === muestra.tipo_producto_id);
+            if (tipo?.nombre?.toLowerCase().includes(searchLower)) return true;
+            
+            // Search by entalle
+            const entalle = entalles.find(e => e.id === muestra.entalle_id);
+            if (entalle?.nombre?.toLowerCase().includes(searchLower)) return true;
+            
+            // Search by tela
+            const tela = telas.find(t => t.id === muestra.tela_id);
+            if (tela?.nombre?.toLowerCase().includes(searchLower)) return true;
+            
+            // Search by muestra nombre
+            if (muestra.nombre?.toLowerCase().includes(searchLower)) return true;
+        }
+        
+        return false;
+    };
+
     const getHiloName = (hiloId) => hilos.find(h => h.id === hiloId)?.nombre || '-';
 
     const handleAdd = () => {
