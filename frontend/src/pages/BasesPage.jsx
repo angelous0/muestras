@@ -744,17 +744,6 @@ export default function BasesPage() {
                                 placeholder="Nombre de la base (opcional)"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label>Hilo</Label>
-                            <Select value={formData.hilo_id || ''} onValueChange={(v) => handleChange('hilo_id', v)}>
-                                <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar hilo" /></SelectTrigger>
-                                <SelectContent>
-                                    {[].map(h => (
-                                        <SelectItem key={h.id} value={h.id}>{h.nombre}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
                         <div className="flex items-center gap-6 pt-2">
                             <div className="flex items-center gap-3">
                                 <Switch checked={formData.aprobado || false} onCheckedChange={(checked) => handleChange('aprobado', checked)} />
