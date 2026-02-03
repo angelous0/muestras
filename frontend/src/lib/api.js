@@ -10,6 +10,46 @@ const api = axios.create({
     },
 });
 
+// Add auth token interceptor
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+// Handle 401 errors
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
+// Auth
+export const login = async (username, password) => {
+    const response = await api.post('/auth/login', { username, password });
+    return response.data;
+};
+
+export const getMe = async (token) => {
+    const response = await axios.get(`${API_BASE}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+};
+
+// Usuarios
+export const getUsuarios = () => api.get('/usuarios');
+export const createUsuario = (data) => api.post('/usuarios', data);
+export const updateUsuario = (id, data) => api.put(`/usuarios/${id}`, data);
+export const deleteUsuario = (id) => api.delete(`/usuarios/${id}`);
+
 // Dashboard
 export const getDashboardStats = () => api.get('/dashboard/stats');
 
