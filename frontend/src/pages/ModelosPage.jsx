@@ -32,6 +32,34 @@ function ModelosPage() {
     const [baseFichasDialog, setBaseFichasDialog] = useState(false);
     const [baseTizadosDialog, setBaseTizadosDialog] = useState(false);
     const [viewingModelo, setViewingModelo] = useState(null);
+    const [tizadoSearch, setTizadoSearch] = useState('');
+
+    // Filter tizados by search
+    const filteredTizados = (viewingModelo?.base_tizados || []).filter(t => {
+        if (!tizadoSearch) return true;
+        const searchLower = tizadoSearch.toLowerCase();
+        const anchoStr = t.ancho ? t.ancho.toString() : '';
+        const curvaStr = t.curva || '';
+        // Get bases names for this tizado
+        const basesNames = (t.bases_ids || []).map(bid => {
+            const base = bases.find(b => b.id === bid);
+            return base ? base.nombre.toLowerCase() : '';
+        }).join(' ');
+        return anchoStr.includes(searchLower) || 
+               curvaStr.toLowerCase().includes(searchLower) ||
+               basesNames.includes(searchLower);
+    });
+
+    // Get other bases names for a tizado (excluding current base)
+    const getOtherBasesForTizado = (tizado) => {
+        if (!tizado.bases_ids) return [];
+        return tizado.bases_ids
+            .filter(bid => bid !== viewingModelo?.base_id)
+            .map(bid => {
+                const base = bases.find(b => b.id === bid);
+                return base ? base.nombre : bid.slice(-4);
+            });
+    };
 
     const fetchData = async () => {
         setLoading(true);
