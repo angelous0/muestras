@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 import { 
     getBases, createBase, updateBase, deleteBase, 
-    uploadPatron, uploadImagen, uploadFichasBase, uploadTizadosBase,
+    uploadPatron, uploadFichasBase, uploadTizadosBase,
     deleteFichaBase, deleteTizadoBase, getFileUrl,
     getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
     getTizados, updateTizado, createTizado, uploadArchivoTizado
