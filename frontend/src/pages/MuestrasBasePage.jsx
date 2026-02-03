@@ -438,6 +438,18 @@ export default function MuestrasBasePage() {
                     </DialogHeader>
 
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
+                        {/* N° Muestra - Campo único */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-slate-700">N° Muestra <span className="text-slate-400 text-xs">(único)</span></Label>
+                            <Input 
+                                value={formData.n_muestra || ''}
+                                onChange={(e) => handleChange('n_muestra', e.target.value)}
+                                placeholder="Ej: M001, 2024-001"
+                                className="bg-white"
+                                data-testid="muestra-form-n-muestra"
+                            />
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-sm font-medium text-slate-700">Marca <span className="text-red-500">*</span></Label>
