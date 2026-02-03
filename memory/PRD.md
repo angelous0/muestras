@@ -1,4 +1,4 @@
-# PRD - Módulo Muestras Textil v2.5
+# PRD - Módulo Muestras v3.0
 
 ## Problema Original
 Crear un módulo de muestras textil con diseño minimalista y corporativo para gestionar catálogos base, muestras y bases con sus archivos asociados.
@@ -8,17 +8,36 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 - **Frontend**: React + Tailwind CSS + Shadcn/UI
 - **Base de datos**: PostgreSQL con schema `muestra`
 - **Almacenamiento**: Cloudflare R2 (S3-compatible)
+- **Autenticación**: JWT con bcrypt para hash de contraseñas
 
 ## Integración Cloudflare R2
 - **Bucket**: muestras
 - **Características**:
   - Subida automática de archivos a R2
   - URLs presigned para descarga segura
-  - Soporte para todos los tipos de archivo (fichas, tizados, patrones, imágenes, costos)
+  - Eliminación en cascada de archivos al eliminar registros
+  - Nombres de archivo personalizables o usando nombre original
+
+## Sistema de Autenticación (v3.0)
+- **Login**: Usuario y contraseña con JWT
+- **Usuarios**: username, password_hash, nombre_completo, rol, activo
+- **Roles**: 
+  - `admin`: Acceso completo + gestión de usuarios
+  - `usuario`: Acceso a todas las funcionalidades excepto gestión de usuarios
+- **Usuario por defecto**: admin / admin123
 
 ## Tablas Implementadas
 
-### Catálogo Base (5 tablas con drag-and-drop para reordenar)
+### Usuarios
+| Campo | Tipo |
+|-------|------|
+| username | String (único) |
+| password_hash | String |
+| nombre_completo | String |
+| rol | String (admin/usuario) |
+| activo | Boolean |
+
+### Catálogo Base (5 tablas con drag-and-drop)
 | Tabla | Campos |
 |-------|--------|
 | Marcas | nombre, descripcion, activo, orden |
@@ -36,45 +55,56 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 | Tizados | nombre, ancho, curva, archivo_tizado, bases_ids[] (relación M-M) |
 
 ## Funcionalidades Implementadas
+- ✅ **Autenticación con JWT** (v3.0)
+- ✅ **Gestión de usuarios** (v3.0) - Solo admin
+- ✅ **Rutas protegidas** (v3.0)
 - ✅ Dashboard con estadísticas
 - ✅ CRUD completo para todas las tablas
 - ✅ Búsqueda por nombre
 - ✅ Filtro por estado activo/inactivo
 - ✅ Relaciones entre tablas (selects dinámicos)
 - ✅ Upload de archivos a Cloudflare R2
+- ✅ Eliminación en cascada de archivos R2
+- ✅ Nombres de archivo personalizables
 - ✅ Cálculo automático de rentabilidad
-- ✅ Drag-and-drop para reordenar catálogos base
-- ✅ Popup rediseñado para Fichas con tabla, búsqueda y creación
+- ✅ Drag-and-drop para reordenar catálogos
+- ✅ Popup de Tizados con búsqueda avanzada
+- ✅ Buscador de bases por nombre, marca, tipo, entalle, tela
 - ✅ Columnas redimensionables en Muestras Base y Bases
-- ✅ Migración completa a PostgreSQL
-- ✅ Relación muchos-a-muchos entre Bases y Tizados
-- ✅ **Popup de Tizados rediseñado** (v2.5)
+- ✅ Relación M-M entre Bases y Tizados
 
-## Completado en esta sesión (v2.5) - 2025-02-02
-- ✅ Eliminadas columnas "#" y "Nombre" del popup de Tizados
-- ✅ Popup ahora muestra: Ancho, Curva, Otras Bases, Acciones
-- ✅ Buscador filtra por ancho, curva y otras bases
-- ✅ Clic en "Otras Bases" abre diálogo para agregar/eliminar bases vinculadas
-- ✅ Nuevo diálogo "Editar Bases del Tizado" con checkboxes
-- ✅ Verificado que página /tizados carga correctamente
+## Completado en esta sesión (v3.0) - 2025-02-03
+- ✅ Nombre de aplicación cambiado de "Textil Sample" a "Muestras"
+- ✅ Sistema de login con usuario y contraseña
+- ✅ Gestión de usuarios (CRUD) - Solo administradores
+- ✅ Roles: admin y usuario
+- ✅ Rutas protegidas con redirección al login
+- ✅ Usuario admin creado automáticamente (admin/admin123)
+- ✅ Información del usuario en sidebar con botón de logout
+- ✅ Sección "Administración" visible solo para admins
+- ✅ Eliminado badge "Made with Emergent"
+- ✅ Eliminación en cascada de archivos en Cloudflare R2
+- ✅ Archivos se guardan con nombre personalizado o nombre original
+- ✅ Buscador de bases mejorado (busca por marca, tipo, entalle, tela)
 
 ## Backlog Pendiente
 
 ### P1 - Alta Prioridad
 - [ ] Campo "Clasificación" en Telas con historial/autocompletado
-- [ ] Columnas redimensionables en tablas restantes (Marcas, Tipo Producto, Entalles, Telas, Hilos)
+- [ ] Columnas redimensionables en tablas restantes
 
 ### P2 - Media Prioridad
-- [ ] Unificar diseño de toda la aplicación según página de Telas
+- [ ] Unificar diseño de la aplicación según página de Telas
 - [ ] Exportación a Excel
 - [ ] Importación masiva desde Excel
 
 ### P3 - Baja Prioridad
-- [ ] Autenticación de usuarios
-- [ ] Roles y permisos
 - [ ] Preview de imágenes en Bases
+- [ ] Recuperación de contraseña
 
-## Variables de Entorno (backend/.env)
+## Variables de Entorno
+
+### backend/.env
 ```
 DATABASE_URL="postgresql://..."
 DB_SCHEMA="muestra"
@@ -82,7 +112,13 @@ R2_ACCOUNT_ID="..."
 R2_ACCESS_KEY_ID="..."
 R2_SECRET_ACCESS_KEY="..."
 R2_BUCKET_NAME="muestras"
+JWT_SECRET_KEY="..." (opcional, tiene default)
 ```
+
+## Credenciales por Defecto
+- **Usuario**: admin
+- **Contraseña**: admin123
+- **Rol**: Administrador
 
 ## Historial de Versiones
 - v1.0: Tablas base iniciales
@@ -90,5 +126,6 @@ R2_BUCKET_NAME="muestras"
 - v2.1: Rediseño popup Fichas
 - v2.2: Columnas redimensionables
 - v2.3: Integración Cloudflare R2
-- v2.4: Migración a PostgreSQL + Relación M-M Bases-Tizados
-- v2.5: Rediseño popup Tizados con columnas Ancho/Curva/Otras Bases
+- v2.4: Migración a PostgreSQL + Relación M-M
+- v2.5: Rediseño popup Tizados
+- **v3.0**: Sistema de autenticación completo con JWT + Gestión de usuarios
