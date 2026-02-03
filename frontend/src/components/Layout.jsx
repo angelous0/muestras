@@ -44,6 +44,7 @@ const navItemsMuestras = [
 
 export const Layout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { user, logout } = useAuth();
 
     const renderNavItems = (items) => items.map((item) => (
         <NavLink
