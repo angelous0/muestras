@@ -98,7 +98,7 @@ export const Layout = () => {
                             <Layers className="w-5 h-5 text-white" />
                         </div>
                         <span className="font-semibold text-white text-lg tracking-tight" style={{ fontFamily: 'Manrope' }}>
-                            Textil Sample
+                            Muestras
                         </span>
                     </div>
                 </div>
