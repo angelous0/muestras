@@ -351,6 +351,30 @@ class Hilo(BaseModel):
     activo: bool = True
     orden: int = 0
 
+class EstadoCosturaCreate(BaseModel):
+    nombre: str
+    activo: bool = True
+
+class EstadoCostura(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
+    activo: bool = True
+    orden: int = 0
+
+class AvioCosturaCreate(BaseModel):
+    nombre: str
+    activo: bool = True
+
+class AvioCostura(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    nombre: str
+    activo: bool = True
+    orden: int = 0
+    activo: bool = True
+    orden: int = 0
+
 class MuestraBaseCreate(BaseModel):
     n_muestra: Optional[str] = None
     marca_id: Optional[str] = None
