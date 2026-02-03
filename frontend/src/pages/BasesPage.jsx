@@ -89,10 +89,11 @@ export default function BasesPage() {
     
     // New Tizado form states
     const [showNewTizadoForm, setShowNewTizadoForm] = useState(false);
-    const [newTizadoName, setNewTizadoName] = useState('');
     const [newTizadoFile, setNewTizadoFile] = useState(null);
     const [newTizadoAncho, setNewTizadoAncho] = useState('');
     const [newTizadoCurva, setNewTizadoCurva] = useState('');
+    const [newTizadoOtrasBases, setNewTizadoOtrasBases] = useState([]);
+    const [newTizadoBasesSearch, setNewTizadoBasesSearch] = useState('');
     const [creatingTizado, setCreatingTizado] = useState(false);
     const [tizadoSearch, setTizadoSearch] = useState('');
     
