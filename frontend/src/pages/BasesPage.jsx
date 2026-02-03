@@ -683,7 +683,7 @@ export default function BasesPage() {
                                                 </Button>
                                             )}
                                         </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.fichas}>
+                                        <ResizableTableCell width={columnWidths.fichas_generales}>
                                             <Button variant="outline" size="sm" onClick={() => openFichasDialog(item)} className="h-7 text-xs">
                                                 <FolderOpen className="w-3 h-3 mr-1" />
                                                 {(item.fichas_archivos?.length || 0)} archivo(s)
