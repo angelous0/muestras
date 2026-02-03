@@ -977,7 +977,7 @@ export default function BasesPage() {
 
             {/* Tizados Dialog - Rediseñado con tabla */}
             <Dialog open={tizadosDialogOpen} onOpenChange={setTizadosDialogOpen}>
-                <DialogContent className="sm:max-w-3xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogContent className="sm:max-w-4xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader className="border-b border-slate-200 pb-4">
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
                             Tizados de Base #{currentBaseForFiles?.id?.slice(-4) || ''}
@@ -987,6 +987,87 @@ export default function BasesPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                        {/* Botón para nuevo tizado */}
+                        {!showNewTizadoForm && (
+                            <Button 
+                                onClick={() => setShowNewTizadoForm(true)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                size="sm"
+                            >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Nuevo Tizado
+                            </Button>
+                        )}
+
+                        {/* Formulario de nuevo tizado */}
+                        {showNewTizadoForm && (
+                            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                                <h4 className="font-medium text-slate-700">Crear Nuevo Tizado</h4>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div>
+                                        <Label className="text-xs text-slate-500">Ancho (cm) *</Label>
+                                        <Input 
+                                            type="number"
+                                            placeholder="160"
+                                            value={newTizadoAncho}
+                                            onChange={(e) => setNewTizadoAncho(e.target.value)}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-slate-500">Curva *</Label>
+                                        <Input 
+                                            placeholder="2-3-3-2"
+                                            value={newTizadoCurva}
+                                            onChange={(e) => setNewTizadoCurva(e.target.value)}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-slate-500">Nombre (opcional)</Label>
+                                        <Input 
+                                            placeholder="Auto-generado"
+                                            value={newTizadoName}
+                                            onChange={(e) => setNewTizadoName(e.target.value)}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-slate-500">Archivo (opcional)</Label>
+                                        <Input 
+                                            ref={newTizadoFileRef}
+                                            type="file"
+                                            onChange={(e) => setNewTizadoFile(e.target.files?.[0])}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 justify-end">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => {
+                                            setShowNewTizadoForm(false);
+                                            setNewTizadoAncho('');
+                                            setNewTizadoCurva('');
+                                            setNewTizadoName('');
+                                            setNewTizadoFile(null);
+                                        }}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button 
+                                        size="sm"
+                                        onClick={handleCreateNewTizado}
+                                        disabled={creatingTizado || !newTizadoAncho || !newTizadoCurva}
+                                        className="bg-emerald-600 hover:bg-emerald-700"
+                                    >
+                                        {creatingTizado ? 'Creando...' : 'Crear y Vincular'}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Campo de búsqueda */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -1003,16 +1084,17 @@ export default function BasesPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Ancho</TableHead>
-                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-32">Curva</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Ancho</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Curva</TableHead>
                                         <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Otras Bases</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Archivo</TableHead>
                                         <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredTizadosInDialog.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
                                                 No hay tizados disponibles
                                             </TableCell>
                                         </TableRow>
@@ -1052,6 +1134,21 @@ export default function BasesPage() {
                                                                 </span>
                                                             )}
                                                         </button>
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3">
+                                                        {tizado.archivo_tizado ? (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                onClick={() => window.open(getFileUrl(tizado.archivo_tizado), '_blank')}
+                                                                className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                            >
+                                                                <Download className="w-3 h-3 mr-1" />
+                                                                Ver
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-slate-400 text-xs">-</span>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="py-2 px-3">
                                                         {isLinked ? (
