@@ -1474,6 +1474,144 @@ async def delete_tizado(base_id: str, file_index: int):
         await session.commit()
         return {"message": "Eliminado"}
 
+# ============ MODELOS ROUTES ============
+
+@api_router.get("/modelos")
+async def get_modelos(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(ModeloDB)
+        if search:
+            query = query.where(ModeloDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(ModeloDB.activo == activo)
+        query = query.order_by(ModeloDB.orden)
+        result = await session.execute(query)
+        return [Modelo.model_validate(m) for m in result.scalars().all()]
+
+@api_router.post("/modelos", response_model=Modelo)
+async def create_modelo(data: ModeloCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(ModeloDB.orden), 0)))
+        max_orden = result.scalar()
+        
+        # Generate automatic name based on base
+        nombre = data.nombre
+        if not nombre and data.base_id:
+            base_result = await session.execute(select(BaseDB).where(BaseDB.id == data.base_id))
+            base = base_result.scalar_one_or_none()
+            if base:
+                nombre = f"Modelo - {base.nombre}"
+        nombre = nombre or "Nuevo Modelo"
+        
+        item = ModeloDB(**data.model_dump(), nombre=nombre, orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return Modelo.model_validate(item)
+
+@api_router.put("/modelos/{item_id}", response_model=Modelo)
+async def update_modelo(item_id: str, data: ModeloCreate):
+    async with async_session() as session:
+        result = await session.execute(select(ModeloDB).where(ModeloDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Generate automatic name based on base
+        nombre = data.nombre
+        if not nombre and data.base_id:
+            base_result = await session.execute(select(BaseDB).where(BaseDB.id == data.base_id))
+            base = base_result.scalar_one_or_none()
+            if base:
+                nombre = f"Modelo - {base.nombre}"
+        nombre = nombre or item.nombre
+        
+        for key, value in data.model_dump().items():
+            setattr(item, key, value)
+        item.nombre = nombre
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return Modelo.model_validate(item)
+
+@api_router.delete("/modelos/{item_id}")
+async def delete_modelo(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(ModeloDB).where(ModeloDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Delete associated files from R2
+        if item.fichas_archivos:
+            delete_multiple_r2_files(item.fichas_archivos)
+        
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
+
+@api_router.get("/modelos/count")
+async def count_modelos():
+    async with async_session() as session:
+        result = await session.execute(select(func.count(ModeloDB.id)))
+        return {"total": result.scalar()}
+
+@api_router.post("/modelos/{modelo_id}/fichas")
+async def upload_fichas_modelo(modelo_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
+    async with async_session() as session:
+        result = await session.execute(select(ModeloDB).where(ModeloDB.id == modelo_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        if not files:
+            raise HTTPException(status_code=400, detail="Se requiere al menos un archivo")
+        
+        file_paths = []
+        new_nombres = []
+        for i, file in enumerate(files):
+            custom_name = nombres[i] if i < len(nombres) and nombres[i] else None
+            file_path = await save_upload_file(file, "fichas_modelos", custom_name)
+            file_paths.append(file_path)
+            
+            if custom_name:
+                new_nombres.append(custom_name)
+            else:
+                new_nombres.append(file.filename or file_path.split('/')[-1])
+        
+        item.fichas_archivos = (item.fichas_archivos or []) + file_paths
+        item.fichas_nombres = (item.fichas_nombres or []) + new_nombres
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_paths": file_paths, "nombres": new_nombres}
+
+@api_router.delete("/modelos/{modelo_id}/fichas/{file_index}")
+async def delete_ficha_modelo(modelo_id: str, file_index: int):
+    async with async_session() as session:
+        result = await session.execute(select(ModeloDB).where(ModeloDB.id == modelo_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        
+        fichas = list(item.fichas_archivos or [])
+        nombres = list(item.fichas_nombres or [])
+        
+        if file_index < 0 or file_index >= len(fichas):
+            raise HTTPException(status_code=400, detail="Índice inválido")
+        
+        # Delete file from R2
+        file_to_delete = fichas[file_index]
+        delete_r2_file(file_to_delete)
+        
+        fichas.pop(file_index)
+        if file_index < len(nombres):
+            nombres.pop(file_index)
+        
+        item.fichas_archivos = fichas
+        item.fichas_nombres = nombres
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"message": "Eliminado"}
+
 # ============ FICHAS ROUTES ============
 
 @api_router.get("/fichas")
