@@ -550,7 +550,7 @@ export default function BasesPage() {
             // A6 size: 105mm x 148mm
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [105, 148] });
             
-            const title = type === 'estados' ? 'ESTADOS COSTURA' : 'AVÍOS COSTURA';
+            const title = type === 'estados' ? 'ESTADOS COSTURA' : 'AVIOS COSTURA';
             const baseName = currentBaseForFiles.nombre || 'Base';
             
             // Title
@@ -579,7 +579,7 @@ export default function BasesPage() {
             doc.setFont('helvetica', 'normal');
             y += 6;
             
-            items.forEach((item, index) => {
+            items.forEach((item) => {
                 if (y > 135) {
                     doc.addPage([105, 148]);
                     y = 15;
@@ -606,19 +606,18 @@ export default function BasesPage() {
             doc.text('Recibido por: _______________________', 5, y);
             doc.text('Fecha: ___/___/____', 70, y);
             
-            // Convert to blob and upload
+            // Convert to blob and upload using the checklist endpoint
             const pdfBlob = doc.output('blob');
-            const fileName = `${title.toLowerCase().replace(' ', '_')}_${Date.now()}.pdf`;
-            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            const file = new File([pdfBlob], `${title}.pdf`, { type: 'application/pdf' });
             
-            // Upload to fichas
-            const formData = new FormData();
-            formData.append('files', file);
-            formData.append('custom_name', title);
+            // Upload to fichas using the checklist endpoint (creates or updates)
+            const response = await uploadFichaChecklist(currentBaseForFiles.id, file, title);
             
-            await uploadFichasBase(currentBaseForFiles.id, [file], title);
-            
-            toast.success(`PDF "${title}" creado y guardado en Fichas Generales`);
+            if (response.data.updated) {
+                toast.success(`PDF "${title}" actualizado en Fichas Generales`);
+            } else {
+                toast.success(`PDF "${title}" creado en Fichas Generales`);
+            }
             fetchData();
             
             if (type === 'estados') {
