@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { getModelos, createModelo, updateModelo, deleteModelo, getBases, getHilos, uploadFichaModelo, deleteFichaModelo, getFileUrl } from '../lib/api';
+import { 
+    getModelos, createModelo, updateModelo, deleteModelo, 
+    getBases, getHilos, uploadFichaModelo, deleteFichaModelo, getFileUrl 
+} from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -10,13 +13,7 @@ import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
 import { Search, Plus, Pencil, Trash2, Upload, Download, FileText, X, Check, Clock } from 'lucide-react';
 
-const ApprovalBadge = ({ aprobado }) => (
-    <Badge className={aprobado ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-100 text-amber-700 hover:bg-amber-100'}>
-        {aprobado ? <><Check className="w-3 h-3 mr-1" />Aprobado</> : <><Clock className="w-3 h-3 mr-1" />Pendiente</>}
-    </Badge>
-);
-
-export default function ModelosPage() {
+function ModelosPage() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -26,11 +23,9 @@ export default function ModelosPage() {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({});
     
-    // Catalogs
     const [bases, setBases] = useState([]);
     const [hilos, setHilos] = useState([]);
     
-    // For Fichas
     const [fichasDialogOpen, setFichasDialogOpen] = useState(false);
     const [currentModeloForFiles, setCurrentModeloForFiles] = useState(null);
     const [fichaFile, setFichaFile] = useState(null);
@@ -70,20 +65,19 @@ export default function ModelosPage() {
 
     useEffect(() => {
         const debounce = setTimeout(() => {
-            fetchData();
+            if (search !== '') fetchData();
         }, 300);
         return () => clearTimeout(debounce);
     }, [search]);
 
-    // Helper to get base name
     const getBaseName = (baseId) => {
         const base = bases.find(b => b.id === baseId);
-        return base?.nombre || '-';
+        return base ? base.nombre : '-';
     };
 
-    // Helper to get hilo name
     const getHiloName = (hiloId) => {
-        return hilos.find(h => h.id === hiloId)?.nombre || '-';
+        const hilo = hilos.find(h => h.id === hiloId);
+        return hilo ? hilo.nombre : '-';
     };
 
     const handleAdd = () => {
@@ -109,7 +103,11 @@ export default function ModelosPage() {
     };
 
     const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => {
+            const newData = { ...prev };
+            newData[field] = value;
+            return newData;
+        });
     };
 
     const handleFormSubmit = async (e) => {
@@ -148,7 +146,6 @@ export default function ModelosPage() {
         }
     };
 
-    // Fichas handlers
     const openFichasDialog = (modelo) => {
         setCurrentModeloForFiles(modelo);
         setFichasDialogOpen(true);
@@ -161,13 +158,13 @@ export default function ModelosPage() {
         
         setUploadingFicha(true);
         try {
-            await uploadFichaModelo(currentModeloForFiles.id, [fichaFile], fichaName ? [fichaName] : []);
+            const nombres = fichaName ? [fichaName] : [];
+            await uploadFichaModelo(currentModeloForFiles.id, [fichaFile], nombres);
             toast.success('Ficha subida');
             setFichaFile(null);
             setFichaName('');
             if (fichaInputRef.current) fichaInputRef.current.value = '';
             
-            // Refresh data
             fetchData();
             const updatedModelos = await getModelos({});
             const refreshed = updatedModelos.data.find(m => m.id === currentModeloForFiles.id);
@@ -185,7 +182,6 @@ export default function ModelosPage() {
             await deleteFichaModelo(currentModeloForFiles.id, index);
             toast.success('Ficha eliminada');
             
-            // Refresh data
             fetchData();
             const updatedModelos = await getModelos({});
             const refreshed = updatedModelos.data.find(m => m.id === currentModeloForFiles.id);
@@ -195,9 +191,14 @@ export default function ModelosPage() {
         }
     };
 
+    const ApprovalBadge = ({ aprobado }) => (
+        <Badge className={aprobado ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+            {aprobado ? 'Aprobado' : 'Pendiente'}
+        </Badge>
+    );
+
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'Manrope' }}>
@@ -210,14 +211,12 @@ export default function ModelosPage() {
                 <Button 
                     onClick={handleAdd}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    data-testid="modelos-add-btn"
                 >
                     <Plus className="w-4 h-4 mr-2" />
                     Nuevo Modelo
                 </Button>
             </div>
 
-            {/* Search */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -230,7 +229,6 @@ export default function ModelosPage() {
                 </div>
             </div>
 
-            {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <Table>
                     <TableHeader>
@@ -255,15 +253,9 @@ export default function ModelosPage() {
                         ) : (
                             data.map((item) => (
                                 <TableRow key={item.id} className="hover:bg-slate-50 border-b border-slate-100">
-                                    <TableCell className="font-medium text-slate-800">
-                                        {item.nombre || '-'}
-                                    </TableCell>
-                                    <TableCell className="text-slate-600">
-                                        {getBaseName(item.base_id)}
-                                    </TableCell>
-                                    <TableCell className="text-slate-600">
-                                        {getHiloName(item.hilo_id)}
-                                    </TableCell>
+                                    <TableCell className="font-medium text-slate-800">{item.nombre || '-'}</TableCell>
+                                    <TableCell className="text-slate-600">{getBaseName(item.base_id)}</TableCell>
+                                    <TableCell className="text-slate-600">{getHiloName(item.hilo_id)}</TableCell>
                                     <TableCell>
                                         <Button
                                             variant="ghost"
@@ -305,20 +297,17 @@ export default function ModelosPage() {
                 </Table>
             </div>
 
-            {/* Form Dialog */}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
                 <DialogContent className="sm:max-w-lg bg-white">
                     <DialogHeader>
-                        <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
+                        <DialogTitle className="text-lg font-semibold text-slate-800">
                             {selectedItem ? 'Editar Modelo' : 'Nuevo Modelo'}
                         </DialogTitle>
-                        <DialogDescription className="sr-only">
-                            Formulario de modelo
-                        </DialogDescription>
+                        <DialogDescription className="sr-only">Formulario de modelo</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Nombre <span className="text-slate-400 text-xs">(opcional)</span></Label>
+                            <Label>Nombre (opcional)</Label>
                             <Input
                                 value={formData.nombre || ''}
                                 onChange={(e) => handleChange('nombre', e.target.value)}
@@ -328,7 +317,7 @@ export default function ModelosPage() {
                         </div>
                         
                         <div className="space-y-2">
-                            <Label>Base <span className="text-red-500">*</span> <span className="text-slate-400 text-xs">(solo aprobadas)</span></Label>
+                            <Label>Base * (solo aprobadas)</Label>
                             <Select value={formData.base_id || ''} onValueChange={(v) => handleChange('base_id', v)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seleccionar base" />
@@ -367,9 +356,7 @@ export default function ModelosPage() {
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4">
-                            <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>
-                                Cancelar
-                            </Button>
+                            <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
                             <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={submitting}>
                                 {selectedItem ? 'Guardar' : 'Crear'}
                             </Button>
@@ -378,14 +365,11 @@ export default function ModelosPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Dialog */}
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
                 <DialogContent className="sm:max-w-md bg-white">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold text-slate-800">Confirmar Eliminación</DialogTitle>
-                        <DialogDescription className="sr-only">
-                            Confirmación de eliminación
-                        </DialogDescription>
+                        <DialogDescription className="sr-only">Confirmación de eliminación</DialogDescription>
                     </DialogHeader>
                     <p className="py-4 text-slate-600">
                         ¿Estás seguro de eliminar "{selectedItem?.nombre}"? Esta acción no se puede deshacer.
@@ -397,11 +381,10 @@ export default function ModelosPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Fichas Dialog */}
             <Dialog open={fichasDialogOpen} onOpenChange={setFichasDialogOpen}>
                 <DialogContent className="sm:max-w-2xl bg-white max-h-[85vh] overflow-hidden flex flex-col">
                     <DialogHeader className="border-b border-slate-200 pb-4">
-                        <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
+                        <DialogTitle className="text-lg font-semibold text-slate-800">
                             Fichas del Modelo
                         </DialogTitle>
                         <DialogDescription className="text-sm text-slate-500 mt-1">
@@ -409,7 +392,6 @@ export default function ModelosPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto py-4 space-y-4">
-                        {/* Upload Form */}
                         <div className="bg-slate-50 p-4 rounded-lg space-y-3">
                             <p className="text-sm font-medium text-slate-700">Agregar Nueva Ficha</p>
                             <div className="flex gap-2">
@@ -438,9 +420,10 @@ export default function ModelosPage() {
                             </div>
                         </div>
 
-                        {/* Files List */}
                         <div className="space-y-2">
-                            <p className="text-sm font-medium text-slate-700">Fichas Cargadas ({currentModeloForFiles?.fichas_archivos?.length || 0})</p>
+                            <p className="text-sm font-medium text-slate-700">
+                                Fichas Cargadas ({currentModeloForFiles?.fichas_archivos?.length || 0})
+                            </p>
                             {(!currentModeloForFiles?.fichas_archivos || currentModeloForFiles.fichas_archivos.length === 0) ? (
                                 <p className="text-sm text-slate-400 text-center py-4">No hay fichas cargadas</p>
                             ) : (
@@ -450,7 +433,7 @@ export default function ModelosPage() {
                                             <div className="flex items-center gap-3">
                                                 <FileText className="w-5 h-5 text-blue-500" />
                                                 <span className="text-sm text-slate-700">
-                                                    {currentModeloForFiles.fichas_nombres?.[index] || `Ficha ${index + 1}`}
+                                                    {currentModeloForFiles.fichas_nombres?.[index] || 'Ficha ' + (index + 1)}
                                                 </span>
                                             </div>
                                             <div className="flex gap-1">
@@ -485,3 +468,5 @@ export default function ModelosPage() {
         </div>
     );
 }
+
+export default ModelosPage;
