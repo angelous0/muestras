@@ -666,7 +666,6 @@ export default function BasesPage() {
                                 <ResizableTableHead columnKey="muestraBase" width={columnWidths.muestraBase} onResize={updateWidth}>Muestra Base</ResizableTableHead>
                                 <ResizableTableHead columnKey="nombre" width={columnWidths.nombre} onResize={updateWidth}>Nombre</ResizableTableHead>
                                 <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
-                                <ResizableTableHead columnKey="imagen" width={columnWidths.imagen} onResize={updateWidth}>Imagen</ResizableTableHead>
                                 <ResizableTableHead columnKey="fichas_generales" width={columnWidths.fichas_generales} onResize={updateWidth}>Fichas Generales</ResizableTableHead>
                                 <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
                                 <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
@@ -675,9 +674,9 @@ export default function BasesPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
                             ) : data.length === 0 ? (
-                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
                             ) : (
                                 data.map((item) => (
                                     <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
@@ -699,21 +698,6 @@ export default function BasesPage() {
                                             ) : (
                                                 <Button variant="outline" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-7 text-xs">
                                                     <Upload className="w-3 h-3 mr-1" />Subir
-                                                </Button>
-                                            )}
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.imagen}>
-                                            <input type="file" ref={el => imagenInputRefs.current[item.id] = el} onChange={(e) => handleImagenUpload(item.id, e)} accept="image/*" className="hidden" />
-                                            {item.imagen_archivo ? (
-                                                <div className="flex items-center gap-1">
-                                                    <a href={getFileUrl(item.imagen_archivo)} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
-                                                        <Image className="w-4 h-4" /><Download className="w-3 h-3" />
-                                                    </a>
-                                                    <Button variant="ghost" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
-                                                </div>
-                                            ) : (
-                                                <Button variant="outline" size="sm" onClick={() => imagenInputRefs.current[item.id]?.click()} className="h-7 text-xs">
-                                                    <Image className="w-3 h-3 mr-1" />Subir
                                                 </Button>
                                             )}
                                         </ResizableTableCell>
