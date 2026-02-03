@@ -1735,15 +1735,19 @@ async def save_file_from_bytes(content: bytes, folder: str, filename: str) -> st
     if r2_client:
         try:
             key = f"{folder}/{new_filename}"
+            logging.info(f"Uploading to R2: {key}")
             r2_client.put_object(
                 Bucket=R2_BUCKET_NAME,
                 Key=key,
                 Body=content,
                 ContentType='application/pdf'
             )
+            logging.info(f"Successfully uploaded to R2: {key}")
             return f"r2://{key}"
         except Exception as e:
-            logging.error(f"R2 upload failed: {e}")
+            logging.error(f"R2 upload failed for {new_filename}: {e}")
+    else:
+        logging.warning("R2 client not available, using local storage")
     
     # Fallback to local storage
     folder_path = UPLOADS_DIR / folder
@@ -1751,6 +1755,7 @@ async def save_file_from_bytes(content: bytes, folder: str, filename: str) -> st
     file_path = folder_path / new_filename
     with open(file_path, 'wb') as f:
         f.write(content)
+    logging.info(f"Saved locally: {file_path}")
     return str(file_path)
 
 @api_router.post("/bases/{base_id}/tizados")
