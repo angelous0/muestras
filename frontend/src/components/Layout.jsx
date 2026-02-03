@@ -119,6 +119,18 @@ export const Layout = () => {
                         {renderNavItems(navItemsBase)}
                     </div>
 
+                    {/* Admin Section - Solo visible para administradores */}
+                    {user?.rol === 'admin' && (
+                        <div>
+                            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                Administración
+                            </p>
+                            <div className="space-y-1">
+                                {renderNavItems(navItemsAdmin)}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Catálogo Section */}
                     <div>
                         <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
