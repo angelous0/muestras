@@ -74,7 +74,15 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 - ✅ Columnas redimensionables en Muestras Base y Bases
 - ✅ Relación M-M entre Bases y Tizados
 
-## Completado en esta sesión (v3.0) - 2025-02-03
+## Completado en esta sesión (v3.1) - 2025-12
+- ✅ Nueva entidad **Modelos** vinculada a Bases (refactorización de estructura de datos)
+- ✅ Campo `N Muestra` único en Muestras Base con prefijo de año automático
+- ✅ Fichas Generales y Tizados de la Base visibles en página de Modelos
+- ✅ Impresión en formato A6 para Muestras Base
+- ✅ El campo `Hilo` se movió de Bases a Modelos
+- ✅ Sección "Fichas" en Bases renombrada a "Fichas Generales"
+
+## Completado en sesión anterior (v3.0) - 2025-02
 - ✅ Nombre de aplicación cambiado de "Textil Sample" a "Muestras"
 - ✅ Sistema de login con usuario y contraseña
 - ✅ Gestión de usuarios (CRUD) - Solo administradores
