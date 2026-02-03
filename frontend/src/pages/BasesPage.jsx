@@ -732,15 +732,15 @@ export default function BasesPage() {
                     </DialogHeader>
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Muestra Base <span className="text-red-500">*</span></Label>
+                            <Label>Muestra Base <span className="text-red-500">*</span> <span className="text-slate-400 text-xs">(solo aprobadas)</span></Label>
                             <Select value={formData.muestra_base_id || ''} onValueChange={(v) => handleChange('muestra_base_id', v)}>
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Seleccionar muestra base" className="truncate" />
                                 </SelectTrigger>
                                 <SelectContent className="max-w-lg">
-                                    {muestrasBase.map(m => (
+                                    {muestrasBase.filter(m => m.aprobado).map(m => (
                                         <SelectItem key={m.id} value={m.id} className="max-w-[450px]">
-                                            <span className="truncate block max-w-[430px]">{getMuestraBaseName(m.id)}</span>
+                                            <span className="truncate block max-w-[430px]">{m.n_muestra ? `${m.n_muestra} - ` : ''}{getMuestraBaseName(m.id)}</span>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
