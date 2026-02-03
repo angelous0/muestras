@@ -74,6 +74,7 @@ export default function MuestrasBasePage() {
 
     // Columnas redimensionables
     const defaultColumnWidths = {
+        n_muestra: 100,
         marca: 120,
         tipo: 120,
         entalle: 100,
