@@ -778,7 +778,7 @@ export default function BasesPage() {
                 <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader className="border-b border-slate-200 pb-4">
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
-                            Fichas de Base #{currentBaseForFiles?.id?.slice(-4) || ''}
+                            Fichas Generales - Base #{currentBaseForFiles?.id?.slice(-4) || ''}
                         </DialogTitle>
                         <DialogDescription className="sr-only">
                             Gestionar fichas técnicas de la base seleccionada
