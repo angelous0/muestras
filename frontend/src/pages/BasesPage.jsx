@@ -9,7 +9,6 @@ import {
     getTizados, updateTizado, createTizado, uploadArchivoTizado,
     getEstadosCostura, getAviosCostura, uploadFichaChecklist
 } from '../lib/api';
-import { generateChecklistDocument } from '../lib/pdfGenerator';
 import {
     Table,
     TableBody,
