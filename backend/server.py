@@ -1198,6 +1198,128 @@ async def reorder_hilos(items: List[dict]):
         await session.commit()
         return {"message": "Orden actualizado"}
 
+# ============ ESTADOS COSTURA ROUTES ============
+
+@api_router.get("/estados-costura")
+async def get_estados_costura(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(EstadoCosturaDB)
+        if search:
+            query = query.where(EstadoCosturaDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(EstadoCosturaDB.activo == activo)
+        query = query.order_by(EstadoCosturaDB.orden)
+        result = await session.execute(query)
+        return [EstadoCostura.model_validate(m) for m in result.scalars().all()]
+
+@api_router.post("/estados-costura", response_model=EstadoCostura)
+async def create_estado_costura(data: EstadoCosturaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(EstadoCosturaDB.orden), 0)))
+        max_orden = result.scalar()
+        item = EstadoCosturaDB(nombre=data.nombre, activo=data.activo, orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return EstadoCostura.model_validate(item)
+
+@api_router.put("/estados-costura/{item_id}", response_model=EstadoCostura)
+async def update_estado_costura(item_id: str, data: EstadoCosturaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(EstadoCosturaDB).where(EstadoCosturaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        item.nombre = data.nombre
+        item.activo = data.activo
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return EstadoCostura.model_validate(item)
+
+@api_router.delete("/estados-costura/{item_id}")
+async def delete_estado_costura(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(EstadoCosturaDB).where(EstadoCosturaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
+
+@api_router.put("/reorder/estados-costura")
+async def reorder_estados_costura(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            result = await session.execute(select(EstadoCosturaDB).where(EstadoCosturaDB.id == item["id"]))
+            db_item = result.scalar_one_or_none()
+            if db_item:
+                db_item.orden = item["orden"]
+        await session.commit()
+        return {"message": "Orden actualizado"}
+
+# ============ AVIOS COSTURA ROUTES ============
+
+@api_router.get("/avios-costura")
+async def get_avios_costura(search: str = "", activo: Optional[bool] = None):
+    async with async_session() as session:
+        query = select(AvioCosturaDB)
+        if search:
+            query = query.where(AvioCosturaDB.nombre.ilike(f"%{search}%"))
+        if activo is not None:
+            query = query.where(AvioCosturaDB.activo == activo)
+        query = query.order_by(AvioCosturaDB.orden)
+        result = await session.execute(query)
+        return [AvioCostura.model_validate(m) for m in result.scalars().all()]
+
+@api_router.post("/avios-costura", response_model=AvioCostura)
+async def create_avio_costura(data: AvioCosturaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(func.coalesce(func.max(AvioCosturaDB.orden), 0)))
+        max_orden = result.scalar()
+        item = AvioCosturaDB(nombre=data.nombre, activo=data.activo, orden=max_orden + 1)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return AvioCostura.model_validate(item)
+
+@api_router.put("/avios-costura/{item_id}", response_model=AvioCostura)
+async def update_avio_costura(item_id: str, data: AvioCosturaCreate):
+    async with async_session() as session:
+        result = await session.execute(select(AvioCosturaDB).where(AvioCosturaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        item.nombre = data.nombre
+        item.activo = data.activo
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(item)
+        return AvioCostura.model_validate(item)
+
+@api_router.delete("/avios-costura/{item_id}")
+async def delete_avio_costura(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(AvioCosturaDB).where(AvioCosturaDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        await session.delete(item)
+        await session.commit()
+        return {"message": "Eliminado correctamente"}
+
+@api_router.put("/reorder/avios-costura")
+async def reorder_avios_costura(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            result = await session.execute(select(AvioCosturaDB).where(AvioCosturaDB.id == item["id"]))
+            db_item = result.scalar_one_or_none()
+            if db_item:
+                db_item.orden = item["orden"]
+        await session.commit()
+        return {"message": "Orden actualizado"}
+
 # ============ MUESTRAS BASE ROUTES ============
 
 @api_router.get("/muestras-base")
