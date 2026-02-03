@@ -152,28 +152,50 @@ function ModelosPage() {
                 <Input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); fetchData(); }} className="pl-10 bg-white" />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50">
                             <TableHead>Nombre</TableHead>
                             <TableHead>Base</TableHead>
                             <TableHead>Hilo</TableHead>
-                            <TableHead>Fichas</TableHead>
+                            <TableHead>Fichas Generales</TableHead>
+                            <TableHead>Tizados</TableHead>
+                            <TableHead>Fichas Modelo</TableHead>
                             <TableHead>Estado</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={6} className="text-center py-8">Cargando...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={8} className="text-center py-8">Cargando...</TableCell></TableRow>
                         ) : data.length === 0 ? (
-                            <TableRow><TableCell colSpan={6} className="text-center py-8">No hay modelos</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={8} className="text-center py-8">No hay modelos</TableCell></TableRow>
                         ) : data.map((item) => (
                             <TableRow key={item.id} className="hover:bg-slate-50">
                                 <TableCell className="font-medium">{item.nombre || '-'}</TableCell>
                                 <TableCell>{getBaseName(item.base_id)}</TableCell>
                                 <TableCell>{getHiloName(item.hilo_id)}</TableCell>
+                                <TableCell>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => { setViewingModelo(item); setBaseFichasDialog(true); }} 
+                                        className="text-purple-600 hover:text-purple-800"
+                                    >
+                                        <FolderOpen className="w-4 h-4 mr-1" />{item.base_fichas_archivos?.length || 0}
+                                    </Button>
+                                </TableCell>
+                                <TableCell>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => { setViewingModelo(item); setBaseTizadosDialog(true); }} 
+                                        className="text-orange-600 hover:text-orange-800"
+                                    >
+                                        <Scissors className="w-4 h-4 mr-1" />{item.base_tizados_archivos?.length || 0}
+                                    </Button>
+                                </TableCell>
                                 <TableCell>
                                     <Button variant="ghost" size="sm" onClick={() => openFichasDialog(item)} className="text-blue-600">
                                         <FileText className="w-4 h-4 mr-1" />{item.fichas_archivos?.length || 0}
