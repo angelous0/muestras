@@ -8,6 +8,8 @@ import TiposProductoPage from "./pages/TiposProductoPage";
 import EntallesPage from "./pages/EntallesPage";
 import TelasPage from "./pages/TelasPage";
 import HilosPage from "./pages/HilosPage";
+import EstadosCosturaPage from "./pages/EstadosCosturaPage";
+import AviosCosturaPage from "./pages/AviosCosturaPage";
 import MuestrasBasePage from "./pages/MuestrasBasePage";
 import BasesPage from "./pages/BasesPage";
 import ModelosPage from "./pages/ModelosPage";
