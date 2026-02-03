@@ -1,4 +1,4 @@
-# PRD - Módulo Muestras v3.1
+# PRD - Módulo Muestras v3.2
 
 ## Problema Original
 Crear un módulo de muestras textil con diseño minimalista y corporativo para gestionar catálogos base, muestras y bases con sus archivos asociados.
@@ -9,6 +9,7 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 - **Base de datos**: PostgreSQL con schema `muestra`
 - **Almacenamiento**: Cloudflare R2 (S3-compatible)
 - **Autenticación**: JWT con bcrypt para hash de contraseñas
+- **PDF Generation**: ReportLab (server-side)
 
 ## Integración Cloudflare R2
 - **Bucket**: muestras
@@ -37,7 +38,7 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 | rol | String (admin/usuario) |
 | activo | Boolean |
 
-### Catálogo Base (5 tablas con drag-and-drop)
+### Catálogo Base (7 tablas con drag-and-drop)
 | Tabla | Campos |
 |-------|--------|
 | Marcas | nombre, descripcion, activo, orden |
@@ -45,97 +46,56 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 | Entalles | nombre, descripcion, activo, orden |
 | Telas | nombre, gramaje, elasticidad, proveedor, ancho, color, precio, clasificacion, activo, orden |
 | Hilos | nombre, activo, orden |
+| Estados Costura | nombre, activo, orden |
+| Avios Costura | nombre, activo, orden |
 
-### Gestión de Muestras (5 tablas)
+### Gestión de Muestras
 | Tabla | Campos |
 |-------|--------|
-| Muestras Base | nombre, n_muestra (único), marca_id, tipo_producto_id, entalle_id, tela_id, consumo_tela, costo_estimado, precio_estimado, rentabilidad_esperada, aprobado, archivo_costos |
-| Bases | nombre, muestra_base_id, patron_archivo, imagen_archivo, fichas_archivos[], fichas_nombres[], tizados_archivos[], tizados_nombres[], aprobado |
-| Modelos | nombre, base_id, hilo_id, fichas_archivos[], fichas_nombres[], aprobado |
-| Fichas | nombre, archivo, descripcion |
-| Tizados | nombre, ancho, curva, archivo_tizado, bases_ids[] (relación M-M) |
+| Muestras Base | nombre, marca_id, tipo_producto_id, hilos, activo, orden |
+| Bases | nombre, muestra_base_id, patron_archivo, fichas_archivos, fichas_nombres, tizados_archivos, tizados_nombres, estados_costura_ids, avios_costura_ids, aprobado, activo, orden |
+| Fichas | base_id, nombre, archivo, tipo |
+| Tizados | ancho, curva, archivo, bases_ids (many-to-many) |
+| Modelos | base_id, clasificacion, activo, orden |
 
-## Funcionalidades Implementadas
-- ✅ **Autenticación con JWT** (v3.0)
-- ✅ **Gestión de usuarios** (v3.0) - Solo admin
-- ✅ **Rutas protegidas** (v3.0)
-- ✅ Dashboard con estadísticas
-- ✅ CRUD completo para todas las tablas
-- ✅ Búsqueda por nombre
-- ✅ Filtro por estado activo/inactivo
-- ✅ Relaciones entre tablas (selects dinámicos)
-- ✅ Upload de archivos a Cloudflare R2
-- ✅ Eliminación en cascada de archivos R2
-- ✅ Nombres de archivo personalizables
-- ✅ Cálculo automático de rentabilidad
-- ✅ Drag-and-drop para reordenar catálogos
-- ✅ Popup de Tizados con búsqueda avanzada
-- ✅ Buscador de bases por nombre, marca, tipo, entalle, tela
-- ✅ Columnas redimensionables en Muestras Base y Bases
-- ✅ Relación M-M entre Bases y Tizados
+## Funcionalidades Completadas
 
-## Completado en esta sesión (v3.1) - 2025-12
-- ✅ Nueva entidad **Modelos** vinculada a Bases (refactorización de estructura de datos)
-- ✅ Campo `N Muestra` único en Muestras Base con prefijo de año automático
-- ✅ Fichas Generales y Tizados de la Base visibles en página de Modelos
-- ✅ Impresión en formato A6 para Muestras Base
-- ✅ El campo `Hilo` se movió de Bases a Modelos
-- ✅ Sección "Fichas" en Bases renombrada a "Fichas Generales"
+### v3.2 (Febrero 2026)
+- **Generación de PDF Checklist**: Se implementó la generación de PDFs en formato A6 desde el backend usando ReportLab
+- **Nuevo endpoint**: `POST /api/bases/{base_id}/generate-checklist` genera y guarda PDFs de checklist
+- **Integración en Bases**: Modal para seleccionar Estados/Avíos Costura con botón para generar PDF
+- **Actualización automática**: Si el PDF ya existe, se reemplaza automáticamente
 
-## Completado en sesión anterior (v3.0) - 2025-02
-- ✅ Nombre de aplicación cambiado de "Textil Sample" a "Muestras"
-- ✅ Sistema de login con usuario y contraseña
-- ✅ Gestión de usuarios (CRUD) - Solo administradores
-- ✅ Roles: admin y usuario
-- ✅ Rutas protegidas con redirección al login
-- ✅ Usuario admin creado automáticamente (admin/admin123)
-- ✅ Información del usuario en sidebar con botón de logout
-- ✅ Sección "Administración" visible solo para admins
-- ✅ Eliminado badge "Made with Emergent"
-- ✅ Eliminación en cascada de archivos en Cloudflare R2
-- ✅ Archivos se guardan con nombre personalizado o nombre original
-- ✅ Buscador de bases mejorado (busca por marca, tipo, entalle, tela)
+### v3.1
+- Columnas redimensionables en Modelos
+- Refactor de UI en página Modelos (nuevas columnas, nombres)
+- Eliminación de funcionalidad de Imagen en Bases
+- Nuevas entidades: Estados Costura y Avíos Costura
 
-## Backlog Pendiente
+## Tareas Pendientes
 
 ### P1 - Alta Prioridad
-- [ ] Campo "Clasificación" en Telas con historial/autocompletado
-- [ ] Columnas redimensionables en tablas restantes
+- Campo "Clasificación" en Telas con historial/autocompletado
+- Aplicar columnas redimensionables a tablas restantes
 
 ### P2 - Media Prioridad
-- [ ] Unificar diseño de la aplicación según página de Telas
-- [ ] Exportación a Excel
-- [ ] Importación masiva desde Excel
+- Unificar diseño de la aplicación
+- Refactorizar BasesPage.jsx (>1500 líneas)
 
-### P3 - Baja Prioridad
-- [ ] Preview de imágenes en Bases
-- [ ] Recuperación de contraseña
+### Backlog
+- Exportación/importación de datos con Excel
 
-## Variables de Entorno
+## Endpoints API
 
-### backend/.env
-```
-DATABASE_URL="postgresql://..."
-DB_SCHEMA="muestra"
-R2_ACCOUNT_ID="..."
-R2_ACCESS_KEY_ID="..."
-R2_SECRET_ACCESS_KEY="..."
-R2_BUCKET_NAME="muestras"
-JWT_SECRET_KEY="..." (opcional, tiene default)
-```
+### Nuevo (v3.2)
+- `POST /api/bases/{base_id}/generate-checklist` - Genera PDF checklist
+  - Body: `{ items: string[], title: string }`
+  - Response: `{ file_path, nombre, updated }`
 
-## Credenciales por Defecto
+### Estados/Avíos Costura
+- CRUD completo en `/api/estados-costura` y `/api/avios-costura`
+- Reordenamiento: `PUT /api/reorder/estados-costura` y `PUT /api/reorder/avios-costura`
+
+## Credenciales de Prueba
 - **Usuario**: admin
 - **Contraseña**: admin123
-- **Rol**: Administrador
-
-## Historial de Versiones
-- v1.0: Tablas base iniciales
-- v2.0: Tablas adicionales + archivos + drag-and-drop
-- v2.1: Rediseño popup Fichas
-- v2.2: Columnas redimensionables
-- v2.3: Integración Cloudflare R2
-- v2.4: Migración a PostgreSQL + Relación M-M
-- v2.5: Rediseño popup Tizados
-- v3.0: Sistema de autenticación completo con JWT + Gestión de usuarios
-- **v3.1**: Nueva entidad Modelos + Campo N Muestra + Visualización de Fichas/Tizados en Modelos
