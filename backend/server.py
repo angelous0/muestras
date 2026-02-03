@@ -156,6 +156,7 @@ class MuestraBaseDB(Base):
     __table_args__ = {"schema": DB_SCHEMA}
     
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    n_muestra: Mapped[Optional[str]] = mapped_column(String(50), unique=True, nullable=True)
     nombre: Mapped[str] = mapped_column(String(500), nullable=False)
     marca_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     tipo_producto_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
