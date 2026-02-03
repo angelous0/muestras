@@ -184,13 +184,13 @@ function ModelosPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50">
-                            <TableHead>Nombre</TableHead>
-                            <TableHead>Muestra Base</TableHead>
-                            <TableHead>Base</TableHead>
+                            <TableHead>Modelo</TableHead>
+                            <TableHead>Clasificación</TableHead>
                             <TableHead>Hilo</TableHead>
+                            <TableHead>Patrón</TableHead>
                             <TableHead>Fichas Generales</TableHead>
-                            <TableHead>Tizados</TableHead>
                             <TableHead>Fichas Modelo</TableHead>
+                            <TableHead>Tizados</TableHead>
                             <TableHead>Estado</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
@@ -202,10 +202,23 @@ function ModelosPage() {
                             <TableRow><TableCell colSpan={9} className="text-center py-8">No hay modelos</TableCell></TableRow>
                         ) : data.map((item) => (
                             <TableRow key={item.id} className="hover:bg-slate-50">
-                                <TableCell className="font-medium">{item.nombre || '-'}</TableCell>
+                                <TableCell className="font-medium">{getBaseName(item.base_id)}</TableCell>
                                 <TableCell className="text-slate-600">{item.muestra_base_nombre || '-'}</TableCell>
-                                <TableCell>{getBaseName(item.base_id)}</TableCell>
                                 <TableCell>{getHiloName(item.hilo_id)}</TableCell>
+                                <TableCell>
+                                    {item.base_patron_archivo ? (
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            onClick={() => window.open(getFileUrl(item.base_patron_archivo), '_blank')}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            <Download className="w-4 h-4 mr-1" />Ver
+                                        </Button>
+                                    ) : (
+                                        <span className="text-slate-400">-</span>
+                                    )}
+                                </TableCell>
                                 <TableCell>
                                     <Button 
                                         variant="ghost" 
@@ -217,6 +230,11 @@ function ModelosPage() {
                                     </Button>
                                 </TableCell>
                                 <TableCell>
+                                    <Button variant="ghost" size="sm" onClick={() => openFichasDialog(item)} className="text-blue-600">
+                                        <FileText className="w-4 h-4 mr-1" />{item.fichas_archivos?.length || 0}
+                                    </Button>
+                                </TableCell>
+                                <TableCell>
                                     <Button 
                                         variant="ghost" 
                                         size="sm" 
@@ -224,11 +242,6 @@ function ModelosPage() {
                                         className="text-orange-600 hover:text-orange-800"
                                     >
                                         <Scissors className="w-4 h-4 mr-1" />{item.base_tizados?.length || 0}
-                                    </Button>
-                                </TableCell>
-                                <TableCell>
-                                    <Button variant="ghost" size="sm" onClick={() => openFichasDialog(item)} className="text-blue-600">
-                                        <FileText className="w-4 h-4 mr-1" />{item.fichas_archivos?.length || 0}
                                     </Button>
                                 </TableCell>
                                 <TableCell>
