@@ -404,7 +404,8 @@ class Modelo(BaseModel):
     # Campos de la Base relacionada
     base_fichas_archivos: List[str] = []
     base_fichas_nombres: List[str] = []
-    base_tizados: List[TizadoInfo] = []  # Tizados relacionados a la base (M-M)
+    base_tizados: List[TizadoInfo] = []
+    muestra_base_nombre: Optional[str] = None  # Nombre de la muestra base (via Base)
 
 class FichaCreate(BaseModel):
     nombre: str
