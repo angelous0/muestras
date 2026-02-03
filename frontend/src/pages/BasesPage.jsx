@@ -549,9 +549,9 @@ export default function BasesPage() {
             const title = type === 'estados' ? 'ESTADOS COSTURA' : 'AVIOS COSTURA';
             const baseName = currentBaseForFiles.nombre || 'Base';
             
-            // Dynamic import with proper handling for jsPDF module
-            const jsPDFModule = await import('jspdf');
-            const jsPDF = jsPDFModule.jsPDF || jsPDFModule.default;
+            // Use jsPDF from global window object (loaded via CDN)
+            // eslint-disable-next-line no-undef
+            const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [105, 148] });
             
             doc.setFontSize(12);
