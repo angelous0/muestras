@@ -655,7 +655,7 @@ export default function BasesPage() {
                                             {item.nombre || '-'}
                                         </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.hilo}>
-                                            {getHiloName(item.hilo_id)}
+                                            {'-'}
                                         </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.patron}>
                                             <input type="file" ref={el => patronInputRefs.current[item.id] = el} onChange={(e) => handlePatronUpload(item.id, e)} accept=".xlsx,.xls,.pdf" className="hidden" />
