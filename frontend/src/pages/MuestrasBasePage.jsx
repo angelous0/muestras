@@ -203,6 +203,155 @@ export default function MuestrasBasePage() {
         }
     };
 
+    // Print A6 function
+    const handlePrint = (item) => {
+        const marca = getCatalogName(item.marca_id, marcas);
+        const tipo = getCatalogName(item.tipo_producto_id, tiposProducto);
+        const entalle = getCatalogName(item.entalle_id, entalles);
+        const tela = getCatalogName(item.tela_id, telas);
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Muestra ${item.n_muestra || ''}</title>
+                <style>
+                    @page {
+                        size: A6 portrait;
+                        margin: 5mm;
+                    }
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    body {
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                        font-size: 10pt;
+                        width: 105mm;
+                        height: 148mm;
+                        padding: 4mm;
+                        background: white;
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 2px solid #333;
+                        padding-bottom: 3mm;
+                        margin-bottom: 3mm;
+                    }
+                    .header h1 {
+                        font-size: 14pt;
+                        font-weight: bold;
+                        color: #333;
+                        margin-bottom: 1mm;
+                    }
+                    .header .n-muestra {
+                        font-size: 18pt;
+                        font-weight: bold;
+                        color: #000;
+                    }
+                    .content {
+                        display: grid;
+                        gap: 2mm;
+                    }
+                    .row {
+                        display: flex;
+                        border-bottom: 1px solid #ddd;
+                        padding: 1.5mm 0;
+                    }
+                    .label {
+                        font-weight: 600;
+                        color: #555;
+                        width: 35mm;
+                        flex-shrink: 0;
+                    }
+                    .value {
+                        color: #000;
+                        flex: 1;
+                    }
+                    .status {
+                        margin-top: 3mm;
+                        text-align: center;
+                        padding: 2mm;
+                        border-radius: 2mm;
+                        font-weight: bold;
+                    }
+                    .status.aprobado {
+                        background: #d1fae5;
+                        color: #065f46;
+                    }
+                    .status.pendiente {
+                        background: #fef3c7;
+                        color: #92400e;
+                    }
+                    .footer {
+                        margin-top: auto;
+                        text-align: center;
+                        font-size: 8pt;
+                        color: #999;
+                        padding-top: 3mm;
+                        border-top: 1px solid #eee;
+                    }
+                    @media print {
+                        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>MUESTRA BASE</h1>
+                    <div class="n-muestra">${item.n_muestra || 'Sin número'}</div>
+                </div>
+                <div class="content">
+                    <div class="row">
+                        <span class="label">Marca:</span>
+                        <span class="value">${marca}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Tipo:</span>
+                        <span class="value">${tipo}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Entalle:</span>
+                        <span class="value">${entalle}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Tela:</span>
+                        <span class="value">${tela}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Consumo Tela:</span>
+                        <span class="value">${item.consumo_tela ? item.consumo_tela + ' m' : '-'}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Costo:</span>
+                        <span class="value">${item.costo_estimado ? 'S/ ' + item.costo_estimado.toFixed(2) : '-'}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Precio:</span>
+                        <span class="value">${item.precio_estimado ? 'S/ ' + item.precio_estimado.toFixed(2) : '-'}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Rentabilidad:</span>
+                        <span class="value">${item.rentabilidad_esperada ? item.rentabilidad_esperada.toFixed(2) + '%' : '-'}</span>
+                    </div>
+                </div>
+                <div class="status ${item.aprobado ? 'aprobado' : 'pendiente'}">
+                    ${item.aprobado ? '✓ APROBADO' : '⏳ PENDIENTE'}
+                </div>
+                <div class="footer">
+                    Impreso: ${new Date().toLocaleDateString('es-PE')}
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.onload = () => {
+            printWindow.print();
+        };
+    };
+
     // Inline file upload
     const handleFileUpload = async (itemId, e) => {
         const file = e.target.files?.[0];
