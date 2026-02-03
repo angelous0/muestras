@@ -355,7 +355,7 @@ export default function BasesPage() {
         }
     };
 
-    // Create new tizado and link to current base
+    // Create new tizado and link to current base + selected other bases
     const handleCreateNewTizado = async () => {
         if (!newTizadoAncho || !newTizadoCurva) {
             toast.error('Ancho y Curva son requeridos');
@@ -364,12 +364,13 @@ export default function BasesPage() {
         
         setCreatingTizado(true);
         try {
-            // Create tizado with current base linked
+            // Create tizado with current base + selected other bases
+            const allBasesIds = currentBaseForFiles ? [currentBaseForFiles.id, ...newTizadoOtrasBases] : [...newTizadoOtrasBases];
             const tizadoData = {
-                nombre: newTizadoName || `${newTizadoAncho}-${newTizadoCurva}`,
+                nombre: `${newTizadoAncho}-${newTizadoCurva}`,
                 ancho: parseFloat(newTizadoAncho),
                 curva: newTizadoCurva,
-                bases_ids: currentBaseForFiles ? [currentBaseForFiles.id] : []
+                bases_ids: allBasesIds
             };
             
             const response = await createTizado(tizadoData);
@@ -384,9 +385,10 @@ export default function BasesPage() {
             
             // Reset form
             setShowNewTizadoForm(false);
-            setNewTizadoName('');
             setNewTizadoAncho('');
             setNewTizadoCurva('');
+            setNewTizadoOtrasBases([]);
+            setNewTizadoBasesSearch('');
             setNewTizadoFile(null);
             if (newTizadoFileRef.current) newTizadoFileRef.current.value = '';
             
@@ -399,6 +401,23 @@ export default function BasesPage() {
             setCreatingTizado(false);
         }
     };
+
+    // Toggle base selection for new tizado
+    const toggleBaseForNewTizado = (baseId) => {
+        setNewTizadoOtrasBases(prev => 
+            prev.includes(baseId) 
+                ? prev.filter(id => id !== baseId)
+                : [...prev, baseId]
+        );
+    };
+
+    // Filter available bases for new tizado (exclude current base)
+    const filteredBasesForNewTizado = data
+        .filter(b => b.id !== currentBaseForFiles?.id)
+        .filter(b => {
+            if (!newTizadoBasesSearch) return true;
+            return b.nombre.toLowerCase().includes(newTizadoBasesSearch.toLowerCase());
+        });
 
     // Get tizados associated with current base
     const getTizadosForCurrentBase = () => {
