@@ -276,18 +276,6 @@ export default function BasesPage() {
         }
     };
 
-    const handleImagenUpload = async (itemId, e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        try {
-            await uploadImagen(itemId, file);
-            toast.success('Imagen subida correctamente');
-            fetchData();
-        } catch (error) {
-            toast.error('Error al subir imagen');
-        }
-    };
-
     // Fichas dialog
     const openFichasDialog = (item) => {
         setCurrentBaseForFiles(item);
