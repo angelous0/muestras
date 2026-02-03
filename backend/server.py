@@ -1565,8 +1565,8 @@ async def delete_ficha(base_id: str, file_index: int):
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
         
-        fichas = list(item.fichas_archivos or [])
-        nombres = list(item.fichas_nombres or [])
+        fichas = item.fichas_archivos or []
+        nombres = item.fichas_nombres or []
         
         if file_index < 0 or file_index >= len(fichas):
             raise HTTPException(status_code=400, detail="Índice inválido")
@@ -1575,15 +1575,50 @@ async def delete_ficha(base_id: str, file_index: int):
         file_to_delete = fichas[file_index]
         delete_r2_file(file_to_delete)
         
-        fichas.pop(file_index)
+        # Remove from arrays
+        item.fichas_archivos = fichas[:file_index] + fichas[file_index+1:]
         if file_index < len(nombres):
-            nombres.pop(file_index)
-        
-        item.fichas_archivos = fichas
-        item.fichas_nombres = nombres
+            item.fichas_nombres = nombres[:file_index] + nombres[file_index+1:]
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
-        return {"message": "Eliminado"}
+        return {"message": "Ficha eliminada"}
+
+@api_router.post("/bases/{base_id}/fichas-checklist")
+async def upload_ficha_checklist(base_id: str, file: UploadFile = File(...), nombre: str = Form(...)):
+    """Upload or update a checklist PDF. If a ficha with the same nombre exists, update it."""
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Check if a ficha with this nombre already exists
+        fichas = item.fichas_archivos or []
+        nombres = item.fichas_nombres or []
+        
+        existing_index = None
+        for i, n in enumerate(nombres):
+            if n == nombre:
+                existing_index = i
+                break
+        
+        # Save the new file
+        file_path = await save_upload_file(file, "fichas_bases", nombre)
+        
+        if existing_index is not None:
+            # Update existing - delete old file first
+            old_file = fichas[existing_index]
+            delete_r2_file(old_file)
+            fichas[existing_index] = file_path
+            item.fichas_archivos = fichas
+        else:
+            # Add new
+            item.fichas_archivos = fichas + [file_path]
+            item.fichas_nombres = nombres + [nombre]
+        
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_path": file_path, "nombre": nombre, "updated": existing_index is not None}
 
 @api_router.post("/bases/{base_id}/tizados")
 async def upload_tizados(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
