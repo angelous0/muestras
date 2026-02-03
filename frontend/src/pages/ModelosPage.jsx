@@ -296,6 +296,90 @@ function ModelosPage() {
                     <div className="flex justify-end"><Button variant="outline" onClick={() => setFichasDialogOpen(false)}>Cerrar</Button></div>
                 </DialogContent>
             </Dialog>
+
+            {/* Dialog para Fichas Generales de la Base */}
+            <Dialog open={baseFichasDialog} onOpenChange={setBaseFichasDialog}>
+                <DialogContent className="sm:max-w-2xl bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FolderOpen className="w-5 h-5 text-purple-600" />
+                            Fichas Generales - Base: {getBaseName(viewingModelo?.base_id)}
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">Fichas generales de la base</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-sm text-slate-500 mb-4">
+                            Fichas generales asociadas a la base de este modelo (solo lectura)
+                        </p>
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            {viewingModelo?.base_fichas_archivos?.map((archivo, i) => (
+                                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg hover:bg-slate-100 transition-colors">
+                                    <span className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-purple-600" />
+                                        <span className="font-medium">{viewingModelo.base_fichas_nombres?.[i] || `Ficha ${i + 1}`}</span>
+                                    </span>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => window.open(getFileUrl(archivo), '_blank')}
+                                        className="text-purple-600 hover:text-purple-800"
+                                    >
+                                        <Download className="w-4 h-4 mr-1" />Descargar
+                                    </Button>
+                                </div>
+                            ))}
+                            {(!viewingModelo?.base_fichas_archivos?.length) && (
+                                <p className="text-center text-slate-400 py-8">No hay fichas generales en esta base</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <Button variant="outline" onClick={() => setBaseFichasDialog(false)}>Cerrar</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog para Tizados de la Base */}
+            <Dialog open={baseTizadosDialog} onOpenChange={setBaseTizadosDialog}>
+                <DialogContent className="sm:max-w-2xl bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Scissors className="w-5 h-5 text-orange-600" />
+                            Tizados - Base: {getBaseName(viewingModelo?.base_id)}
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">Tizados de la base</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-sm text-slate-500 mb-4">
+                            Tizados asociados a la base de este modelo (solo lectura)
+                        </p>
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            {viewingModelo?.base_tizados_archivos?.map((archivo, i) => (
+                                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg hover:bg-slate-100 transition-colors">
+                                    <span className="flex items-center gap-2">
+                                        <Scissors className="w-4 h-4 text-orange-600" />
+                                        <span className="font-medium">{viewingModelo.base_tizados_nombres?.[i] || `Tizado ${i + 1}`}</span>
+                                    </span>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => window.open(getFileUrl(archivo), '_blank')}
+                                        className="text-orange-600 hover:text-orange-800"
+                                    >
+                                        <Download className="w-4 h-4 mr-1" />Descargar
+                                    </Button>
+                                </div>
+                            ))}
+                            {(!viewingModelo?.base_tizados_archivos?.length) && (
+                                <p className="text-center text-slate-400 py-8">No hay tizados en esta base</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <Button variant="outline" onClick={() => setBaseTizadosDialog(false)}>Cerrar</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
