@@ -105,7 +105,6 @@ export default function BasesPage() {
     
     // File input refs
     const patronInputRefs = useRef({});
-    const imagenInputRefs = useRef({});
     const fichasInputRef = useRef(null);
     const tizadosInputRef = useRef(null);
     const newFichaFileRef = useRef(null);
@@ -116,7 +115,6 @@ export default function BasesPage() {
         muestraBase: 180,
         nombre: 150,
         patron: 100,
-        imagen: 100,
         fichas_generales: 120,
         tizados: 120,
         estado: 100,
