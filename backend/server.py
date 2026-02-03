@@ -19,6 +19,10 @@ import boto3
 from botocore.config import Config
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from io import BytesIO
+from reportlab.lib.pagesizes import A6
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
