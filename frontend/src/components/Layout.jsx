@@ -138,7 +138,33 @@ export const Layout = () => {
                 </nav>
 
                 {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700 space-y-3">
+                    {/* User Info */}
+                    {user && (
+                        <div className="flex items-center gap-3 px-2">
+                            <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-slate-300" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">
+                                    {user.nombre}
+                                </p>
+                                <p className="text-xs text-slate-400 truncate">
+                                    {user.email}
+                                </p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={logout}
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-700"
+                                title="Cerrar sesión"
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    )}
+                    
                     <p className="text-xs text-slate-500 text-center">
                         Módulo Muestras v2.0
                     </p>
