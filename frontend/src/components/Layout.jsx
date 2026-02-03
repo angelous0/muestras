@@ -15,7 +15,9 @@ import {
     Scissors,
     Users,
     LogOut,
-    User
+    User,
+    CheckSquare,
+    Sparkles
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -36,6 +38,8 @@ const navItemsCatalogo = [
     { to: '/entalles', icon: Ruler, label: 'Entalles' },
     { to: '/telas', icon: Layers, label: 'Telas' },
     { to: '/hilos', icon: Palette, label: 'Hilos' },
+    { to: '/estados-costura', icon: CheckSquare, label: 'Estados Costura' },
+    { to: '/avios-costura', icon: Sparkles, label: 'Avíos Costura' },
 ];
 
 const navItemsMuestras = [
