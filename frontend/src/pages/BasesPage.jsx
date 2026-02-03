@@ -753,7 +753,7 @@ export default function BasesPage() {
                             <Select value={formData.hilo_id || ''} onValueChange={(v) => handleChange('hilo_id', v)}>
                                 <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar hilo" /></SelectTrigger>
                                 <SelectContent>
-                                    {hilos.map(h => (
+                                    {[].map(h => (
                                         <SelectItem key={h.id} value={h.id}>{h.nombre}</SelectItem>
                                     ))}
                                 </SelectContent>
