@@ -24,6 +24,9 @@ import { Separator } from './ui/separator';
 
 const navItemsBase = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+];
+
+const navItemsAdmin = [
     { to: '/usuarios', icon: Users, label: 'Usuarios' },
 ];
 
