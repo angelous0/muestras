@@ -949,6 +949,18 @@ export default function BasesPage() {
                                                 {(item.tizados_relacionados?.length || 0)} tizado(s)
                                             </Button>
                                         </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.estadosCostura}>
+                                            <Button variant="outline" size="sm" onClick={() => openEstadosCosturaDialog(item)} className="h-7 text-xs text-purple-600 border-purple-200 hover:bg-purple-50">
+                                                <CheckSquare className="w-3 h-3 mr-1" />
+                                                {(item.estados_costura_ids?.length || 0)}
+                                            </Button>
+                                        </ResizableTableCell>
+                                        <ResizableTableCell width={columnWidths.aviosCostura}>
+                                            <Button variant="outline" size="sm" onClick={() => openAviosCosturaDialog(item)} className="h-7 text-xs text-amber-600 border-amber-200 hover:bg-amber-50">
+                                                <Sparkles className="w-3 h-3 mr-1" />
+                                                {(item.avios_costura_ids?.length || 0)}
+                                            </Button>
+                                        </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.estado}>
                                             <ApprovalBadge aprobado={item.aprobado} />
                                         </ResizableTableCell>
