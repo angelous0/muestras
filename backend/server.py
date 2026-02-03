@@ -1549,7 +1549,8 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                             "nombre": t.nombre,
                             "ancho": t.ancho,
                             "curva": t.curva,
-                            "archivo_tizado": t.archivo_tizado
+                            "archivo_tizado": t.archivo_tizado,
+                            "bases_ids": t.bases_ids or []
                         })
                 modelo_dict["base_tizados"] = related_tizados
             
