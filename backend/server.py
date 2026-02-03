@@ -419,6 +419,8 @@ class BaseModel_(BaseModel):
     fichas_nombres: List[str] = []
     tizados_archivos: List[str] = []
     tizados_nombres: List[str] = []
+    estados_costura_ids: List[str] = []
+    avios_costura_ids: List[str] = []
     aprobado: bool = False
     activo: bool = True
     orden: int = 0
