@@ -469,6 +469,168 @@ export default function BasesPage() {
         );
     };
 
+    // Open Estados Costura dialog
+    const openEstadosCosturaDialog = (base) => {
+        setCurrentBaseForFiles(base);
+        setSelectedEstadosCostura(base.estados_costura_ids || []);
+        setEstadosCosturaDialogOpen(true);
+    };
+
+    // Open Avios Costura dialog
+    const openAviosCosturaDialog = (base) => {
+        setCurrentBaseForFiles(base);
+        setSelectedAviosCostura(base.avios_costura_ids || []);
+        setAviosCosturaDialogOpen(true);
+    };
+
+    // Toggle estado costura selection
+    const toggleEstadoCostura = (id) => {
+        setSelectedEstadosCostura(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    // Toggle avio costura selection
+    const toggleAvioCostura = (id) => {
+        setSelectedAviosCostura(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    // Save Estados Costura selection
+    const saveEstadosCostura = async () => {
+        if (!currentBaseForFiles) return;
+        try {
+            await updateBase(currentBaseForFiles.id, { 
+                ...currentBaseForFiles, 
+                estados_costura_ids: selectedEstadosCostura 
+            });
+            toast.success('Estados Costura actualizados');
+            fetchData();
+            setEstadosCosturaDialogOpen(false);
+        } catch (error) {
+            toast.error('Error al guardar');
+        }
+    };
+
+    // Save Avios Costura selection
+    const saveAviosCostura = async () => {
+        if (!currentBaseForFiles) return;
+        try {
+            await updateBase(currentBaseForFiles.id, { 
+                ...currentBaseForFiles, 
+                avios_costura_ids: selectedAviosCostura 
+            });
+            toast.success('Avíos Costura actualizados');
+            fetchData();
+            setAviosCosturaDialogOpen(false);
+        } catch (error) {
+            toast.error('Error al guardar');
+        }
+    };
+
+    // Generate PDF checklist and upload to Fichas
+    const generateChecklistPdf = async (type) => {
+        if (!currentBaseForFiles) return;
+        
+        const items = type === 'estados' 
+            ? allEstadosCostura.filter(e => selectedEstadosCostura.includes(e.id))
+            : allAviosCostura.filter(a => selectedAviosCostura.includes(a.id));
+        
+        if (items.length === 0) {
+            toast.error('Selecciona al menos un item');
+            return;
+        }
+        
+        setGeneratingPdf(true);
+        try {
+            // A6 size: 105mm x 148mm
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [105, 148] });
+            
+            const title = type === 'estados' ? 'ESTADOS COSTURA' : 'AVÍOS COSTURA';
+            const baseName = currentBaseForFiles.nombre || 'Base';
+            
+            // Title
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, 52.5, 10, { align: 'center' });
+            
+            // Base name
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Base: ${baseName}`, 5, 18);
+            
+            // Table header
+            let y = 25;
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
+            doc.text('ITEM', 5, y);
+            doc.text('CHECK', 55, y);
+            doc.text('FECHA', 70, y);
+            doc.text('FIRMA', 90, y);
+            
+            // Draw header line
+            doc.line(5, y + 1, 100, y + 1);
+            
+            // Items
+            doc.setFont('helvetica', 'normal');
+            y += 6;
+            
+            items.forEach((item, index) => {
+                if (y > 135) {
+                    doc.addPage([105, 148]);
+                    y = 15;
+                }
+                
+                // Item name
+                doc.text(item.nombre.substring(0, 25), 5, y);
+                
+                // Checkbox (empty square)
+                doc.rect(57, y - 3, 4, 4);
+                
+                // Date line
+                doc.line(68, y, 85, y);
+                
+                // Signature line
+                doc.line(88, y, 100, y);
+                
+                y += 8;
+            });
+            
+            // Footer with receiver info
+            y = 138;
+            doc.setFontSize(7);
+            doc.text('Recibido por: _______________________', 5, y);
+            doc.text('Fecha: ___/___/____', 70, y);
+            
+            // Convert to blob and upload
+            const pdfBlob = doc.output('blob');
+            const fileName = `${title.toLowerCase().replace(' ', '_')}_${Date.now()}.pdf`;
+            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            
+            // Upload to fichas
+            const formData = new FormData();
+            formData.append('files', file);
+            formData.append('custom_name', title);
+            
+            await uploadFichasBase(currentBaseForFiles.id, [file], title);
+            
+            toast.success(`PDF "${title}" creado y guardado en Fichas Generales`);
+            fetchData();
+            
+            if (type === 'estados') {
+                setEstadosCosturaDialogOpen(false);
+            } else {
+                setAviosCosturaDialogOpen(false);
+            }
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            toast.error('Error al generar PDF');
+        } finally {
+            setGeneratingPdf(false);
+        }
+    };
+
     // Get tizados associated with current base
     const getTizadosForCurrentBase = () => {
         if (!currentBaseForFiles) return [];
