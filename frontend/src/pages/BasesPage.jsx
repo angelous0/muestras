@@ -1034,35 +1034,45 @@ export default function BasesPage() {
                                     <div className="relative mb-2">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                         <Input 
-                                            placeholder="Buscar bases..."
+                                            placeholder="Escribe para buscar bases..."
                                             value={newTizadoBasesSearch}
                                             onChange={(e) => setNewTizadoBasesSearch(e.target.value)}
                                             className="pl-10 bg-white"
                                         />
                                     </div>
-                                    <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-lg bg-white">
-                                        {filteredBasesForNewTizado.length === 0 ? (
-                                            <p className="text-center text-slate-400 text-sm py-3">No hay otras bases disponibles</p>
+                                    <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-lg bg-white">
+                                        {!newTizadoBasesSearch ? (
+                                            <p className="text-center text-slate-400 text-sm py-3">Escribe para buscar bases...</p>
+                                        ) : filteredBasesForNewTizado.results.length === 0 ? (
+                                            <p className="text-center text-slate-400 text-sm py-3">No se encontraron bases</p>
                                         ) : (
-                                            filteredBasesForNewTizado.map(base => (
-                                                <div 
-                                                    key={base.id} 
-                                                    className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-0 ${newTizadoOtrasBases.includes(base.id) ? 'bg-emerald-50' : ''}`}
-                                                    onClick={() => toggleBaseForNewTizado(base.id)}
-                                                >
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={newTizadoOtrasBases.includes(base.id)}
-                                                        onChange={() => {}}
-                                                        className="rounded"
-                                                    />
-                                                    <span className="text-sm">{base.nombre}</span>
-                                                </div>
-                                            ))
+                                            <>
+                                                {filteredBasesForNewTizado.results.map(base => (
+                                                    <div 
+                                                        key={base.id} 
+                                                        className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-0 ${newTizadoOtrasBases.includes(base.id) ? 'bg-emerald-50' : ''}`}
+                                                        onClick={() => toggleBaseForNewTizado(base.id)}
+                                                    >
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={newTizadoOtrasBases.includes(base.id)}
+                                                            onChange={() => {}}
+                                                            className="rounded"
+                                                        />
+                                                        <span className="text-sm">{base.nombre}</span>
+                                                    </div>
+                                                ))}
+                                                {filteredBasesForNewTizado.total > 10 && (
+                                                    <p className="text-center text-slate-500 text-xs py-2 bg-slate-50">
+                                                        Mostrando 10 de {filteredBasesForNewTizado.total} resultados. Refina tu búsqueda.
+                                                    </p>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                     {newTizadoOtrasBases.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-2">
+                                            <span className="text-xs text-slate-500 mr-1">Seleccionadas:</span>
                                             {newTizadoOtrasBases.map(baseId => {
                                                 const base = data.find(b => b.id === baseId);
                                                 return (
