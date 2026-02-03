@@ -370,49 +370,102 @@ function ModelosPage() {
             </Dialog>
 
             {/* Dialog para Tizados de la Base */}
-            <Dialog open={baseTizadosDialog} onOpenChange={setBaseTizadosDialog}>
-                <DialogContent className="sm:max-w-2xl bg-white">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+            <Dialog open={baseTizadosDialog} onOpenChange={(open) => { setBaseTizadosDialog(open); if (!open) setTizadoSearch(''); }}>
+                <DialogContent className="sm:max-w-4xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
+                    <DialogHeader className="border-b border-slate-200 pb-4">
+                        <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-slate-800">
                             <Scissors className="w-5 h-5 text-orange-600" />
                             Tizados - Base: {getBaseName(viewingModelo?.base_id)}
                         </DialogTitle>
                         <DialogDescription className="sr-only">Tizados de la base</DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <p className="text-sm text-slate-500 mb-4">
+                    <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                        <p className="text-sm text-slate-500">
                             Tizados asociados a la base de este modelo (solo lectura)
                         </p>
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                            {viewingModelo?.base_tizados?.map((tizado) => (
-                                <div key={tizado.id} className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg hover:bg-slate-100 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <Scissors className="w-4 h-4 text-orange-600" />
-                                        <div>
-                                            <span className="font-medium">{tizado.nombre}</span>
-                                            <div className="text-xs text-slate-500">
-                                                Ancho: {tizado.ancho || '-'} | Curva: {tizado.curva || '-'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {tizado.archivo_tizado && (
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            onClick={() => window.open(getFileUrl(tizado.archivo_tizado), '_blank')}
-                                            className="text-orange-600 hover:text-orange-800"
-                                        >
-                                            <Download className="w-4 h-4 mr-1" />Descargar
-                                        </Button>
+                        
+                        {/* Buscador */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input 
+                                placeholder="Buscar por ancho, curva u otras bases..."
+                                value={tizadoSearch}
+                                onChange={(e) => setTizadoSearch(e.target.value)}
+                                className="pl-10 bg-white"
+                            />
+                        </div>
+
+                        {/* Tabla de tizados */}
+                        <div className="border border-slate-200 rounded-lg overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Ancho</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-32">Curva</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Otras Bases</TableHead>
+                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Archivo</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredTizados.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                                                No hay tizados disponibles
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredTizados.map((tizado) => {
+                                            const otherBases = getOtherBasesForTizado(tizado);
+                                            return (
+                                                <TableRow key={tizado.id} className="border-b border-slate-100 hover:bg-slate-50 bg-emerald-50">
+                                                    <TableCell className="py-2 px-3 text-sm text-slate-600">
+                                                        {tizado.ancho ? `${tizado.ancho} cm` : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3 text-sm text-slate-600">
+                                                        {tizado.curva || '-'}
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3 text-sm">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {otherBases.length > 0 ? (
+                                                                <>
+                                                                    {otherBases.slice(0, 3).map((name, i) => (
+                                                                        <Badge key={i} variant="outline" className="text-xs truncate max-w-[100px]">
+                                                                            {name}
+                                                                        </Badge>
+                                                                    ))}
+                                                                    {otherBases.length > 3 && (
+                                                                        <Badge variant="secondary" className="text-xs">+{otherBases.length - 3}</Badge>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-slate-400 text-xs">Solo esta base</span>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="py-2 px-3">
+                                                        {tizado.archivo_tizado ? (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                onClick={() => window.open(getFileUrl(tizado.archivo_tizado), '_blank')}
+                                                                className="h-7 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                                            >
+                                                                <Download className="w-3 h-3 mr-1" />
+                                                                Ver
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-slate-400 text-xs">Sin archivo</span>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
                                     )}
-                                </div>
-                            ))}
-                            {(!viewingModelo?.base_tizados?.length) && (
-                                <p className="text-center text-slate-400 py-8">No hay tizados en esta base</p>
-                            )}
+                                </TableBody>
+                            </Table>
                         </div>
                     </div>
-                    <div className="flex justify-end">
+                    <div className="border-t border-slate-200 pt-4 flex justify-end">
                         <Button variant="outline" onClick={() => setBaseTizadosDialog(false)}>Cerrar</Button>
                     </div>
                 </DialogContent>
