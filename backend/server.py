@@ -367,7 +367,6 @@ class BaseModel_(BaseModel):
     nombre: str
     muestra_base_id: Optional[str] = None
     patron_archivo: Optional[str] = None
-    imagen_archivo: Optional[str] = None
     fichas_archivos: List[str] = []
     fichas_nombres: List[str] = []
     tizados_archivos: List[str] = []
