@@ -556,6 +556,15 @@ export default function MuestrasBasePage() {
                                                 <Button 
                                                     variant="ghost" 
                                                     size="sm"
+                                                    onClick={() => handlePrint(item)}
+                                                    className="h-8 px-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                                                    title="Imprimir A6"
+                                                >
+                                                    <Printer className="h-4 w-4" />
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
                                                     onClick={() => handleEdit(item)}
                                                     className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                                                 >
