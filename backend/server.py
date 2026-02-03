@@ -1624,6 +1624,135 @@ async def upload_ficha_checklist(base_id: str, file: UploadFile = File(...), nom
         await session.commit()
         return {"file_path": file_path, "nombre": nombre, "updated": existing_index is not None}
 
+class GenerateChecklistRequest(BaseModel):
+    items: List[str]  # List of item names
+    title: str
+
+@api_router.post("/bases/{base_id}/generate-checklist")
+async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest):
+    """Generate a checklist PDF on the server and save it to fichas"""
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB).where(BaseDB.id == base_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        
+        base_name = item.nombre or "Base"
+        
+        # Generate PDF using ReportLab
+        buffer = BytesIO()
+        # A6 size: 105mm x 148mm
+        page_width = 105 * mm
+        page_height = 148 * mm
+        c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
+        
+        # Title
+        c.setFont("Helvetica-Bold", 12)
+        c.drawCentredString(page_width / 2, page_height - 10 * mm, request.title)
+        
+        # Base name
+        c.setFont("Helvetica", 8)
+        c.drawString(5 * mm, page_height - 18 * mm, f"Base: {base_name}")
+        
+        # Table header
+        y = page_height - 25 * mm
+        c.setFont("Helvetica-Bold", 7)
+        c.drawString(5 * mm, y, "ITEM")
+        c.drawString(55 * mm, y, "CHECK")
+        c.drawString(70 * mm, y, "FECHA")
+        c.drawString(90 * mm, y, "FIRMA")
+        
+        # Header line
+        c.line(5 * mm, y - 1 * mm, 100 * mm, y - 1 * mm)
+        
+        # Items
+        c.setFont("Helvetica", 7)
+        y -= 6 * mm
+        
+        for item_name in request.items:
+            if y < 15 * mm:
+                c.showPage()
+                y = page_height - 15 * mm
+            
+            # Item name (truncate to 25 chars)
+            c.drawString(5 * mm, y, item_name[:25])
+            
+            # Checkbox (empty square)
+            c.rect(57 * mm, y - 3 * mm, 4 * mm, 4 * mm)
+            
+            # Date line
+            c.line(68 * mm, y, 85 * mm, y)
+            
+            # Signature line
+            c.line(88 * mm, y, 100 * mm, y)
+            
+            y -= 8 * mm
+        
+        # Footer with receiver info
+        c.setFont("Helvetica", 7)
+        c.drawString(5 * mm, 10 * mm, "Recibido por: _______________________")
+        c.drawString(70 * mm, 10 * mm, "Fecha: ___/___/____")
+        
+        c.save()
+        buffer.seek(0)
+        
+        # Save to R2/local storage
+        file_name = f"{request.title}.pdf"
+        file_path = await save_file_from_bytes(buffer.read(), "fichas_bases", file_name)
+        
+        # Check if a ficha with this nombre already exists
+        fichas = item.fichas_archivos or []
+        nombres = item.fichas_nombres or []
+        
+        existing_index = None
+        for i, n in enumerate(nombres):
+            if n == request.title:
+                existing_index = i
+                break
+        
+        if existing_index is not None:
+            # Update existing - delete old file first
+            old_file = fichas[existing_index]
+            delete_r2_file(old_file)
+            fichas[existing_index] = file_path
+            item.fichas_archivos = fichas
+        else:
+            # Add new
+            item.fichas_archivos = fichas + [file_path]
+            item.fichas_nombres = nombres + [request.title]
+        
+        item.updated_at = datetime.now(timezone.utc)
+        await session.commit()
+        return {"file_path": file_path, "nombre": request.title, "updated": existing_index is not None}
+
+async def save_file_from_bytes(content: bytes, folder: str, filename: str) -> str:
+    """Save bytes content to R2 or local storage"""
+    unique_suffix = uuid.uuid4().hex[:8]
+    safe_filename = filename.replace(" ", "_")
+    new_filename = f"{Path(safe_filename).stem}_{unique_suffix}{Path(safe_filename).suffix}"
+    
+    # Try R2 first
+    if R2_ENABLED:
+        try:
+            key = f"{folder}/{new_filename}"
+            s3_client.put_object(
+                Bucket=R2_BUCKET,
+                Key=key,
+                Body=content,
+                ContentType='application/pdf'
+            )
+            return f"r2://{key}"
+        except Exception as e:
+            logging.error(f"R2 upload failed: {e}")
+    
+    # Fallback to local storage
+    folder_path = UPLOADS_DIR / folder
+    folder_path.mkdir(parents=True, exist_ok=True)
+    file_path = folder_path / new_filename
+    with open(file_path, 'wb') as f:
+        f.write(content)
+    return str(file_path)
+
 @api_router.post("/bases/{base_id}/tizados")
 async def upload_tizados(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
     async with async_session() as session:
