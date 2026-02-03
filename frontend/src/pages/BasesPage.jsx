@@ -6,7 +6,7 @@ import {
     uploadPatron, uploadImagen, uploadFichasBase, uploadTizadosBase,
     deleteFichaBase, deleteTizadoBase, getFileUrl,
     getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
-    getTizados, updateTizado
+    getTizados, updateTizado, createTizado, uploadArchivoTizado
 } from '../lib/api';
 import {
     Table,
