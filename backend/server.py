@@ -407,6 +407,8 @@ class MuestraBase(BaseModel):
 class BaseCreate(BaseModel):
     nombre: Optional[str] = None
     muestra_base_id: Optional[str] = None
+    estados_costura_ids: List[str] = []
+    avios_costura_ids: List[str] = []
     aprobado: bool = False
 
 class BaseModel_(BaseModel):
