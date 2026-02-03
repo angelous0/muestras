@@ -546,16 +546,24 @@ export default function BasesPage() {
         
         setGeneratingPdf(true);
         try {
+            // First, save the selection to the base
+            const updateData = {
+                ...currentBaseForFiles,
+                estados_costura_ids: type === 'estados' ? selectedEstadosCostura : currentBaseForFiles.estados_costura_ids,
+                avios_costura_ids: type === 'avios' ? selectedAviosCostura : currentBaseForFiles.avios_costura_ids
+            };
+            await updateBase(currentBaseForFiles.id, updateData);
+            
+            // Then generate and save the PDF
             const title = type === 'estados' ? 'ESTADOS COSTURA' : 'AVIOS COSTURA';
             const itemNames = items.map(item => item.nombre);
             
-            // Call backend to generate PDF
             const response = await generateChecklistPdf(currentBaseForFiles.id, itemNames, title);
             
             if (response.data.updated) {
-                toast.success(`PDF "${title}" actualizado en Fichas Generales`);
+                toast.success(`Selección guardada y PDF "${title}" actualizado`);
             } else {
-                toast.success(`PDF "${title}" creado en Fichas Generales`);
+                toast.success(`Selección guardada y PDF "${title}" creado`);
             }
             fetchData();
             
