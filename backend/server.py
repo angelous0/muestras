@@ -1491,7 +1491,41 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
             query = query.where(ModeloDB.activo == activo)
         query = query.order_by(ModeloDB.orden)
         result = await session.execute(query)
-        return [Modelo.model_validate(m) for m in result.scalars().all()]
+        modelos = result.scalars().all()
+        
+        # Get all bases to include their fichas and tizados
+        bases_result = await session.execute(select(BaseDB))
+        bases_dict = {b.id: b for b in bases_result.scalars().all()}
+        
+        response = []
+        for m in modelos:
+            modelo_dict = {
+                "id": m.id,
+                "nombre": m.nombre,
+                "base_id": m.base_id,
+                "hilo_id": m.hilo_id,
+                "fichas_archivos": m.fichas_archivos or [],
+                "fichas_nombres": m.fichas_nombres or [],
+                "aprobado": m.aprobado,
+                "activo": m.activo,
+                "orden": m.orden,
+                "base_fichas_archivos": [],
+                "base_fichas_nombres": [],
+                "base_tizados_archivos": [],
+                "base_tizados_nombres": []
+            }
+            
+            # Add base's fichas and tizados
+            if m.base_id and m.base_id in bases_dict:
+                base = bases_dict[m.base_id]
+                modelo_dict["base_fichas_archivos"] = base.fichas_archivos or []
+                modelo_dict["base_fichas_nombres"] = base.fichas_nombres or []
+                modelo_dict["base_tizados_archivos"] = base.tizados_archivos or []
+                modelo_dict["base_tizados_nombres"] = base.tizados_nombres or []
+            
+            response.append(modelo_dict)
+        
+        return response
 
 @api_router.post("/modelos", response_model=Modelo)
 async def create_modelo(data: ModeloCreate):
