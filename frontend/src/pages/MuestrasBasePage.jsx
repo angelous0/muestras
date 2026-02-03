@@ -145,7 +145,8 @@ export default function MuestrasBasePage() {
 
     const handleAdd = () => {
         setSelectedItem(null);
-        setFormData({ activo: true, aprobado: false });
+        const currentYear = new Date().getFullYear();
+        setFormData({ activo: true, aprobado: false, n_muestra: `${currentYear}-` });
         setFormOpen(true);
     };
 
