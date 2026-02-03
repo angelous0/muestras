@@ -314,6 +314,7 @@ class Hilo(BaseModel):
     orden: int = 0
 
 class MuestraBaseCreate(BaseModel):
+    n_muestra: Optional[str] = None
     marca_id: Optional[str] = None
     tipo_producto_id: Optional[str] = None
     entalle_id: Optional[str] = None
@@ -326,6 +327,7 @@ class MuestraBaseCreate(BaseModel):
 class MuestraBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
+    n_muestra: Optional[str] = None
     nombre: str
     marca_id: Optional[str] = None
     tipo_producto_id: Optional[str] = None
