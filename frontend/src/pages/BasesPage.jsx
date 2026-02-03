@@ -631,10 +631,9 @@ export default function BasesPage() {
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
                                 <ResizableTableHead columnKey="muestraBase" width={columnWidths.muestraBase} onResize={updateWidth}>Muestra Base</ResizableTableHead>
                                 <ResizableTableHead columnKey="nombre" width={columnWidths.nombre} onResize={updateWidth}>Nombre</ResizableTableHead>
-                                <ResizableTableHead columnKey="hilo" width={columnWidths.hilo} onResize={updateWidth}>Hilo</ResizableTableHead>
                                 <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
                                 <ResizableTableHead columnKey="imagen" width={columnWidths.imagen} onResize={updateWidth}>Imagen</ResizableTableHead>
-                                <ResizableTableHead columnKey="fichas" width={columnWidths.fichas} onResize={updateWidth}>Fichas</ResizableTableHead>
+                                <ResizableTableHead columnKey="fichas_generales" width={columnWidths.fichas_generales} onResize={updateWidth}>Fichas Generales</ResizableTableHead>
                                 <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
                                 <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
                                 <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
@@ -642,9 +641,9 @@ export default function BasesPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
                             ) : data.length === 0 ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
                             ) : (
                                 data.map((item) => (
                                     <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
@@ -653,9 +652,6 @@ export default function BasesPage() {
                                         </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.nombre}>
                                             {item.nombre || '-'}
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.hilo}>
-                                            {'-'}
                                         </ResizableTableCell>
                                         <ResizableTableCell width={columnWidths.patron}>
                                             <input type="file" ref={el => patronInputRefs.current[item.id] = el} onChange={(e) => handlePatronUpload(item.id, e)} accept=".xlsx,.xls,.pdf" className="hidden" />
