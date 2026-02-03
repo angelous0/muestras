@@ -393,6 +393,76 @@ class Tizado(BaseModel):
     activo: bool = True
     orden: int = 0
 
+# ============ Auth Schemas ============
+
+class UsuarioCreate(BaseModel):
+    username: str
+    password: str
+    nombre_completo: str
+    rol: str = "usuario"
+
+class UsuarioUpdate(BaseModel):
+    username: Optional[str] = None
+    password: Optional[str] = None
+    nombre_completo: Optional[str] = None
+    rol: Optional[str] = None
+    activo: Optional[bool] = None
+
+class Usuario(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    username: str
+    nombre_completo: str
+    rol: str
+    activo: bool
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: Usuario
+
+# ============ Auth Helper Functions ============
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UsuarioDB:
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Token inválido")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    
+    async with async_session() as session:
+        result = await session.execute(select(UsuarioDB).where(UsuarioDB.id == user_id))
+        user = result.scalar_one_or_none()
+        if user is None:
+            raise HTTPException(status_code=401, detail="Usuario no encontrado")
+        if not user.activo:
+            raise HTTPException(status_code=401, detail="Usuario desactivado")
+        return user
+
+async def get_admin_user(current_user: UsuarioDB = Depends(get_current_user)) -> UsuarioDB:
+    if current_user.rol != "admin":
+        raise HTTPException(status_code=403, detail="Se requiere rol de administrador")
+    return current_user
+
 # ============ Database Initialization ============
 
 async def init_db():
@@ -403,6 +473,22 @@ async def init_db():
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)
     logging.info(f"Database initialized with schema: {DB_SCHEMA}")
+    
+    # Create default admin user if not exists
+    async with async_session() as session:
+        result = await session.execute(select(UsuarioDB).where(UsuarioDB.username == "admin"))
+        admin = result.scalar_one_or_none()
+        if not admin:
+            admin_user = UsuarioDB(
+                username="admin",
+                password_hash=get_password_hash("admin123"),
+                nombre_completo="Administrador",
+                rol="admin",
+                activo=True
+            )
+            session.add(admin_user)
+            await session.commit()
+            logging.info("Default admin user created: admin/admin123")
 
 @app.on_event("startup")
 async def startup():
