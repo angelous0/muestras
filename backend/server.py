@@ -1711,18 +1711,21 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
                 break
         
         if existing_index is not None:
-            # Update existing - delete old file first
+            # Update existing - delete old file first (ignore if doesn't exist)
             old_file = fichas[existing_index]
             delete_r2_file(old_file)
-            fichas[existing_index] = file_path
-            item.fichas_archivos = fichas
+            # Create new list to ensure SQLAlchemy detects the change
+            new_fichas = list(fichas)
+            new_fichas[existing_index] = file_path
+            item.fichas_archivos = new_fichas
         else:
             # Add new
-            item.fichas_archivos = fichas + [file_path]
-            item.fichas_nombres = nombres + [request.title]
+            item.fichas_archivos = list(fichas) + [file_path]
+            item.fichas_nombres = list(nombres) + [request.title]
         
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
+        await session.refresh(item)
         return {"file_path": file_path, "nombre": request.title, "updated": existing_index is not None}
 
 async def save_file_from_bytes(content: bytes, folder: str, filename: str) -> str:
