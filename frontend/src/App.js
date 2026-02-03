@@ -80,6 +80,8 @@ function AppRoutes() {
                 <Route path="entalles" element={<EntallesPage />} />
                 <Route path="telas" element={<TelasPage />} />
                 <Route path="hilos" element={<HilosPage />} />
+                <Route path="estados-costura" element={<EstadosCosturaPage />} />
+                <Route path="avios-costura" element={<AviosCosturaPage />} />
                 <Route path="muestras-base" element={<MuestrasBasePage />} />
                 <Route path="bases" element={<BasesPage />} />
                 <Route path="modelos" element={<ModelosPage />} />
