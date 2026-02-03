@@ -7,7 +7,7 @@ import {
     deleteFichaBase, deleteTizadoBase, getFileUrl,
     getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
     getTizados, updateTizado, createTizado, uploadArchivoTizado,
-    getEstadosCostura, getAviosCostura
+    getEstadosCostura, getAviosCostura, uploadFichaChecklist
 } from '../lib/api';
 import { jsPDF } from 'jspdf';
 import {
