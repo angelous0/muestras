@@ -169,11 +169,13 @@ export default function BasesPage() {
     const defaultColumnWidths = {
         muestraBase: 180,
         nombre: 150,
-        patron: 100,
-        fichas_generales: 120,
-        tizados: 120,
-        estado: 100,
-        acciones: 100
+        patron: 80,
+        fichas_generales: 100,
+        tizados: 80,
+        estadosCostura: 100,
+        aviosCostura: 100,
+        estado: 80,
+        acciones: 80
     };
     const { columnWidths, updateWidth, resetWidths } = useResizableColumns('bases', defaultColumnWidths);
 
