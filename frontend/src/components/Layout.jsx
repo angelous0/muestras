@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { 
     LayoutDashboard, 
     Tags, 
@@ -11,7 +12,10 @@ import {
     FileBox,
     ClipboardList,
     FileText,
-    Scissors
+    Scissors,
+    Users,
+    LogOut,
+    User
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
