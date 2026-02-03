@@ -43,7 +43,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import { Search, Plus, Pencil, Trash2, Filter, X, Upload, FileSpreadsheet, Download, Percent, Check, Clock, RotateCcw } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Filter, X, Upload, FileSpreadsheet, Download, Percent, Check, Clock, RotateCcw, Printer } from 'lucide-react';
 
 const ApprovalBadge = ({ aprobado }) => (
     <Badge className={aprobado ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-100 text-amber-700 hover:bg-amber-100'}>
