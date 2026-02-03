@@ -389,6 +389,7 @@ class TizadoInfo(BaseModel):
     ancho: Optional[float] = None
     curva: Optional[str] = None
     archivo_tizado: Optional[str] = None
+    bases_ids: List[str] = []
 
 class Modelo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
