@@ -354,23 +354,30 @@ function ModelosPage() {
                             Tizados asociados a la base de este modelo (solo lectura)
                         </p>
                         <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                            {viewingModelo?.base_tizados_archivos?.map((archivo, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg hover:bg-slate-100 transition-colors">
-                                    <span className="flex items-center gap-2">
+                            {viewingModelo?.base_tizados?.map((tizado) => (
+                                <div key={tizado.id} className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg hover:bg-slate-100 transition-colors">
+                                    <div className="flex items-center gap-3">
                                         <Scissors className="w-4 h-4 text-orange-600" />
-                                        <span className="font-medium">{viewingModelo.base_tizados_nombres?.[i] || `Tizado ${i + 1}`}</span>
-                                    </span>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        onClick={() => window.open(getFileUrl(archivo), '_blank')}
-                                        className="text-orange-600 hover:text-orange-800"
-                                    >
-                                        <Download className="w-4 h-4 mr-1" />Descargar
-                                    </Button>
+                                        <div>
+                                            <span className="font-medium">{tizado.nombre}</span>
+                                            <div className="text-xs text-slate-500">
+                                                Ancho: {tizado.ancho || '-'} | Curva: {tizado.curva || '-'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {tizado.archivo_tizado && (
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            onClick={() => window.open(getFileUrl(tizado.archivo_tizado), '_blank')}
+                                            className="text-orange-600 hover:text-orange-800"
+                                        >
+                                            <Download className="w-4 h-4 mr-1" />Descargar
+                                        </Button>
+                                    )}
                                 </div>
                             ))}
-                            {(!viewingModelo?.base_tizados_archivos?.length) && (
+                            {(!viewingModelo?.base_tizados?.length) && (
                                 <p className="text-center text-slate-400 py-8">No hay tizados en esta base</p>
                             )}
                         </div>
