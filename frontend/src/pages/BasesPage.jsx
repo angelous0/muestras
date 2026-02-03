@@ -546,6 +546,8 @@ export default function BasesPage() {
         
         setGeneratingPdf(true);
         try {
+            // Dynamic import to avoid webpack bundling conflicts with lucide-react
+            const { default: jsPDF } = await import('jspdf');
             // A6 size: 105mm x 148mm
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [105, 148] });
             
