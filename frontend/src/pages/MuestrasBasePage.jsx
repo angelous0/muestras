@@ -61,6 +61,7 @@ export default function MuestrasBasePage() {
     const [selectedItem, setSelectedItem] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({});
+    const [printItem, setPrintItem] = useState(null);
     
     // Catalogs
     const [marcas, setMarcas] = useState([]);
