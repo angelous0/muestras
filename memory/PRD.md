@@ -46,11 +46,12 @@ Crear un módulo de muestras textil con diseño minimalista y corporativo para g
 | Telas | nombre, gramaje, elasticidad, proveedor, ancho, color, precio, clasificacion, activo, orden |
 | Hilos | nombre, activo, orden |
 
-### Gestión de Muestras (4 tablas)
+### Gestión de Muestras (5 tablas)
 | Tabla | Campos |
 |-------|--------|
-| Muestras Base | nombre, marca_id, tipo_producto_id, entalle_id, tela_id, consumo_tela, costo_estimado, precio_estimado, rentabilidad_esperada, aprobado, archivo_costos |
-| Bases | nombre, muestra_base_id, hilo_id, patron_archivo, imagen_archivo, fichas_archivos[], fichas_nombres[], tizados_archivos[], tizados_nombres[], aprobado |
+| Muestras Base | nombre, n_muestra (único), marca_id, tipo_producto_id, entalle_id, tela_id, consumo_tela, costo_estimado, precio_estimado, rentabilidad_esperada, aprobado, archivo_costos |
+| Bases | nombre, muestra_base_id, patron_archivo, imagen_archivo, fichas_archivos[], fichas_nombres[], tizados_archivos[], tizados_nombres[], aprobado |
+| Modelos | nombre, base_id, hilo_id, fichas_archivos[], fichas_nombres[], aprobado |
 | Fichas | nombre, archivo, descripcion |
 | Tizados | nombre, ancho, curva, archivo_tizado, bases_ids[] (relación M-M) |
 
