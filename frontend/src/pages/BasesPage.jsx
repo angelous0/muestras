@@ -454,20 +454,6 @@ export default function BasesPage() {
         );
     };
 
-    // Filter available bases for new tizado
-    const getFilteredBasesForNewTizado = () => {
-        if (!newTizadoBasesSearch || newTizadoBasesSearch.length < 1) {
-            return { results: [], total: 0 };
-        }
-        const filtered = data
-            .filter(b => b.id !== currentBaseForFiles?.id)
-            .filter(b => b.nombre.toLowerCase().includes(newTizadoBasesSearch.toLowerCase()));
-        return {
-            results: filtered.slice(0, 10),
-            total: filtered.length
-        };
-    };
-
     // Get tizados associated with current base
     const getTizadosForCurrentBase = () => {
         if (!currentBaseForFiles) return [];
