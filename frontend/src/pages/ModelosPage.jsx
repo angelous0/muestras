@@ -157,6 +157,7 @@ function ModelosPage() {
                     <TableHeader>
                         <TableRow className="bg-slate-50">
                             <TableHead>Nombre</TableHead>
+                            <TableHead>Muestra Base</TableHead>
                             <TableHead>Base</TableHead>
                             <TableHead>Hilo</TableHead>
                             <TableHead>Fichas Generales</TableHead>
@@ -168,12 +169,13 @@ function ModelosPage() {
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={8} className="text-center py-8">Cargando...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={9} className="text-center py-8">Cargando...</TableCell></TableRow>
                         ) : data.length === 0 ? (
-                            <TableRow><TableCell colSpan={8} className="text-center py-8">No hay modelos</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={9} className="text-center py-8">No hay modelos</TableCell></TableRow>
                         ) : data.map((item) => (
                             <TableRow key={item.id} className="hover:bg-slate-50">
                                 <TableCell className="font-medium">{item.nombre || '-'}</TableCell>
+                                <TableCell className="text-slate-600">{item.muestra_base_nombre || '-'}</TableCell>
                                 <TableCell>{getBaseName(item.base_id)}</TableCell>
                                 <TableCell>{getHiloName(item.hilo_id)}</TableCell>
                                 <TableCell>
