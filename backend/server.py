@@ -383,6 +383,13 @@ class ModeloCreate(BaseModel):
     hilo_id: Optional[str] = None
     aprobado: bool = False
 
+class TizadoInfo(BaseModel):
+    id: str
+    nombre: str
+    ancho: Optional[float] = None
+    curva: Optional[str] = None
+    archivo_tizado: Optional[str] = None
+
 class Modelo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
@@ -397,8 +404,7 @@ class Modelo(BaseModel):
     # Campos de la Base relacionada
     base_fichas_archivos: List[str] = []
     base_fichas_nombres: List[str] = []
-    base_tizados_archivos: List[str] = []
-    base_tizados_nombres: List[str] = []
+    base_tizados: List[TizadoInfo] = []  # Tizados relacionados a la base (M-M)
 
 class FichaCreate(BaseModel):
     nombre: str
