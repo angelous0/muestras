@@ -95,7 +95,6 @@ export default function BasesPage() {
     const [newTizadoCurva, setNewTizadoCurva] = useState('');
     const [creatingTizado, setCreatingTizado] = useState(false);
     const [tizadoSearch, setTizadoSearch] = useState('');
-    const newTizadoFileRef = useRef(null);
     
     // Catalogs
     const [muestrasBase, setMuestrasBase] = useState([]);
