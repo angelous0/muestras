@@ -406,7 +406,8 @@ class Modelo(BaseModel):
     base_fichas_archivos: List[str] = []
     base_fichas_nombres: List[str] = []
     base_tizados: List[TizadoInfo] = []
-    muestra_base_nombre: Optional[str] = None  # Nombre de la muestra base (via Base)
+    muestra_base_nombre: Optional[str] = None
+    base_patron_archivo: Optional[str] = None
 
 class FichaCreate(BaseModel):
     nombre: str
