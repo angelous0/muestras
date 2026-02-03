@@ -992,7 +992,7 @@ export default function BasesPage() {
                         {showNewTizadoForm && (
                             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
                                 <h4 className="font-medium text-slate-700">Crear Nuevo Tizado</h4>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div>
                                         <Label className="text-xs text-slate-500">Ancho (cm) *</Label>
                                         <Input 
@@ -1013,15 +1013,6 @@ export default function BasesPage() {
                                         />
                                     </div>
                                     <div>
-                                        <Label className="text-xs text-slate-500">Nombre (opcional)</Label>
-                                        <Input 
-                                            placeholder="Auto-generado"
-                                            value={newTizadoName}
-                                            onChange={(e) => setNewTizadoName(e.target.value)}
-                                            className="bg-white"
-                                        />
-                                    </div>
-                                    <div>
                                         <Label className="text-xs text-slate-500">Archivo (opcional)</Label>
                                         <Input 
                                             ref={newTizadoFileRef}
@@ -1031,6 +1022,58 @@ export default function BasesPage() {
                                         />
                                     </div>
                                 </div>
+                                
+                                {/* Selector de otras bases */}
+                                <div>
+                                    <Label className="text-xs text-slate-500 mb-2 block">Otras bases a vincular (opcional)</Label>
+                                    <div className="relative mb-2">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Input 
+                                            placeholder="Buscar bases..."
+                                            value={newTizadoBasesSearch}
+                                            onChange={(e) => setNewTizadoBasesSearch(e.target.value)}
+                                            className="pl-10 bg-white"
+                                        />
+                                    </div>
+                                    <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-lg bg-white">
+                                        {filteredBasesForNewTizado.length === 0 ? (
+                                            <p className="text-center text-slate-400 text-sm py-3">No hay otras bases disponibles</p>
+                                        ) : (
+                                            filteredBasesForNewTizado.map(base => (
+                                                <div 
+                                                    key={base.id} 
+                                                    className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-0 ${newTizadoOtrasBases.includes(base.id) ? 'bg-emerald-50' : ''}`}
+                                                    onClick={() => toggleBaseForNewTizado(base.id)}
+                                                >
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={newTizadoOtrasBases.includes(base.id)}
+                                                        onChange={() => {}}
+                                                        className="rounded"
+                                                    />
+                                                    <span className="text-sm">{base.nombre}</span>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                    {newTizadoOtrasBases.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-2">
+                                            {newTizadoOtrasBases.map(baseId => {
+                                                const base = data.find(b => b.id === baseId);
+                                                return (
+                                                    <Badge key={baseId} variant="secondary" className="text-xs">
+                                                        {base?.nombre || baseId.slice(-4)}
+                                                        <X 
+                                                            className="w-3 h-3 ml-1 cursor-pointer" 
+                                                            onClick={(e) => { e.stopPropagation(); toggleBaseForNewTizado(baseId); }}
+                                                        />
+                                                    </Badge>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div className="flex gap-2 justify-end">
                                     <Button 
                                         variant="outline" 
@@ -1039,7 +1082,8 @@ export default function BasesPage() {
                                             setShowNewTizadoForm(false);
                                             setNewTizadoAncho('');
                                             setNewTizadoCurva('');
-                                            setNewTizadoName('');
+                                            setNewTizadoOtrasBases([]);
+                                            setNewTizadoBasesSearch('');
                                             setNewTizadoFile(null);
                                         }}
                                     >
