@@ -96,7 +96,21 @@ export const getHilo = (id) => api.get(`/hilos/${id}`);
 export const createHilo = (data) => api.post('/hilos', data);
 export const updateHilo = (id, data) => api.put(`/hilos/${id}`, data);
 export const deleteHilo = (id) => api.delete(`/hilos/${id}`);
-export const reorderHilos = (items) => api.put('/hilos/reorder', { items });
+export const reorderHilos = (items) => api.put('/reorder/hilos', items);
+
+// Estados Costura
+export const getEstadosCostura = (params) => api.get('/estados-costura', { params });
+export const createEstadoCostura = (data) => api.post('/estados-costura', data);
+export const updateEstadoCostura = (id, data) => api.put(`/estados-costura/${id}`, data);
+export const deleteEstadoCostura = (id) => api.delete(`/estados-costura/${id}`);
+export const reorderEstadosCostura = (items) => api.put('/reorder/estados-costura', items);
+
+// Avios Costura
+export const getAviosCostura = (params) => api.get('/avios-costura', { params });
+export const createAvioCostura = (data) => api.post('/avios-costura', data);
+export const updateAvioCostura = (id, data) => api.put(`/avios-costura/${id}`, data);
+export const deleteAvioCostura = (id) => api.delete(`/avios-costura/${id}`);
+export const reorderAviosCostura = (items) => api.put('/reorder/avios-costura', items);
 
 // Muestras Base
 export const getMuestrasBase = (params) => api.get('/muestras-base', { params });
