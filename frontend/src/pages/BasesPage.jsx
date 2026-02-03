@@ -60,6 +60,49 @@ const ApprovalBadge = ({ aprobado }) => (
     </Badge>
 );
 
+// Component for bases search results in new tizado form
+const BasesSearchResults = ({ searchTerm, data, currentBaseId, selectedBases, onToggle }) => {
+    if (!searchTerm) {
+        return <p className="text-center text-slate-400 text-sm py-3">Escribe para buscar bases...</p>;
+    }
+    
+    const filtered = data
+        .filter(b => b.id !== currentBaseId)
+        .filter(b => b.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const results = filtered.slice(0, 10);
+    const total = filtered.length;
+    
+    if (results.length === 0) {
+        return <p className="text-center text-slate-400 text-sm py-3">No se encontraron bases</p>;
+    }
+    
+    return (
+        <>
+            {results.map(base => (
+                <div 
+                    key={base.id} 
+                    className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-0 ${selectedBases.includes(base.id) ? 'bg-emerald-50' : ''}`}
+                    onClick={() => onToggle(base.id)}
+                >
+                    <input 
+                        type="checkbox" 
+                        checked={selectedBases.includes(base.id)}
+                        onChange={() => {}}
+                        className="rounded"
+                    />
+                    <span className="text-sm">{base.nombre}</span>
+                </div>
+            ))}
+            {total > 10 && (
+                <p className="text-center text-slate-500 text-xs py-2 bg-slate-50">
+                    Mostrando 10 de {total} resultados. Refina tu búsqueda.
+                </p>
+            )}
+        </>
+    );
+};
+
 export default function BasesPage() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
