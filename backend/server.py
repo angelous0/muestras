@@ -207,6 +207,8 @@ class BaseDB(Base):
     fichas_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     tizados_archivos: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     tizados_nombres: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    estados_costura_ids: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
+    avios_costura_ids: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     aprobado: Mapped[bool] = mapped_column(Boolean, default=False)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     orden: Mapped[int] = mapped_column(Integer, default=0)
