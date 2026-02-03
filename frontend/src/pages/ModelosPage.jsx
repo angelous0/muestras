@@ -267,11 +267,7 @@ function ModelosPage() {
                     </DialogHeader>
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
                         <div>
-                            <Label>Nombre</Label>
-                            <Input value={formData.nombre || ''} onChange={(e) => setFormData({...formData, nombre: e.target.value})} />
-                        </div>
-                        <div>
-                            <Label>Base *</Label>
+                            <Label>Base (Modelo) *</Label>
                             <Select value={formData.base_id || ''} onValueChange={(v) => setFormData({...formData, base_id: v})}>
                                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                                 <SelectContent>{bases.filter(b => b.aprobado).map(b => <SelectItem key={b.id} value={b.id}>{b.nombre}</SelectItem>)}</SelectContent>
@@ -299,7 +295,7 @@ function ModelosPage() {
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
                 <DialogContent className="sm:max-w-md bg-white">
                     <DialogHeader><DialogTitle>Eliminar</DialogTitle><DialogDescription className="sr-only">Confirm</DialogDescription></DialogHeader>
-                    <p className="py-4">¿Eliminar "{selectedItem?.nombre}"?</p>
+                    <p className="py-4">¿Eliminar modelo "{getBaseName(selectedItem?.base_id)}"?</p>
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancelar</Button>
                         <Button variant="destructive" onClick={handleConfirmDelete}>Eliminar</Button>
