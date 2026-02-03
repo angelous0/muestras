@@ -10,6 +10,7 @@ import TelasPage from "./pages/TelasPage";
 import HilosPage from "./pages/HilosPage";
 import MuestrasBasePage from "./pages/MuestrasBasePage";
 import BasesPage from "./pages/BasesPage";
+import ModelosPage from "./pages/ModelosPage";
 import FichasPage from "./pages/FichasPage";
 import TizadosPage from "./pages/TizadosPage";
 import LoginPage from "./pages/LoginPage";
