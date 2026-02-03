@@ -216,8 +216,6 @@ export default function BasesPage() {
         return false;
     };
 
-    const getHiloName = (hiloId) => hilos.find(h => h.id === hiloId)?.nombre || '-';
-
     const handleAdd = () => {
         setSelectedItem(null);
         setFormData({ nombre: '', activo: true, aprobado: false });
