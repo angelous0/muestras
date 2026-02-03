@@ -220,6 +220,19 @@ class TizadoDB(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+class UsuarioDB(Base):
+    __tablename__ = "usuarios"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    nombre_completo: Mapped[str] = mapped_column(String(255), nullable=False)
+    rol: Mapped[str] = mapped_column(String(50), default="usuario")  # admin, usuario
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
 # ============ Pydantic Schemas ============
 
 class MarcaCreate(BaseModel):
