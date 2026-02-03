@@ -394,6 +394,11 @@ class Modelo(BaseModel):
     aprobado: bool = False
     activo: bool = True
     orden: int = 0
+    # Campos de la Base relacionada
+    base_fichas_archivos: List[str] = []
+    base_fichas_nombres: List[str] = []
+    base_tizados_archivos: List[str] = []
+    base_tizados_nombres: List[str] = []
 
 class FichaCreate(BaseModel):
     nombre: str
