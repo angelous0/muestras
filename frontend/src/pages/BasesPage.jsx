@@ -53,7 +53,8 @@ import { ScrollArea } from '../components/ui/scroll-area';
 import { Checkbox } from '../components/ui/checkbox';
 import { 
     Search, Plus, Pencil, Trash2, Filter, X, Upload, 
-    FileSpreadsheet, Download, Image, Check, Clock, File, FolderOpen, RotateCcw, Link2
+    FileSpreadsheet, Download, Image, Check, Clock, File, FolderOpen, RotateCcw, Link2,
+    CheckSquare, Sparkles, FileText
 } from 'lucide-react';
 
 const ApprovalBadge = ({ aprobado }) => (
