@@ -112,10 +112,9 @@ export default function BasesPage() {
     const defaultColumnWidths = {
         muestraBase: 180,
         nombre: 150,
-        hilo: 100,
         patron: 100,
         imagen: 100,
-        fichas: 120,
+        fichas_generales: 120,
         tizados: 120,
         estado: 100,
         acciones: 100
