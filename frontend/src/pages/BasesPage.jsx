@@ -5,7 +5,7 @@ import {
     getBases, createBase, updateBase, deleteBase, 
     uploadPatron, uploadImagen, uploadFichasBase, uploadTizadosBase,
     deleteFichaBase, deleteTizadoBase, getFileUrl,
-    getMuestrasBase, getHilos, getMarcas, getTiposProducto, getEntalles, getTelas,
+    getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
     getTizados, updateTizado
 } from '../lib/api';
 import {
