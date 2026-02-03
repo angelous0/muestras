@@ -785,7 +785,7 @@ async def delete_usuario(user_id: str, current_user: UsuarioDB = Depends(get_adm
 
 @api_router.post("/upload/{category}")
 async def upload_file(category: str, file: UploadFile = File(...), custom_name: str = Form(None)):
-    allowed_categories = ["costos", "patrones", "imagenes", "fichas", "tizados", "fichas_bases", "tizados_bases"]
+    allowed_categories = ["costos", "patrones", "imagenes", "fichas", "tizados", "fichas_bases", "tizados_bases", "fichas_modelos"]
     if category not in allowed_categories:
         raise HTTPException(status_code=400, detail="Categoría no válida")
     file_path = await save_upload_file(file, category, custom_name)
