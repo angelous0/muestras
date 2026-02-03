@@ -1503,7 +1503,9 @@ async def create_modelo(data: ModeloCreate):
                 nombre = f"Modelo - {base.nombre}"
         nombre = nombre or "Nuevo Modelo"
         
-        item = ModeloDB(**data.model_dump(), nombre=nombre, orden=max_orden + 1)
+        # Create dict without nombre to avoid duplicate
+        model_data = data.model_dump(exclude={'nombre'})
+        item = ModeloDB(**model_data, nombre=nombre, orden=max_orden + 1)
         session.add(item)
         await session.commit()
         await session.refresh(item)
@@ -1526,7 +1528,8 @@ async def update_modelo(item_id: str, data: ModeloCreate):
                 nombre = f"Modelo - {base.nombre}"
         nombre = nombre or item.nombre
         
-        for key, value in data.model_dump().items():
+        # Update fields excluding nombre
+        for key, value in data.model_dump(exclude={'nombre'}).items():
             setattr(item, key, value)
         item.nombre = nombre
         item.updated_at = datetime.now(timezone.utc)
