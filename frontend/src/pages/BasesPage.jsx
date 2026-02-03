@@ -95,7 +95,6 @@ export default function BasesPage() {
     
     // Catalogs
     const [muestrasBase, setMuestrasBase] = useState([]);
-    const [hilos, setHilos] = useState([]);
     const [marcas, setMarcas] = useState([]);
     const [tiposProducto, setTiposProducto] = useState([]);
     const [entalles, setEntalles] = useState([]);
