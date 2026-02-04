@@ -1490,6 +1490,110 @@ export default function BasesPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+            
+            {/* Dialog para editar tizado completo (ancho, curva, bases) */}
+            <Dialog open={!!editingTizado} onOpenChange={(open) => !open && setEditingTizado(null)}>
+                <DialogContent className="sm:max-w-lg bg-white max-h-[85vh] overflow-hidden flex flex-col">
+                    <DialogHeader className="border-b border-slate-200 pb-4">
+                        <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
+                            Editar Tizado
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Editar ancho, curva y bases vinculadas del tizado
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                        {/* Campos de Ancho y Curva */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label className="text-xs text-slate-500 mb-1.5 block">Ancho (cm) *</Label>
+                                <Input 
+                                    type="number"
+                                    placeholder="160"
+                                    value={editTizadoAncho}
+                                    onChange={(e) => setEditTizadoAncho(e.target.value)}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div>
+                                <Label className="text-xs text-slate-500 mb-1.5 block">Curva *</Label>
+                                <Input 
+                                    placeholder="2-3-3-2"
+                                    value={editTizadoCurva}
+                                    onChange={(e) => setEditTizadoCurva(e.target.value)}
+                                    className="bg-white"
+                                />
+                            </div>
+                        </div>
+                        
+                        {/* Selector de bases */}
+                        <div>
+                            <Label className="text-xs text-slate-500 mb-1.5 block">Bases vinculadas</Label>
+                            <div className="relative mb-2">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Input 
+                                    placeholder="Buscar bases..."
+                                    value={editTizadoBasesSearch}
+                                    onChange={(e) => setEditTizadoBasesSearch(e.target.value)}
+                                    className="pl-10 bg-white"
+                                />
+                            </div>
+                            <div className="space-y-1.5 max-h-[200px] overflow-y-auto border border-slate-200 rounded-lg p-2">
+                                {data
+                                    .filter(base => searchBase(base, editTizadoBasesSearch))
+                                    .map((base) => (
+                                    <label 
+                                        key={base.id}
+                                        className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors ${
+                                            editTizadoBasesIds.includes(base.id) 
+                                                ? 'bg-emerald-50 border border-emerald-200' 
+                                                : 'hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <Checkbox 
+                                            checked={editTizadoBasesIds.includes(base.id)}
+                                            onCheckedChange={() => toggleBaseInTizadoEditor(base.id)}
+                                        />
+                                        <span className="text-sm text-slate-700 flex-1 truncate">
+                                            {base.nombre || getMuestraBaseName(base.muestra_base_id)}
+                                        </span>
+                                    </label>
+                                ))}
+                                {data.filter(base => searchBase(base, editTizadoBasesSearch)).length === 0 && (
+                                    <p className="text-center text-slate-400 py-3 text-sm">No se encontraron bases</p>
+                                )}
+                            </div>
+                            {/* Bases seleccionadas */}
+                            {editTizadoBasesIds.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    <span className="text-xs text-slate-500 mr-1">Vinculadas ({editTizadoBasesIds.length}):</span>
+                                    {editTizadoBasesIds.slice(0, 5).map(baseId => {
+                                        const base = data.find(b => b.id === baseId);
+                                        return (
+                                            <Badge key={baseId} variant="secondary" className="text-xs">
+                                                {base?.nombre || baseId.slice(-4)}
+                                            </Badge>
+                                        );
+                                    })}
+                                    {editTizadoBasesIds.length > 5 && (
+                                        <Badge variant="outline" className="text-xs">+{editTizadoBasesIds.length - 5} más</Badge>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-200 pt-4 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setEditingTizado(null)}>Cancelar</Button>
+                        <Button 
+                            onClick={saveEditedTizado} 
+                            disabled={savingTizado || !editTizadoAncho || !editTizadoCurva}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            {savingTizado ? 'Guardando...' : 'Guardar Cambios'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <DeleteConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDeleteConfirm} itemName={selectedItem?.nombre} loading={submitting} />
 
