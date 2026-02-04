@@ -159,7 +159,7 @@ export const Layout = () => {
                 </nav>
 
                 {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700 space-y-3">
+                <div className="p-4 border-t border-slate-700 space-y-3 flex-shrink-0">
                     {/* User Info */}
                     {user && (
                         <div className="flex items-center gap-3 px-2">
