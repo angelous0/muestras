@@ -1280,7 +1280,7 @@ export default function BasesPage() {
                             />
                         </div>
 
-                        {/* Tabla de tizados */}
+                        {/* Tabla de tizados vinculados */}
                         <div className="border border-slate-200 rounded-lg overflow-hidden">
                             <Table>
                                 <TableHeader>
@@ -1289,22 +1289,20 @@ export default function BasesPage() {
                                         <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-28">Curva</TableHead>
                                         <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3">Otras Bases</TableHead>
                                         <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Archivo</TableHead>
-                                        <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-2 px-3 w-24">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredTizadosInDialog.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                                                No hay tizados disponibles
+                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                                                No hay tizados vinculados a esta base
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         filteredTizadosInDialog.map((tizado) => {
-                                            const isLinked = (tizado.bases_ids || []).includes(currentBaseForFiles?.id);
                                             const otherBases = getOtherBasesNames(tizado);
                                             return (
-                                                <TableRow key={tizado.id} className={`border-b border-slate-100 hover:bg-slate-50 ${isLinked ? 'bg-emerald-50' : ''}`}>
+                                                <TableRow key={tizado.id} className="border-b border-slate-100 hover:bg-slate-50">
                                                     <TableCell className="py-2 px-3 text-sm text-slate-600">
                                                         {tizado.ancho ? `${tizado.ancho} cm` : '-'}
                                                     </TableCell>
@@ -1312,11 +1310,7 @@ export default function BasesPage() {
                                                         {tizado.curva || '-'}
                                                     </TableCell>
                                                     <TableCell className="py-2 px-3 text-sm">
-                                                        <button
-                                                            onClick={() => openBasesEditor(tizado)}
-                                                            className="flex flex-wrap gap-1 w-full text-left hover:bg-slate-100 p-1 rounded transition-colors cursor-pointer min-h-[28px] items-center"
-                                                            title="Clic para agregar o eliminar bases"
-                                                        >
+                                                        <div className="flex flex-wrap gap-1">
                                                             {otherBases.length > 0 ? (
                                                                 <>
                                                                     {otherBases.slice(0, 3).map((name, i) => (
@@ -1329,12 +1323,9 @@ export default function BasesPage() {
                                                                     )}
                                                                 </>
                                                             ) : (
-                                                                <span className="text-slate-400 text-xs flex items-center gap-1">
-                                                                    <Plus className="w-3 h-3" />
-                                                                    Agregar bases
-                                                                </span>
+                                                                <span className="text-slate-400 text-xs">Solo esta base</span>
                                                             )}
-                                                        </button>
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="py-2 px-3">
                                                         {tizado.archivo_tizado ? (
@@ -1349,29 +1340,6 @@ export default function BasesPage() {
                                                             </Button>
                                                         ) : (
                                                             <span className="text-slate-400 text-xs">-</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="py-2 px-3">
-                                                        {isLinked ? (
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                onClick={() => handleToggleTizadoAssociation(tizado)}
-                                                                className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                            >
-                                                                <X className="w-3 h-3 mr-1" />
-                                                                Desvincular
-                                                            </Button>
-                                                        ) : (
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                onClick={() => handleToggleTizadoAssociation(tizado)}
-                                                                className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                                            >
-                                                                <Plus className="w-3 h-3 mr-1" />
-                                                                Vincular
-                                                            </Button>
                                                         )}
                                                     </TableCell>
                                                 </TableRow>
