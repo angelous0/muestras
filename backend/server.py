@@ -680,6 +680,7 @@ def get_r2_presigned_url(key: str, expiration: int = 3600) -> str:
 def delete_r2_file(file_path: str) -> bool:
     """Delete a file from R2 storage"""
     if not file_path:
+        print(f"[R2 DELETE] Skipped - empty file path")
         return True
     
     try:
@@ -690,17 +691,24 @@ def delete_r2_file(file_path: str) -> bool:
             key = file_path
         
         if r2_client:
+            print(f"[R2 DELETE] Deleting from R2: {key}")
             r2_client.delete_object(Bucket=R2_BUCKET_NAME, Key=key)
+            print(f"[R2 DELETE] SUCCESS - Deleted: {key}")
             logging.info(f"Deleted file from R2: {key}")
             return True
         else:
             # Local storage fallback
             local_path = UPLOADS_DIR / key
+            print(f"[R2 DELETE] Local mode - Deleting: {local_path}")
             if local_path.exists():
                 local_path.unlink()
+                print(f"[R2 DELETE] SUCCESS - Deleted local: {local_path}")
                 logging.info(f"Deleted local file: {local_path}")
+            else:
+                print(f"[R2 DELETE] File not found locally: {local_path}")
             return True
     except Exception as e:
+        print(f"[R2 DELETE] ERROR deleting {file_path}: {e}")
         logging.error(f"Error deleting file {file_path}: {e}")
         return False
 
