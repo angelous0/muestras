@@ -1656,42 +1656,49 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         
         # Table header
         y = page_height - 25 * mm
-        c.setFont("Helvetica-Bold", 7)
+        c.setFont("Helvetica-Bold", 6)
         c.drawString(5 * mm, y, "ITEM")
-        c.drawString(55 * mm, y, "CHECK")
-        c.drawString(70 * mm, y, "FECHA")
-        c.drawString(90 * mm, y, "FIRMA")
+        c.drawString(42 * mm, y, "CHECK")
+        c.drawString(52 * mm, y, "FECHA")
+        c.drawString(68 * mm, y, "ENTREGADO POR")
+        c.drawString(92 * mm, y, "FIRMA")
         
         # Header line
-        c.line(5 * mm, y - 1 * mm, 100 * mm, y - 1 * mm)
+        c.setStrokeColorRGB(0.5, 0.5, 0.5)  # Gray color
+        c.line(5 * mm, y - 1.5 * mm, 100 * mm, y - 1.5 * mm)
         
         # Items
-        c.setFont("Helvetica", 7)
+        c.setFont("Helvetica", 6)
         y -= 6 * mm
         
         for item_name in request.items:
-            if y < 15 * mm:
+            if y < 10 * mm:
                 c.showPage()
                 y = page_height - 15 * mm
             
-            # Item name (truncate to 25 chars)
-            c.drawString(5 * mm, y, item_name[:25])
+            # Item name (truncate to 20 chars)
+            c.setStrokeColorRGB(0, 0, 0)  # Black for text
+            c.drawString(5 * mm, y, item_name[:20])
             
             # Checkbox (empty square)
-            c.rect(57 * mm, y - 3 * mm, 4 * mm, 4 * mm)
+            c.rect(43 * mm, y - 2.5 * mm, 3.5 * mm, 3.5 * mm)
             
-            # Date line
-            c.line(68 * mm, y, 85 * mm, y)
+            # Date field with dotted format _/_/_
+            c.drawString(52 * mm, y, "_/_/_")
             
-            # Signature line
-            c.line(88 * mm, y, 100 * mm, y)
+            # Entregado por (dotted line)
+            c.setDash(1, 2)  # Dotted line pattern
+            c.line(68 * mm, y - 1 * mm, 88 * mm, y - 1 * mm)
             
-            y -= 8 * mm
-        
-        # Footer with receiver info
-        c.setFont("Helvetica", 7)
-        c.drawString(5 * mm, 10 * mm, "Recibido por: _______________________")
-        c.drawString(70 * mm, 10 * mm, "Fecha: ___/___/____")
+            # Firma (dotted line)
+            c.line(92 * mm, y - 1 * mm, 100 * mm, y - 1 * mm)
+            
+            # Row separator line (light gray)
+            c.setDash()  # Reset to solid line
+            c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
+            c.line(5 * mm, y - 4 * mm, 100 * mm, y - 4 * mm)
+            
+            y -= 7 * mm
         
         c.save()
         buffer.seek(0)
