@@ -1773,15 +1773,6 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         
         c.save()
         buffer.seek(0)
-            c.setDash()  # Reset to solid line
-            c.setStrokeColorRGB(0.75, 0.75, 0.75)  # Light gray (plomo)
-            c.setLineWidth(0.3)
-            c.line(5 * mm, y - 4.5 * mm, 100 * mm, y - 4.5 * mm)
-            
-            y -= 8 * mm
-        
-        c.save()
-        buffer.seek(0)
         
         # Save to R2/local storage
         file_name = f"{request.title}.pdf"
