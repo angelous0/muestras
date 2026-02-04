@@ -1646,18 +1646,88 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         page_height = 148 * mm
         c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
         
+        # Check if it's AVIOS COSTURA or ESTADOS COSTURA
+        is_avios = "AVIOS" in request.title.upper()
+        
         # Title
         c.setFont("Helvetica-Bold", 12)
         c.drawCentredString(page_width / 2, page_height - 10 * mm, request.title)
         
-        # Base name
+        # Model name
         c.setFont("Helvetica", 8)
         c.drawString(5 * mm, page_height - 18 * mm, f"Modelo: {base_name}")
         
-        # Table header
-        y = page_height - 25 * mm
-        c.setFont("Helvetica-Bold", 7)
-        c.drawString(5 * mm, y, "ITEM")
+        if is_avios:
+            # AVIOS COSTURA PDF FORMAT
+            # Cantidad field
+            c.drawString(5 * mm, page_height - 25 * mm, "Cantidad: ____________________")
+            
+            # Table header
+            y = page_height - 35 * mm
+            c.setFont("Helvetica-Bold", 8)
+            c.drawString(5 * mm, y, "AVIOS")
+            c.drawString(75 * mm, y, "CHECK")
+            
+            # Header line
+            c.setStrokeColorRGB(0.4, 0.4, 0.4)
+            c.setLineWidth(0.5)
+            c.line(5 * mm, y - 2 * mm, 100 * mm, y - 2 * mm)
+            
+            # Items
+            y -= 7 * mm
+            
+            for item_name in request.items:
+                if y < 35 * mm:  # Leave space for footer
+                    c.showPage()
+                    y = page_height - 15 * mm
+                
+                # Item name - BOLD
+                c.setFont("Helvetica-Bold", 8)
+                c.setFillColorRGB(0, 0, 0)
+                c.drawString(5 * mm, y, item_name[:35])
+                
+                # Checkbox
+                c.setStrokeColorRGB(0, 0, 0)
+                c.setLineWidth(0.5)
+                c.rect(76 * mm, y - 1.5 * mm, 3.5 * mm, 3.5 * mm)
+                
+                # Row separator line (light gray)
+                c.setStrokeColorRGB(0.75, 0.75, 0.75)
+                c.setLineWidth(0.3)
+                c.line(5 * mm, y - 4.5 * mm, 100 * mm, y - 4.5 * mm)
+                
+                y -= 8 * mm
+            
+            # Footer section
+            c.setFont("Helvetica", 7)
+            c.setFillColorRGB(0, 0, 0)
+            footer_y = 20 * mm
+            
+            # Recibido por
+            c.drawString(5 * mm, footer_y, "Recibido por:")
+            c.setDash(1, 1)
+            c.setStrokeColorRGB(0, 0, 0)
+            c.line(25 * mm, footer_y - 1 * mm, 55 * mm, footer_y - 1 * mm)
+            
+            # Fecha
+            c.setDash()
+            c.drawString(5 * mm, footer_y - 8 * mm, "Fecha: ___/___/____")
+            
+            # Firma
+            c.drawString(55 * mm, footer_y - 8 * mm, "Firma:")
+            c.setDash(1, 1)
+            c.line(67 * mm, footer_y - 9 * mm, 100 * mm, footer_y - 9 * mm)
+        
+        else:
+            # ESTADOS COSTURA PDF FORMAT (original)
+            # Table header
+            y = page_height - 25 * mm
+            c.setFont("Helvetica-Bold", 7)
+            c.drawString(5 * mm, y, "ITEM")
+            c.drawString(38 * mm, y, "CHECK")
+            c.drawString(48 * mm, y, "FECHA")
+            c.drawString(68 * mm, y, "ENTREGADO POR")
+            c.drawString(92 * mm, y, "FIRMA")
         c.drawString(38 * mm, y, "CHECK")
         c.drawString(48 * mm, y, "FECHA")
         c.drawString(68 * mm, y, "ENTREGADO POR")
