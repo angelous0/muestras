@@ -148,24 +148,53 @@ function ModelosPage() {
         setFichasDialogOpen(true);
         setFichaFile(null);
         setFichaName('');
+        setShowNewFichaForm(false);
+        setFichaSearch('');
     };
 
     const handleUploadFicha = async () => {
-        if (!fichaFile || !currentModelo) return;
+        if (!fichaFile || !currentModelo || !fichaName) return;
         setUploadingFicha(true);
         try {
-            await uploadFichaModelo(currentModelo.id, [fichaFile], fichaName ? [fichaName] : []);
-            toast.success('Ficha subida');
+            await uploadFichaModelo(currentModelo.id, [fichaFile], [fichaName]);
+            toast.success('Ficha creada exitosamente');
             setFichaFile(null);
             setFichaName('');
+            setShowNewFichaForm(false);
             fetchData();
             const res = await getModelos({});
             setCurrentModelo(res.data.find(m => m.id === currentModelo.id));
         } catch (err) {
-            toast.error('Error');
+            toast.error('Error al crear ficha');
         } finally {
             setUploadingFicha(false);
         }
+    };
+
+    // Helper functions for file display
+    const getFileName = (path) => {
+        if (!path) return '';
+        const parts = path.split('/');
+        return parts[parts.length - 1];
+    };
+
+    const getFileExtension = (path) => {
+        if (!path) return '';
+        const name = getFileName(path);
+        const parts = name.split('.');
+        return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : '';
+    };
+
+    // Filtered fichas for search
+    const filteredFichasModelo = () => {
+        if (!currentModelo?.fichas_archivos) return [];
+        const fichas = currentModelo.fichas_archivos.map((archivo, i) => ({
+            archivo,
+            nombre: currentModelo.fichas_nombres?.[i] || `Ficha ${i + 1}`,
+            index: i
+        }));
+        if (!fichaSearch) return fichas;
+        return fichas.filter(f => f.nombre.toLowerCase().includes(fichaSearch.toLowerCase()));
     };
 
     const handleDeleteFicha = async (index) => {
