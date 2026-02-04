@@ -586,8 +586,12 @@ export default function BasesPage() {
         return allTizados.filter(t => (t.bases_ids || []).includes(currentBaseForFiles.id));
     };
 
-    // Filter tizados by search (by ancho, curva, and otras bases)
+    // Filter tizados - only show linked tizados, with optional search
     const filteredTizadosInDialog = allTizados.filter(t => {
+        // First, only include tizados linked to current base
+        const isLinked = (t.bases_ids || []).includes(currentBaseForFiles?.id);
+        if (!isLinked) return false;
+        
         const searchLower = tizadoSearchInDialog.toLowerCase();
         if (!searchLower) return true;
         
