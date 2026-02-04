@@ -1656,49 +1656,54 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         
         # Table header
         y = page_height - 25 * mm
-        c.setFont("Helvetica-Bold", 6)
+        c.setFont("Helvetica-Bold", 7)
         c.drawString(5 * mm, y, "ITEM")
-        c.drawString(42 * mm, y, "CHECK")
-        c.drawString(52 * mm, y, "FECHA")
+        c.drawString(38 * mm, y, "CHECK")
+        c.drawString(48 * mm, y, "FECHA")
         c.drawString(68 * mm, y, "ENTREGADO POR")
         c.drawString(92 * mm, y, "FIRMA")
         
         # Header line
-        c.setStrokeColorRGB(0.5, 0.5, 0.5)  # Gray color
-        c.line(5 * mm, y - 1.5 * mm, 100 * mm, y - 1.5 * mm)
+        c.setStrokeColorRGB(0.4, 0.4, 0.4)  # Gray color
+        c.setLineWidth(0.5)
+        c.line(5 * mm, y - 2 * mm, 100 * mm, y - 2 * mm)
         
         # Items
-        c.setFont("Helvetica", 6)
-        y -= 6 * mm
+        y -= 7 * mm
         
         for item_name in request.items:
             if y < 10 * mm:
                 c.showPage()
                 y = page_height - 15 * mm
             
-            # Item name (truncate to 20 chars)
-            c.setStrokeColorRGB(0, 0, 0)  # Black for text
-            c.drawString(5 * mm, y, item_name[:20])
+            # Item name - BOLD and larger font
+            c.setFont("Helvetica-Bold", 8)
+            c.setFillColorRGB(0, 0, 0)
+            c.drawString(5 * mm, y, item_name[:18])
             
-            # Checkbox (empty square)
-            c.rect(43 * mm, y - 2.5 * mm, 3.5 * mm, 3.5 * mm)
+            # Checkbox (empty square) - centered vertically
+            c.setStrokeColorRGB(0, 0, 0)
+            c.setLineWidth(0.5)
+            c.rect(39 * mm, y - 1.5 * mm, 3 * mm, 3 * mm)
             
-            # Date field with dotted format _/_/_
-            c.drawString(52 * mm, y, "_/_/_")
+            # Date field - realistic format __/__/____
+            c.setFont("Helvetica", 7)
+            c.drawString(48 * mm, y, "___/___/____")
             
-            # Entregado por (dotted line)
-            c.setDash(1, 2)  # Dotted line pattern
+            # Entregado por (dotted line) - aligned
+            c.setDash(1, 1)  # Dotted line pattern
             c.line(68 * mm, y - 1 * mm, 88 * mm, y - 1 * mm)
             
-            # Firma (dotted line)
+            # Firma (dotted line) - aligned same level
             c.line(92 * mm, y - 1 * mm, 100 * mm, y - 1 * mm)
             
             # Row separator line (light gray)
             c.setDash()  # Reset to solid line
-            c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
-            c.line(5 * mm, y - 4 * mm, 100 * mm, y - 4 * mm)
+            c.setStrokeColorRGB(0.75, 0.75, 0.75)  # Light gray (plomo)
+            c.setLineWidth(0.3)
+            c.line(5 * mm, y - 4.5 * mm, 100 * mm, y - 4.5 * mm)
             
-            y -= 7 * mm
+            y -= 8 * mm
         
         c.save()
         buffer.seek(0)
