@@ -1148,10 +1148,10 @@ export default function BasesPage() {
                 <DialogContent className="sm:max-w-4xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader className="border-b border-slate-200 pb-4">
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
-                            Tizados de Base #{currentBaseForFiles?.id?.slice(-4) || ''}
+                            Tizados Vinculados - {currentBaseForFiles?.nombre || `Base #${currentBaseForFiles?.id?.slice(-4)}`}
                         </DialogTitle>
                         <DialogDescription className="sr-only">
-                            Gestionar tizados vinculados a esta base
+                            Ver tizados vinculados a esta base
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto py-4 space-y-4">
