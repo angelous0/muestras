@@ -1728,50 +1728,50 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
             y = top_start - 12 * mm
             c.setFont("Helvetica-Bold", 7)
             c.drawString(left_margin, y, "ITEM")
-            c.drawString(38 * mm, y, "CHECK")
-            c.drawString(48 * mm, y, "FECHA")
-            c.drawString(68 * mm, y, "ENTREGADO POR")
-            c.drawString(92 * mm, y, "FIRMA")
+            c.drawString(35 * mm, y, "CHECK")
+            c.drawString(45 * mm, y, "FECHA")
+            c.drawString(65 * mm, y, "ENTREGADO POR")
+            c.drawString(90 * mm, y, "FIRMA")
             
             # Header line
             c.setStrokeColorRGB(0.4, 0.4, 0.4)
             c.setLineWidth(0.5)
-            c.line(5 * mm, y - 2 * mm, 100 * mm, y - 2 * mm)
+            c.line(left_margin, y - 2 * mm, 100 * mm, y - 2 * mm)
             
             # Items
             y -= 7 * mm
             
             for item_name in request.items:
-                if y < 10 * mm:
+                if y < 5 * mm:
                     c.showPage()
-                    y = page_height - 15 * mm
+                    y = page_height - 10 * mm
                 
                 # Item name - BOLD and larger font
                 c.setFont("Helvetica-Bold", 8)
                 c.setFillColorRGB(0, 0, 0)
-                c.drawString(5 * mm, y, item_name[:18])
+                c.drawString(left_margin, y, item_name[:18])
                 
                 # Checkbox (empty square)
                 c.setStrokeColorRGB(0, 0, 0)
                 c.setLineWidth(0.5)
-                c.rect(39 * mm, y - 1.5 * mm, 3 * mm, 3 * mm)
+                c.rect(36 * mm, y - 1.5 * mm, 3 * mm, 3 * mm)
                 
                 # Date field - realistic format
                 c.setFont("Helvetica", 7)
-                c.drawString(48 * mm, y, "___/___/____")
+                c.drawString(45 * mm, y, "___/___/____")
                 
                 # Entregado por (dotted line)
                 c.setDash(1, 1)
-                c.line(68 * mm, y - 1 * mm, 88 * mm, y - 1 * mm)
+                c.line(65 * mm, y - 1 * mm, 85 * mm, y - 1 * mm)
                 
                 # Firma (dotted line)
-                c.line(92 * mm, y - 1 * mm, 100 * mm, y - 1 * mm)
+                c.line(90 * mm, y - 1 * mm, 100 * mm, y - 1 * mm)
                 
                 # Row separator line (light gray)
                 c.setDash()
                 c.setStrokeColorRGB(0.75, 0.75, 0.75)
                 c.setLineWidth(0.3)
-                c.line(5 * mm, y - 4.5 * mm, 100 * mm, y - 4.5 * mm)
+                c.line(left_margin, y - 4.5 * mm, 100 * mm, y - 4.5 * mm)
                 
                 y -= 8 * mm
         
