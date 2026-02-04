@@ -1641,25 +1641,30 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         
         # Generate PDF using ReportLab
         buffer = BytesIO()
-        # A6 size: 105mm x 148mm
-        page_width = 105 * mm
-        page_height = 148 * mm
-        c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
+        # A4 size page, but content in A6 area (top-left corner)
+        from reportlab.lib.pagesizes import A4
+        page_width_a4 = A4[0]  # 210mm
+        page_height_a4 = A4[1]  # 297mm
+        c = canvas.Canvas(buffer, pagesize=A4)
+        
+        # A6 content area dimensions
+        a6_width = 105 * mm
+        a6_height = 148 * mm
         
         # Check if it's AVIOS COSTURA or ESTADOS COSTURA
         is_avios = "AVIOS" in request.title.upper()
         
-        # Margins - minimal for easy cutting
-        left_margin = 2 * mm
-        top_start = page_height - 4 * mm
+        # Content starts at top-left of A4, within A6 bounds
+        left_margin = 5 * mm
+        top_start = page_height_a4 - 8 * mm  # Start from top of A4
         
-        # Title - aligned left
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(left_margin, top_start, request.title)
+        # Title - centered within A6 width
+        c.setFont("Helvetica-Bold", 12)
+        c.drawCentredString(a6_width / 2, top_start, request.title)
         
         # Model name
         c.setFont("Helvetica", 8)
-        c.drawString(left_margin, top_start - 6 * mm, f"Modelo: {base_name}")
+        c.drawString(left_margin, top_start - 8 * mm, f"Modelo: {base_name}")
         
         if is_avios:
             # AVIOS COSTURA PDF FORMAT
