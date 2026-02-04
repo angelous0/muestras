@@ -736,6 +736,61 @@ export default function BasesPage() {
             toast.error('Error al actualizar bases');
         }
     };
+    
+    // Open tizado editor
+    const openTizadoEditor = (tizado) => {
+        setEditingTizado(tizado);
+        setEditTizadoAncho(tizado.ancho?.toString() || '');
+        setEditTizadoCurva(tizado.curva || '');
+        setEditTizadoBasesIds([...(tizado.bases_ids || [])]);
+        setEditTizadoBasesSearch('');
+    };
+    
+    // Toggle base in tizado editor
+    const toggleBaseInTizadoEditor = (baseId) => {
+        setEditTizadoBasesIds(prev => {
+            if (prev.includes(baseId)) {
+                return prev.filter(id => id !== baseId);
+            } else {
+                return [...prev, baseId];
+            }
+        });
+    };
+    
+    // Save edited tizado
+    const saveEditedTizado = async () => {
+        if (!editingTizado || !editTizadoAncho || !editTizadoCurva) {
+            toast.error('Ancho y Curva son requeridos');
+            return;
+        }
+        
+        setSavingTizado(true);
+        try {
+            await updateTizado(editingTizado.id, {
+                ...editingTizado,
+                ancho: parseFloat(editTizadoAncho),
+                curva: editTizadoCurva,
+                nombre: `${editTizadoAncho}-${editTizadoCurva}`,
+                bases_ids: editTizadoBasesIds
+            });
+            toast.success('Tizado actualizado');
+            
+            // Refresh data
+            fetchData();
+            fetchCatalogs();
+            if (currentBaseForFiles) {
+                const updated = await getBases({});
+                const refreshed = updated.data.find(b => b.id === currentBaseForFiles.id);
+                if (refreshed) setCurrentBaseForFiles(refreshed);
+            }
+            
+            setEditingTizado(null);
+        } catch (error) {
+            toast.error('Error al actualizar tizado');
+        } finally {
+            setSavingTizado(false);
+        }
+    };
 
     // Create new ficha with name and file
     const handleCreateFicha = async () => {
