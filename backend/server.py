@@ -1652,7 +1652,7 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         
         # Base name
         c.setFont("Helvetica", 8)
-        c.drawString(5 * mm, page_height - 18 * mm, f"Base: {base_name}")
+        c.drawString(5 * mm, page_height - 18 * mm, f"Modelo: {base_name}")
         
         # Table header
         y = page_height - 25 * mm
