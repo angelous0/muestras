@@ -617,6 +617,14 @@ export default function BasesPage() {
     const [editingTizadoBases, setEditingTizadoBases] = useState(null);
     const [tempBasesIds, setTempBasesIds] = useState([]);
     const [basesEditorSearch, setBasesEditorSearch] = useState('');
+    
+    // State for editing a complete tizado (ancho, curva, bases)
+    const [editingTizado, setEditingTizado] = useState(null);
+    const [editTizadoAncho, setEditTizadoAncho] = useState('');
+    const [editTizadoCurva, setEditTizadoCurva] = useState('');
+    const [editTizadoBasesIds, setEditTizadoBasesIds] = useState([]);
+    const [editTizadoBasesSearch, setEditTizadoBasesSearch] = useState('');
+    const [savingTizado, setSavingTizado] = useState(false);
 
     const handleDeleteConfirm = async () => {
         setSubmitting(true);
