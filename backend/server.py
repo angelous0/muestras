@@ -1669,10 +1669,10 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         if is_avios:
             # AVIOS COSTURA PDF FORMAT
             # Cantidad field
-            c.drawString(left_margin, top_start - 12 * mm, "Cantidad: ____________________")
+            c.drawString(left_margin, top_start - 14 * mm, "Cantidad: ____________________")
             
             # Table header
-            y = top_start - 20 * mm
+            y = top_start - 24 * mm
             c.setFont("Helvetica-Bold", 8)
             c.drawString(left_margin, y, "AVIOS")
             c.drawString(70 * mm, y, "CHECK")
@@ -1680,15 +1680,19 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
             # Header line
             c.setStrokeColorRGB(0.4, 0.4, 0.4)
             c.setLineWidth(0.5)
-            c.line(left_margin, y - 2 * mm, 100 * mm, y - 2 * mm)
+            c.line(left_margin, y - 2 * mm, a6_width - 5 * mm, y - 2 * mm)
             
             # Items
             y -= 7 * mm
             
+            # Calculate footer position (bottom of A6 area)
+            a6_bottom = page_height_a4 - a6_height
+            footer_y = a6_bottom + 20 * mm
+            
             for item_name in request.items:
-                if y < 30 * mm:  # Leave space for footer
+                if y < footer_y + 15 * mm:  # Leave space for footer
                     c.showPage()
-                    y = page_height - 10 * mm
+                    y = page_height_a4 - 15 * mm
                 
                 # Item name - BOLD
                 c.setFont("Helvetica-Bold", 8)
@@ -1703,14 +1707,13 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
                 # Row separator line (light gray)
                 c.setStrokeColorRGB(0.75, 0.75, 0.75)
                 c.setLineWidth(0.3)
-                c.line(left_margin, y - 4.5 * mm, 100 * mm, y - 4.5 * mm)
+                c.line(left_margin, y - 4.5 * mm, a6_width - 5 * mm, y - 4.5 * mm)
                 
                 y -= 8 * mm
             
-            # Footer section
+            # Footer section (within A6 area)
             c.setFont("Helvetica", 7)
             c.setFillColorRGB(0, 0, 0)
-            footer_y = 18 * mm
             
             # Recibido por
             c.drawString(left_margin, footer_y, "Recibido por:")
@@ -1720,17 +1723,17 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
             
             # Fecha
             c.setDash()
-            c.drawString(left_margin, footer_y - 8 * mm, "Fecha: ___/___/____")
+            c.drawString(left_margin, footer_y - 10 * mm, "Fecha: ___/___/____")
             
             # Firma
-            c.drawString(50 * mm, footer_y - 8 * mm, "Firma:")
+            c.drawString(50 * mm, footer_y - 10 * mm, "Firma:")
             c.setDash(1, 1)
-            c.line(62 * mm, footer_y - 9 * mm, 100 * mm, footer_y - 9 * mm)
+            c.line(62 * mm, footer_y - 11 * mm, a6_width - 5 * mm, footer_y - 11 * mm)
         
         else:
             # ESTADOS COSTURA PDF FORMAT
             # Table header
-            y = top_start - 12 * mm
+            y = top_start - 14 * mm
             c.setFont("Helvetica-Bold", 7)
             c.drawString(left_margin, y, "ITEM")
             c.drawString(35 * mm, y, "CHECK")
