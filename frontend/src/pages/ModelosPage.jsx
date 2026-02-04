@@ -28,6 +28,8 @@ function ModelosPage() {
     const [fichaName, setFichaName] = useState('');
     const [uploadingFicha, setUploadingFicha] = useState(false);
     const fichaInputRef = useRef(null);
+    const [showNewFichaForm, setShowNewFichaForm] = useState(false);
+    const [fichaSearch, setFichaSearch] = useState('');
     
     // Columnas redimensionables
     const defaultColumnWidths = {
