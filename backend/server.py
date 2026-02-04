@@ -1744,15 +1744,18 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
             # Header line
             c.setStrokeColorRGB(0.4, 0.4, 0.4)
             c.setLineWidth(0.5)
-            c.line(left_margin, y - 2 * mm, 100 * mm, y - 2 * mm)
+            c.line(left_margin, y - 2 * mm, a6_width - 5 * mm, y - 2 * mm)
             
             # Items
             y -= 7 * mm
             
+            # Calculate A6 bottom boundary
+            a6_bottom = page_height_a4 - a6_height
+            
             for item_name in request.items:
-                if y < 5 * mm:
+                if y < a6_bottom + 5 * mm:
                     c.showPage()
-                    y = page_height - 10 * mm
+                    y = page_height_a4 - 15 * mm
                 
                 # Item name - BOLD and larger font
                 c.setFont("Helvetica-Bold", 8)
@@ -1773,13 +1776,13 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
                 c.line(65 * mm, y - 1 * mm, 85 * mm, y - 1 * mm)
                 
                 # Firma (dotted line)
-                c.line(90 * mm, y - 1 * mm, 100 * mm, y - 1 * mm)
+                c.line(90 * mm, y - 1 * mm, a6_width - 5 * mm, y - 1 * mm)
                 
                 # Row separator line (light gray)
                 c.setDash()
                 c.setStrokeColorRGB(0.75, 0.75, 0.75)
                 c.setLineWidth(0.3)
-                c.line(left_margin, y - 4.5 * mm, 100 * mm, y - 4.5 * mm)
+                c.line(left_margin, y - 4.5 * mm, a6_width - 5 * mm, y - 4.5 * mm)
                 
                 y -= 8 * mm
         
