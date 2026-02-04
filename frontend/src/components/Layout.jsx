@@ -104,9 +104,10 @@ export const Layout = () => {
                 transform transition-transform duration-200 ease-in-out
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                 lg:translate-x-0
+                flex flex-col
             `}>
                 {/* Logo */}
-                <div className="h-16 flex items-center px-6 border-b border-slate-700">
+                <div className="h-16 flex items-center px-6 border-b border-slate-700 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
                             <Layers className="w-5 h-5 text-white" />
@@ -118,7 +119,7 @@ export const Layout = () => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-4 space-y-6">
+                <nav className="p-4 space-y-6 flex-1 overflow-y-auto">
                     {/* Dashboard */}
                     <div className="space-y-1">
                         {renderNavItems(navItemsBase)}
