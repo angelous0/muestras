@@ -1649,35 +1649,39 @@ async def generate_checklist_pdf(base_id: str, request: GenerateChecklistRequest
         # Check if it's AVIOS COSTURA or ESTADOS COSTURA
         is_avios = "AVIOS" in request.title.upper()
         
-        # Title
-        c.setFont("Helvetica-Bold", 12)
-        c.drawCentredString(page_width / 2, page_height - 10 * mm, request.title)
+        # Margins - minimal for easy cutting
+        left_margin = 2 * mm
+        top_start = page_height - 4 * mm
+        
+        # Title - aligned left
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(left_margin, top_start, request.title)
         
         # Model name
         c.setFont("Helvetica", 8)
-        c.drawString(5 * mm, page_height - 18 * mm, f"Modelo: {base_name}")
+        c.drawString(left_margin, top_start - 6 * mm, f"Modelo: {base_name}")
         
         if is_avios:
             # AVIOS COSTURA PDF FORMAT
             # Cantidad field
-            c.drawString(5 * mm, page_height - 25 * mm, "Cantidad: ____________________")
+            c.drawString(left_margin, top_start - 12 * mm, "Cantidad: ____________________")
             
             # Table header
-            y = page_height - 35 * mm
+            y = top_start - 20 * mm
             c.setFont("Helvetica-Bold", 8)
-            c.drawString(5 * mm, y, "AVIOS")
-            c.drawString(75 * mm, y, "CHECK")
+            c.drawString(left_margin, y, "AVIOS")
+            c.drawString(70 * mm, y, "CHECK")
             
             # Header line
             c.setStrokeColorRGB(0.4, 0.4, 0.4)
             c.setLineWidth(0.5)
-            c.line(5 * mm, y - 2 * mm, 100 * mm, y - 2 * mm)
+            c.line(left_margin, y - 2 * mm, 100 * mm, y - 2 * mm)
             
             # Items
             y -= 7 * mm
             
             for item_name in request.items:
-                if y < 35 * mm:  # Leave space for footer
+                if y < 30 * mm:  # Leave space for footer
                     c.showPage()
                     y = page_height - 15 * mm
                 
