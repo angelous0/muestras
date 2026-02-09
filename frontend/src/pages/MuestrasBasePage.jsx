@@ -168,8 +168,8 @@ export default function MuestrasBasePage() {
 
     const handleAdd = () => {
         setSelectedItem(null);
-        const currentYear = new Date().getFullYear();
-        setFormData({ activo: true, aprobado: false, n_muestra: `${currentYear}-` });
+        const nextNMuestra = generateNextNMuestra();
+        setFormData({ activo: true, aprobado: false, n_muestra: nextNMuestra });
         setFormOpen(true);
     };
 
