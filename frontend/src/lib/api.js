@@ -60,7 +60,7 @@ export const getMarca = (id) => api.get(`/marcas/${id}`);
 export const createMarca = (data) => api.post('/marcas', data);
 export const updateMarca = (id, data) => api.put(`/marcas/${id}`, data);
 export const deleteMarca = (id) => api.delete(`/marcas/${id}`);
-export const reorderMarcas = (items) => api.put('/marcas/reorder', { items });
+export const reorderMarcas = (items) => api.put('/reorder/marcas', items);
 
 // Tipos Producto
 export const getTiposProducto = (params) => api.get('/tipos-producto', { params });
@@ -69,7 +69,7 @@ export const getTipoProducto = (id) => api.get(`/tipos-producto/${id}`);
 export const createTipoProducto = (data) => api.post('/tipos-producto', data);
 export const updateTipoProducto = (id, data) => api.put(`/tipos-producto/${id}`, data);
 export const deleteTipoProducto = (id) => api.delete(`/tipos-producto/${id}`);
-export const reorderTiposProducto = (items) => api.put('/tipos-producto/reorder', { items });
+export const reorderTiposProducto = (items) => api.put('/reorder/tipos-producto', items);
 
 // Entalles
 export const getEntalles = (params) => api.get('/entalles', { params });
@@ -78,7 +78,7 @@ export const getEntalle = (id) => api.get(`/entalles/${id}`);
 export const createEntalle = (data) => api.post('/entalles', data);
 export const updateEntalle = (id, data) => api.put(`/entalles/${id}`, data);
 export const deleteEntalle = (id) => api.delete(`/entalles/${id}`);
-export const reorderEntalles = (items) => api.put('/entalles/reorder', { items });
+export const reorderEntalles = (items) => api.put('/reorder/entalles', items);
 
 // Telas
 export const getTelas = (params) => api.get('/telas', { params });
@@ -87,7 +87,7 @@ export const getTela = (id) => api.get(`/telas/${id}`);
 export const createTela = (data) => api.post('/telas', data);
 export const updateTela = (id, data) => api.put(`/telas/${id}`, data);
 export const deleteTela = (id) => api.delete(`/telas/${id}`);
-export const reorderTelas = (items) => api.put('/telas/reorder', { items });
+export const reorderTelas = (items) => api.put('/reorder/telas', items);
 
 // Hilos
 export const getHilos = (params) => api.get('/hilos', { params });
