@@ -390,6 +390,22 @@ export default function MuestrasBasePage() {
             setUploadingId(null);
         }
     };
+    
+    // Delete file
+    const handleDeleteFile = async (itemId) => {
+        if (!confirm('¿Eliminar el archivo de costos?')) return;
+        
+        setUploadingId(itemId);
+        try {
+            await deleteArchivoCostos(itemId);
+            toast.success('Archivo eliminado');
+            fetchData();
+        } catch (error) {
+            toast.error('Error al eliminar archivo');
+        } finally {
+            setUploadingId(null);
+        }
+    };
 
     const handleDeleteConfirm = async () => {
         setSubmitting(true);
