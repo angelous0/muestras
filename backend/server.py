@@ -1428,12 +1428,30 @@ async def upload_archivo_costos(item_id: str, file: UploadFile = File(...)):
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        # Delete old file if exists
+        if item.archivo_costos:
+            delete_r2_file(item.archivo_costos)
         # Use original filename
         file_path = await save_upload_file(file, "costos", None)
         item.archivo_costos = file_path
         item.updated_at = datetime.now(timezone.utc)
         await session.commit()
         return {"file_path": file_path}
+
+@api_router.delete("/muestras-base/{item_id}/archivo")
+async def delete_archivo_costos(item_id: str):
+    async with async_session() as session:
+        result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == item_id))
+        item = result.scalar_one_or_none()
+        if not item:
+            raise HTTPException(status_code=404, detail="No encontrado")
+        if item.archivo_costos:
+            delete_r2_file(item.archivo_costos)
+            item.archivo_costos = None
+            item.updated_at = datetime.now(timezone.utc)
+            await session.commit()
+            return {"message": "Archivo eliminado"}
+        return {"message": "No hay archivo para eliminar"}
 
 # ============ BASES ROUTES ============
 
