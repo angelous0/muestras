@@ -126,6 +126,7 @@ export const uploadArchivoCostos = (id, file) => {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 };
+export const deleteArchivoCostos = (id) => api.delete(`/muestras-base/${id}/archivo`);
 
 // Fichas
 export const getFichas = (params) => api.get('/fichas', { params });
