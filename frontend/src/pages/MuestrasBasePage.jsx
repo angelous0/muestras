@@ -133,6 +133,28 @@ export default function MuestrasBasePage() {
     // Helper to get catalog names
     const getCatalogName = (id, catalog) => catalog.find(c => c.id === id)?.nombre || '-';
 
+    // Generate next n_muestra with format YYYY-XXX
+    const generateNextNMuestra = () => {
+        const currentYear = new Date().getFullYear();
+        const yearPrefix = `${currentYear}-`;
+        
+        // Find all n_muestra that start with current year
+        const currentYearNumbers = data
+            .filter(item => item.n_muestra && item.n_muestra.startsWith(yearPrefix))
+            .map(item => {
+                const numPart = item.n_muestra.replace(yearPrefix, '');
+                return parseInt(numPart, 10) || 0;
+            })
+            .filter(num => !isNaN(num));
+        
+        // Get the max number and increment
+        const maxNumber = currentYearNumbers.length > 0 ? Math.max(...currentYearNumbers) : 0;
+        const nextNumber = maxNumber + 1;
+        
+        // Format with leading zeros (3 digits)
+        return `${yearPrefix}${String(nextNumber).padStart(3, '0')}`;
+    };
+
     // Generate automatic name
     const generateNombre = (data) => {
         const marca = getCatalogName(data.marca_id, marcas);
