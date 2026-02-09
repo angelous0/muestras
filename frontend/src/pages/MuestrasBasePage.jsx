@@ -555,6 +555,7 @@ export default function MuestrasBasePage() {
                                                             target="_blank" 
                                                             rel="noreferrer"
                                                             className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                            title="Descargar archivo"
                                                         >
                                                             <FileSpreadsheet className="w-4 h-4" />
                                                             <Download className="w-3 h-3" />
@@ -565,8 +566,19 @@ export default function MuestrasBasePage() {
                                                             onClick={() => fileInputRefs.current[item.id]?.click()}
                                                             className="h-6 px-1 text-slate-500 hover:text-slate-700"
                                                             disabled={uploadingId === item.id}
+                                                            title="Reemplazar archivo"
                                                         >
                                                             <Upload className="w-3 h-3" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleDeleteFile(item.id)}
+                                                            className="h-6 px-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                            disabled={uploadingId === item.id}
+                                                            title="Eliminar archivo"
+                                                        >
+                                                            <Trash2 className="w-3 h-3" />
                                                         </Button>
                                                     </div>
                                                 ) : (
