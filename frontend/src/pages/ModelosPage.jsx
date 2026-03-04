@@ -360,9 +360,42 @@ function ModelosPage() {
                             <Label>Base (Modelo) *</Label>
                             <Select value={formData.base_id || ''} onValueChange={(v) => setFormData({...formData, base_id: v})}>
                                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                                <SelectContent>{bases.filter(b => b.aprobado).map(b => <SelectItem key={b.id} value={b.id}>{b.nombre}</SelectItem>)}</SelectContent>
+                                <SelectContent className="max-h-[300px]">{bases.filter(b => b.aprobado).map(b => <SelectItem key={b.id} value={b.id}>{b.nombre}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
+                        
+                        {/* Panel informativo de la base seleccionada */}
+                        {formData.base_id && getSelectedBaseInfo() && (
+                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2">
+                                <div className="flex items-center gap-2 text-slate-600 text-sm font-medium border-b border-slate-200 pb-2 mb-2">
+                                    <Info className="w-4 h-4" />
+                                    Información de la Base
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">N° Muestra:</span>
+                                        <span className="font-medium text-slate-700">{getSelectedBaseInfo()?.nMuestra}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Marca:</span>
+                                        <span className="font-medium text-slate-700">{getSelectedBaseInfo()?.marca}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Tipo:</span>
+                                        <span className="font-medium text-slate-700">{getSelectedBaseInfo()?.tipo}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Entalle:</span>
+                                        <span className="font-medium text-slate-700">{getSelectedBaseInfo()?.entalle}</span>
+                                    </div>
+                                    <div className="col-span-2 flex justify-between">
+                                        <span className="text-slate-500">Tela:</span>
+                                        <span className="font-medium text-slate-700">{getSelectedBaseInfo()?.tela}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
                         <div>
                             <Label>Hilo</Label>
                             <Select value={formData.hilo_id || ''} onValueChange={(v) => setFormData({...formData, hilo_id: v})}>
