@@ -99,6 +99,11 @@ function ModelosPage() {
         fetchData();
         getBases({ activo: true }).then(res => setBases(res.data)).catch(() => {});
         getHilos({ activo: true }).then(res => setHilos(res.data)).catch(() => {});
+        getMuestrasBase({}).then(res => setMuestrasBase(res.data)).catch(() => {});
+        getMarcas({ activo: true }).then(res => setMarcas(res.data)).catch(() => {});
+        getTiposProducto({ activo: true }).then(res => setTiposProducto(res.data)).catch(() => {});
+        getEntalles({ activo: true }).then(res => setEntalles(res.data)).catch(() => {});
+        getTelas({ activo: true }).then(res => setTelas(res.data)).catch(() => {});
     }, []);
 
     const getBaseName = (id) => bases.find(b => b.id === id)?.nombre || '-';
