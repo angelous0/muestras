@@ -1004,13 +1004,22 @@ export default function BasesPage() {
                         <div className="space-y-2">
                             <Label>Muestra Base <span className="text-red-500">*</span> <span className="text-slate-400 text-xs">(solo aprobadas)</span></Label>
                             <Select value={formData.muestra_base_id || ''} onValueChange={(v) => handleChange('muestra_base_id', v)}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccionar muestra base" className="truncate" />
+                                <SelectTrigger className="w-full min-h-[40px] h-auto">
+                                    <SelectValue placeholder="Seleccionar muestra base">
+                                        {formData.muestra_base_id && (
+                                            <span className="text-left whitespace-normal leading-tight">
+                                                {(() => {
+                                                    const m = muestrasBase.find(mb => mb.id === formData.muestra_base_id);
+                                                    return m ? `${m.n_muestra ? `${m.n_muestra} - ` : ''}${getMuestraBaseName(m.id)}` : '';
+                                                })()}
+                                            </span>
+                                        )}
+                                    </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent className="max-w-lg">
+                                <SelectContent className="max-w-[500px] max-h-[300px]">
                                     {muestrasBase.filter(m => m.aprobado).map(m => (
-                                        <SelectItem key={m.id} value={m.id} className="max-w-[450px]">
-                                            <span className="truncate block max-w-[430px]">{m.n_muestra ? `${m.n_muestra} - ` : ''}{getMuestraBaseName(m.id)}</span>
+                                        <SelectItem key={m.id} value={m.id} className="py-2">
+                                            <span className="whitespace-normal leading-tight">{m.n_muestra ? `${m.n_muestra} - ` : ''}{getMuestraBaseName(m.id)}</span>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
