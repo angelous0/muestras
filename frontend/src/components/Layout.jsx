@@ -51,7 +51,8 @@ const navItemsMuestras = [
 ];
 
 export const Layout = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // For desktop
     const { user, logout } = useAuth();
 
     const renderNavItems = (items) => items.map((item) => (
