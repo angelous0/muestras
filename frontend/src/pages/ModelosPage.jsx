@@ -22,6 +22,11 @@ function ModelosPage() {
     const [formData, setFormData] = useState({});
     const [bases, setBases] = useState([]);
     const [hilos, setHilos] = useState([]);
+    const [muestrasBase, setMuestrasBase] = useState([]);
+    const [marcas, setMarcas] = useState([]);
+    const [tiposProducto, setTiposProducto] = useState([]);
+    const [entalles, setEntalles] = useState([]);
+    const [telas, setTelas] = useState([]);
     const [fichasDialogOpen, setFichasDialogOpen] = useState(false);
     const [currentModelo, setCurrentModelo] = useState(null);
     const [fichaFile, setFichaFile] = useState(null);
