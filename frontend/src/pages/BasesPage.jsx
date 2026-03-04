@@ -1007,27 +1007,22 @@ export default function BasesPage() {
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
                         <div className="space-y-2">
                             <Label>Muestra Base <span className="text-red-500">*</span> <span className="text-slate-400 text-xs">(solo aprobadas)</span></Label>
-                            <Select value={formData.muestra_base_id || ''} onValueChange={(v) => handleChange('muestra_base_id', v)}>
-                                <SelectTrigger className="w-full min-h-[40px] h-auto">
-                                    <SelectValue placeholder="Seleccionar muestra base">
-                                        {formData.muestra_base_id && (
-                                            <span className="text-left whitespace-normal leading-tight">
-                                                {(() => {
-                                                    const m = muestrasBase.find(mb => mb.id === formData.muestra_base_id);
-                                                    return m ? `${m.n_muestra ? `${m.n_muestra} - ` : ''}${getMuestraBaseName(m.id)}` : '';
-                                                })()}
-                                            </span>
-                                        )}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="max-w-[500px] max-h-[300px]">
-                                    {muestrasBase.filter(m => m.aprobado).map(m => (
-                                        <SelectItem key={m.id} value={m.id} className="py-2">
-                                            <span className="whitespace-normal leading-tight">{m.n_muestra ? `${m.n_muestra} - ` : ''}{getMuestraBaseName(m.id)}</span>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <div 
+                                onClick={() => setMuestraBaseModalOpen(true)}
+                                className="w-full min-h-[44px] px-3 py-2 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between"
+                            >
+                                {formData.muestra_base_id ? (
+                                    <span className="text-sm text-slate-700 leading-tight">
+                                        {(() => {
+                                            const m = muestrasBase.find(mb => mb.id === formData.muestra_base_id);
+                                            return m ? `${m.n_muestra ? `${m.n_muestra} - ` : ''}${getMuestraBaseName(m.id)}` : '';
+                                        })()}
+                                    </span>
+                                ) : (
+                                    <span className="text-slate-400 text-sm">Clic para seleccionar muestra base...</span>
+                                )}
+                                <Search className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" />
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label>Nombre</Label>
