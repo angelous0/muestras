@@ -994,7 +994,7 @@ export default function BasesPage() {
 
             {/* Form Dialog */}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
-                <DialogContent className="sm:max-w-lg bg-white">
+                <DialogContent className="sm:max-w-xl bg-white">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
                             {selectedItem ? 'Editar Base' : 'Nueva Base'}
