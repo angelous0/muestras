@@ -89,6 +89,20 @@ export const Layout = () => {
                     {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </Button>
             </div>
+            
+            {/* Desktop toggle button - visible when sidebar is collapsed */}
+            <div className={`hidden lg:block fixed top-4 z-50 transition-all duration-200 ${sidebarCollapsed ? 'left-4' : 'left-[17rem]'}`}>
+                <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    data-testid="desktop-menu-btn"
+                    className="bg-white shadow-sm hover:bg-slate-100"
+                    title={sidebarCollapsed ? 'Mostrar menú' : 'Ocultar menú'}
+                >
+                    {sidebarCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+                </Button>
+            </div>
 
             {/* Overlay */}
             {sidebarOpen && (
@@ -104,7 +118,7 @@ export const Layout = () => {
                 bg-slate-800 sidebar-texture overflow-y-auto
                 transform transition-transform duration-200 ease-in-out
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                lg:translate-x-0
+                ${sidebarCollapsed ? 'lg:-translate-x-full' : 'lg:translate-x-0'}
                 flex flex-col
             `}>
                 {/* Logo */}
