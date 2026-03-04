@@ -116,6 +116,10 @@ export default function BasesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({});
     
+    // Muestra Base selector modal
+    const [muestraBaseModalOpen, setMuestraBaseModalOpen] = useState(false);
+    const [muestraBaseSearch, setMuestraBaseSearch] = useState('');
+    
     // All tizados for selection
     const [allTizados, setAllTizados] = useState([]);
     
