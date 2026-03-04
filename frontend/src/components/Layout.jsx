@@ -208,10 +208,10 @@ export const Layout = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="lg:ml-64 min-h-screen">
+            <main className={`min-h-screen transition-all duration-200 ${sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'}`}>
                 {/* Header */}
                 <header className="sticky top-0 z-30 h-16 glass-header border-b border-slate-200 flex items-center px-6 lg:px-8">
-                    <div className="lg:hidden w-10" />
+                    <div className={`transition-all duration-200 ${sidebarCollapsed ? 'lg:w-14' : 'lg:w-0'} w-10`} />
                     <h1 
                         className="text-lg font-semibold text-slate-700"
                         style={{ fontFamily: 'Manrope' }}
