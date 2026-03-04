@@ -108,6 +108,25 @@ function ModelosPage() {
 
     const getBaseName = (id) => bases.find(b => b.id === id)?.nombre || '-';
     const getHiloName = (id) => hilos.find(h => h.id === id)?.nombre || '-';
+    
+    // Get full info of selected base
+    const getSelectedBaseInfo = () => {
+        if (!formData.base_id) return null;
+        const base = bases.find(b => b.id === formData.base_id);
+        if (!base) return null;
+        
+        const muestra = muestrasBase.find(m => m.id === base.muestra_base_id);
+        if (!muestra) return { baseName: base.nombre };
+        
+        return {
+            baseName: base.nombre,
+            marca: marcas.find(m => m.id === muestra.marca_id)?.nombre || '-',
+            tipo: tiposProducto.find(t => t.id === muestra.tipo_producto_id)?.nombre || '-',
+            entalle: entalles.find(e => e.id === muestra.entalle_id)?.nombre || '-',
+            tela: telas.find(t => t.id === muestra.tela_id)?.nombre || '-',
+            nMuestra: muestra.n_muestra || '-'
+        };
+    };
 
     const handleAdd = () => {
         setSelectedItem(null);
