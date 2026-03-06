@@ -943,18 +943,19 @@ async def get_marcas(search: str = "", activo: Optional[bool] = None):
         return [Marca.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/marcas", response_model=Marca)
-async def create_marca(data: MarcaCreate):
+async def create_marca(data: MarcaCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(func.coalesce(func.max(MarcaDB.orden), 0)))
         max_orden = result.scalar()
         item = MarcaDB(**data.model_dump(), orden=max_orden + 1)
         session.add(item)
+        await log_audit(session, current_user, "CREAR", "Marca", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return Marca.model_validate(item)
 
 @api_router.put("/marcas/{item_id}", response_model=Marca)
-async def update_marca(item_id: str, data: MarcaCreate):
+async def update_marca(item_id: str, data: MarcaCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(MarcaDB).where(MarcaDB.id == item_id))
         item = result.scalar_one_or_none()
@@ -963,17 +964,19 @@ async def update_marca(item_id: str, data: MarcaCreate):
         for key, value in data.model_dump().items():
             setattr(item, key, value)
         item.updated_at = datetime.now(timezone.utc)
+        await log_audit(session, current_user, "EDITAR", "Marca", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return Marca.model_validate(item)
 
 @api_router.delete("/marcas/{item_id}")
-async def delete_marca(item_id: str):
+async def delete_marca(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(MarcaDB).where(MarcaDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        await log_audit(session, current_user, "ELIMINAR", "Marca", item.id, item.nombre)
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
