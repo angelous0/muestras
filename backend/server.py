@@ -2364,18 +2364,19 @@ async def get_tizados(search: str = "", activo: Optional[bool] = None):
         return [Tizado.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/tizados", response_model=Tizado)
-async def create_tizado(data: TizadoCreate):
+async def create_tizado(data: TizadoCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(func.coalesce(func.max(TizadoDB.orden), 0)))
         max_orden = result.scalar()
         item = TizadoDB(**data.model_dump(), orden=max_orden + 1)
         session.add(item)
+        await log_audit(session, current_user, "CREAR", "Tizado", item.id, data.nombre or f"{data.ancho}-{data.curva}")
         await session.commit()
         await session.refresh(item)
         return Tizado.model_validate(item)
 
 @api_router.put("/tizados/{item_id}", response_model=Tizado)
-async def update_tizado(item_id: str, data: TizadoCreate):
+async def update_tizado(item_id: str, data: TizadoCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(TizadoDB).where(TizadoDB.id == item_id))
         item = result.scalar_one_or_none()
@@ -2384,17 +2385,20 @@ async def update_tizado(item_id: str, data: TizadoCreate):
         for key, value in data.model_dump().items():
             setattr(item, key, value)
         item.updated_at = datetime.now(timezone.utc)
+        await log_audit(session, current_user, "EDITAR", "Tizado", item.id, data.nombre or f"{data.ancho}-{data.curva}")
         await session.commit()
         await session.refresh(item)
         return Tizado.model_validate(item)
 
 @api_router.delete("/tizados/{item_id}")
-async def delete_tizado_item(item_id: str):
+async def delete_tizado_item(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(TizadoDB).where(TizadoDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        await log_audit(session, current_user, "ELIMINAR", "Tizado", item.id, item.nombre)
         
         # Delete associated file from R2
         if item.archivo_tizado:
