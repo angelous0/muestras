@@ -1211,18 +1211,19 @@ async def get_hilos(search: str = "", activo: Optional[bool] = None):
         return [Hilo.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/hilos", response_model=Hilo)
-async def create_hilo(data: HiloCreate):
+async def create_hilo(data: HiloCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(func.coalesce(func.max(HiloDB.orden), 0)))
         max_orden = result.scalar()
         item = HiloDB(**data.model_dump(), orden=max_orden + 1)
         session.add(item)
+        await log_audit(session, current_user, "CREAR", "Hilo", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return Hilo.model_validate(item)
 
 @api_router.put("/hilos/{item_id}", response_model=Hilo)
-async def update_hilo(item_id: str, data: HiloCreate):
+async def update_hilo(item_id: str, data: HiloCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(HiloDB).where(HiloDB.id == item_id))
         item = result.scalar_one_or_none()
@@ -1231,17 +1232,19 @@ async def update_hilo(item_id: str, data: HiloCreate):
         for key, value in data.model_dump().items():
             setattr(item, key, value)
         item.updated_at = datetime.now(timezone.utc)
+        await log_audit(session, current_user, "EDITAR", "Hilo", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return Hilo.model_validate(item)
 
 @api_router.delete("/hilos/{item_id}")
-async def delete_hilo(item_id: str):
+async def delete_hilo(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(HiloDB).where(HiloDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        await log_audit(session, current_user, "ELIMINAR", "Hilo", item.id, item.nombre)
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
