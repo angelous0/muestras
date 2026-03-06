@@ -1939,6 +1939,17 @@ async def delete_tizado(base_id: str, file_index: int):
         await session.commit()
         return {"message": "Eliminado"}
 
+@api_router.put("/reorder/bases")
+async def reorder_bases(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            result = await session.execute(select(BaseDB).where(BaseDB.id == item['id']))
+            db_item = result.scalar_one_or_none()
+            if db_item:
+                db_item.orden = item['orden']
+        await session.commit()
+        return {"message": "Orden actualizado"}
+
 # ============ MODELOS ROUTES ============
 
 @api_router.get("/modelos")
