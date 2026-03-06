@@ -1994,7 +1994,8 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                 "base_fichas_nombres": [],
                 "base_tizados": [],
                 "muestra_base_nombre": None,
-                "base_patron_archivo": None  # Patron de la base
+                "base_patron_archivo": None,  # Patron de la base
+                "clasificacion": None  # Dynamic classification
             }
             
             # Add base's fichas, related tizados, and muestra_base name
@@ -2004,9 +2005,23 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                 modelo_dict["base_fichas_nombres"] = base.fichas_nombres or []
                 modelo_dict["base_patron_archivo"] = base.patron_archivo
                 
-                # Get muestra_base name from base
+                # Get muestra_base and build dynamic clasificacion
                 if base.muestra_base_id and base.muestra_base_id in muestras_dict:
-                    modelo_dict["muestra_base_nombre"] = muestras_dict[base.muestra_base_id].nombre
+                    muestra = muestras_dict[base.muestra_base_id]
+                    modelo_dict["muestra_base_nombre"] = muestra.nombre
+                    
+                    # Build clasificacion dynamically from current catalog values
+                    parts = []
+                    if muestra.marca_id and muestra.marca_id in marcas_dict:
+                        parts.append(marcas_dict[muestra.marca_id])
+                    if muestra.tipo_producto_id and muestra.tipo_producto_id in tipos_dict:
+                        parts.append(tipos_dict[muestra.tipo_producto_id])
+                    if muestra.tela_id and muestra.tela_id in telas_dict:
+                        parts.append(telas_dict[muestra.tela_id])
+                    if muestra.entalle_id and muestra.entalle_id in entalles_dict:
+                        parts.append(entalles_dict[muestra.entalle_id])
+                    
+                    modelo_dict["clasificacion"] = "-".join(parts) if parts else None
                 
                 # Find tizados related to this base (M-M relation via bases_ids)
                 related_tizados = []
