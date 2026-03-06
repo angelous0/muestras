@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getModelos, createModelo, updateModelo, deleteModelo, getBases, getHilos, uploadFichaModelo, deleteFichaModelo, getFileUrl, getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas } from '../lib/api';
+import { getModelos, createModelo, updateModelo, deleteModelo, getBases, getHilos, uploadFichaModelo, deleteFichaModelo, getFileUrl, getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas, reorderModelos } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -8,8 +8,62 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { Search, Plus, Pencil, Trash2, Upload, Download, FileText, X, FolderOpen, Scissors, RotateCcw, Info } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Upload, Download, FileText, X, FolderOpen, Scissors, RotateCcw, Info, GripVertical } from 'lucide-react';
 import { ResizableTableHead, ResizableTableCell, useResizableColumns } from '../components/ResizableTable';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable row component for drag and drop
+const SortableModeloRow = ({ item, children }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        backgroundColor: isDragging ? '#f1f5f9' : undefined,
+    };
+
+    return (
+        <TableRow
+            ref={setNodeRef}
+            style={style}
+            className="border-b border-slate-100 hover:bg-slate-50"
+        >
+            <TableCell className="py-3 px-2 w-10">
+                <button
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-slate-100 rounded"
+                >
+                    <GripVertical className="h-4 w-4 text-slate-400" />
+                </button>
+            </TableCell>
+            {children}
+        </TableRow>
+    );
+};
 
 function ModelosPage() {
     const [data, setData] = useState([]);
