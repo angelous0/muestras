@@ -7,8 +7,25 @@ import {
     deleteFichaBase, deleteTizadoBase, getFileUrl,
     getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
     getTizados, updateTizado, createTizado, uploadArchivoTizado,
-    getEstadosCostura, getAviosCostura, generateChecklistPdf
+    getEstadosCostura, getAviosCostura, generateChecklistPdf,
+    reorderBases
 } from '../lib/api';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
     Table,
     TableBody,
