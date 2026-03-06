@@ -1010,18 +1010,19 @@ async def get_tipos_producto(search: str = "", activo: Optional[bool] = None):
         return [TipoProducto.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/tipos-producto", response_model=TipoProducto)
-async def create_tipo_producto(data: TipoProductoCreate):
+async def create_tipo_producto(data: TipoProductoCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(func.coalesce(func.max(TipoProductoDB.orden), 0)))
         max_orden = result.scalar()
         item = TipoProductoDB(**data.model_dump(), orden=max_orden + 1)
         session.add(item)
+        await log_audit(session, current_user, "CREAR", "Tipo Producto", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return TipoProducto.model_validate(item)
 
 @api_router.put("/tipos-producto/{item_id}", response_model=TipoProducto)
-async def update_tipo_producto(item_id: str, data: TipoProductoCreate):
+async def update_tipo_producto(item_id: str, data: TipoProductoCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(TipoProductoDB).where(TipoProductoDB.id == item_id))
         item = result.scalar_one_or_none()
@@ -1030,17 +1031,19 @@ async def update_tipo_producto(item_id: str, data: TipoProductoCreate):
         for key, value in data.model_dump().items():
             setattr(item, key, value)
         item.updated_at = datetime.now(timezone.utc)
+        await log_audit(session, current_user, "EDITAR", "Tipo Producto", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return TipoProducto.model_validate(item)
 
 @api_router.delete("/tipos-producto/{item_id}")
-async def delete_tipo_producto(item_id: str):
+async def delete_tipo_producto(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(TipoProductoDB).where(TipoProductoDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        await log_audit(session, current_user, "ELIMINAR", "Tipo Producto", item.id, item.nombre)
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
