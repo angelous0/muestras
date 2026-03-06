@@ -122,6 +122,44 @@ const BasesSearchResults = ({ searchTerm, data, currentBaseId, selectedBases, on
     );
 };
 
+// Sortable row component for drag and drop
+const SortableBaseRow = ({ item, children }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        backgroundColor: isDragging ? '#f1f5f9' : undefined,
+    };
+
+    return (
+        <TableRow
+            ref={setNodeRef}
+            style={style}
+            className="table-row-hover border-b border-slate-100"
+        >
+            <TableCell className="py-3 px-2 w-10">
+                <button
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-slate-100 rounded"
+                >
+                    <GripVertical className="h-4 w-4 text-slate-400" />
+                </button>
+            </TableCell>
+            {children}
+        </TableRow>
+    );
+};
+
 export default function BasesPage() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
