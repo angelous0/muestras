@@ -761,6 +761,18 @@ async def log_audit(
     )
     session.add(audit)
 
+def serialize_db_item(item) -> dict:
+    """Serialize a SQLAlchemy model instance to a dict for audit logging"""
+    data = {}
+    for col in item.__table__.columns:
+        val = getattr(item, col.name)
+        if isinstance(val, datetime):
+            val = val.isoformat()
+        elif isinstance(val, list):
+            val = list(val)
+        data[col.name] = val
+    return data
+
 def calculate_rentabilidad(costo: float, precio: float) -> float:
     """Calculate profitability percentage"""
     if costo and precio and costo > 0:
@@ -976,7 +988,7 @@ async def delete_marca(item_id: str, current_user: UsuarioDB = Depends(get_curre
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        await log_audit(session, current_user, "ELIMINAR", "Marca", item.id, item.nombre)
+        await log_audit(session, current_user, "ELIMINAR", "Marca", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
@@ -1043,7 +1055,7 @@ async def delete_tipo_producto(item_id: str, current_user: UsuarioDB = Depends(g
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        await log_audit(session, current_user, "ELIMINAR", "Tipo Producto", item.id, item.nombre)
+        await log_audit(session, current_user, "ELIMINAR", "Tipo Producto", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
@@ -1110,7 +1122,7 @@ async def delete_entalle(item_id: str, current_user: UsuarioDB = Depends(get_cur
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        await log_audit(session, current_user, "ELIMINAR", "Entalle", item.id, item.nombre)
+        await log_audit(session, current_user, "ELIMINAR", "Entalle", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
@@ -1177,7 +1189,7 @@ async def delete_tela(item_id: str, current_user: UsuarioDB = Depends(get_curren
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        await log_audit(session, current_user, "ELIMINAR", "Tela", item.id, item.nombre)
+        await log_audit(session, current_user, "ELIMINAR", "Tela", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
@@ -1244,7 +1256,7 @@ async def delete_hilo(item_id: str, current_user: UsuarioDB = Depends(get_curren
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
-        await log_audit(session, current_user, "ELIMINAR", "Hilo", item.id, item.nombre)
+        await log_audit(session, current_user, "ELIMINAR", "Hilo", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
@@ -1466,8 +1478,8 @@ async def delete_muestra_base(item_id: str, current_user: UsuarioDB = Depends(ge
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
         
-        # Log audit before delete
-        await log_audit(session, current_user, "ELIMINAR", "Muestra Base", item.id, item.n_muestra or item.nombre)
+        # Log audit before delete with full data
+        await log_audit(session, current_user, "ELIMINAR", "Muestra Base", item.id, item.n_muestra or item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         
         # Delete associated file from R2
         if item.archivo_costos:
@@ -1594,8 +1606,8 @@ async def delete_base(item_id: str, current_user: UsuarioDB = Depends(get_curren
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
         
-        # Log audit before delete
-        await log_audit(session, current_user, "ELIMINAR", "Base", item.id, item.nombre)
+        # Log audit before delete with full data
+        await log_audit(session, current_user, "ELIMINAR", "Base", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         
         # Delete all associated files from R2
         if item.patron_archivo:
@@ -2190,8 +2202,8 @@ async def delete_modelo(item_id: str, current_user: UsuarioDB = Depends(get_curr
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
         
-        # Log audit before delete
-        await log_audit(session, current_user, "ELIMINAR", "Modelo", item.id, item.nombre)
+        # Log audit before delete with full data
+        await log_audit(session, current_user, "ELIMINAR", "Modelo", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         
         # Delete associated files from R2
         if item.fichas_archivos:
@@ -2398,7 +2410,7 @@ async def delete_tizado_item(item_id: str, current_user: UsuarioDB = Depends(get
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
         
-        await log_audit(session, current_user, "ELIMINAR", "Tizado", item.id, item.nombre)
+        await log_audit(session, current_user, "ELIMINAR", "Tizado", item.id, item.nombre, detalles={"datos_completos": serialize_db_item(item)})
         
         # Delete associated file from R2
         if item.archivo_tizado:
@@ -2548,6 +2560,85 @@ async def get_audit_stats(current_user: UsuarioDB = Depends(get_current_user)):
             "by_entity": by_entity,
             "recent_7_days": recent_count
         }
+
+@api_router.post("/historial/{log_id}/restaurar")
+async def restore_from_audit(log_id: str, current_user: UsuarioDB = Depends(get_current_user)):
+    """Restore a deleted item from audit log"""
+    import json
+    async with async_session() as session:
+        result = await session.execute(select(AuditLogDB).where(AuditLogDB.id == log_id))
+        log_entry = result.scalar_one_or_none()
+        if not log_entry:
+            raise HTTPException(status_code=404, detail="Registro de auditoría no encontrado")
+        
+        if log_entry.accion != "ELIMINAR":
+            raise HTTPException(status_code=400, detail="Solo se pueden restaurar elementos eliminados")
+        
+        detalles = json.loads(log_entry.detalles) if log_entry.detalles else None
+        if not detalles or "datos_completos" not in detalles:
+            raise HTTPException(status_code=400, detail="No hay datos completos para restaurar")
+        
+        datos = detalles["datos_completos"]
+        entidad = log_entry.entidad
+        
+        # Map entity to DB model
+        entity_map = {
+            "Marca": MarcaDB,
+            "Tipo Producto": TipoProductoDB,
+            "Entalle": EntalloDB,
+            "Tela": TelaDB,
+            "Hilo": HiloDB,
+            "Muestra Base": MuestraBaseDB,
+            "Base": BaseDB,
+            "Modelo": ModeloDB,
+            "Tizado": TizadoDB,
+        }
+        
+        db_model = entity_map.get(entidad)
+        if not db_model:
+            raise HTTPException(status_code=400, detail=f"No se puede restaurar la entidad '{entidad}'")
+        
+        # Remove timestamps and generate new id
+        datos.pop("created_at", None)
+        datos.pop("updated_at", None)
+        old_id = datos.pop("id", None)
+        
+        # For MuestraBase, clear file references (files were deleted from R2)
+        if entidad == "Muestra Base":
+            datos.pop("archivo_costos", None)
+        elif entidad == "Base":
+            datos.pop("patron_archivo", None)
+            datos.pop("fichas_archivos", None)
+            datos.pop("fichas_nombres", None)
+            datos.pop("tizados_archivos", None)
+            datos.pop("tizados_nombres", None)
+            datos["fichas_archivos"] = []
+            datos["fichas_nombres"] = []
+            datos["tizados_archivos"] = []
+            datos["tizados_nombres"] = []
+        elif entidad == "Modelo":
+            datos.pop("fichas_archivos", None)
+            datos.pop("fichas_nombres", None)
+            datos["fichas_archivos"] = []
+            datos["fichas_nombres"] = []
+        elif entidad == "Tizado":
+            datos.pop("archivo_tizado", None)
+        
+        # Create new item
+        new_item = db_model(**datos)
+        session.add(new_item)
+        
+        # Log the restoration
+        await log_audit(
+            session, current_user, "RESTAURAR", entidad,
+            new_item.id, log_entry.entidad_nombre,
+            detalles={"restaurado_desde_log": log_id, "id_original": old_id}
+        )
+        
+        await session.commit()
+        await session.refresh(new_item)
+        
+        return {"message": f"{entidad} restaurado correctamente", "new_id": new_item.id}
 
 # Include router
 app.include_router(api_router)

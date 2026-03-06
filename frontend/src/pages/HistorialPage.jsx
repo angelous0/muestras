@@ -33,6 +33,12 @@ const actionStyles = {
         badge: 'bg-purple-500 text-white',
         icon: 'bg-purple-100 text-purple-600',
         text: 'text-purple-700'
+    },
+    RESTAURAR: {
+        bg: 'bg-amber-50 hover:bg-amber-100 border-l-4 border-l-amber-500',
+        badge: 'bg-amber-500 text-white',
+        icon: 'bg-amber-100 text-amber-600',
+        text: 'text-amber-700'
     }
 };
 
@@ -50,7 +56,8 @@ const ActionIcon = ({ accion, className }) => {
         EDITAR: Pencil,
         ELIMINAR: Trash2,
         SUBIR_ARCHIVO: Upload,
-        ELIMINAR_ARCHIVO: Trash2
+        ELIMINAR_ARCHIVO: Trash2,
+        RESTAURAR: RotateCcw
     };
     const Icon = icons[accion] || Eye;
     return <Icon className={className || "w-4 h-4"} />;
@@ -199,40 +206,9 @@ export default function HistorialPage() {
     const handleRestore = async () => {
         if (!selectedLog) return;
         
-        const detalles = parseDetalles(selectedLog.detalles);
-        if (!detalles?.datos_completos) {
-            toast.error('No hay datos para restaurar');
-            return;
-        }
-        
         setRestoring(true);
         try {
-            // Determinar el endpoint según la entidad
-            const endpoints = {
-                'Marca': '/marcas',
-                'Tipo Producto': '/tipos-producto',
-                'Entalle': '/entalles',
-                'Tela': '/telas',
-                'Hilo': '/hilos',
-                'Muestra Base': '/muestras-base',
-                'Base': '/bases',
-                'Modelo': '/modelos',
-                'Tizado': '/tizados'
-            };
-            
-            const endpoint = endpoints[selectedLog.entidad];
-            if (!endpoint) {
-                toast.error('No se puede restaurar esta entidad');
-                return;
-            }
-            
-            // Crear nuevo registro con los datos guardados
-            const datosRestaurar = { ...detalles.datos_completos };
-            delete datosRestaurar.id;
-            delete datosRestaurar.created_at;
-            delete datosRestaurar.updated_at;
-            
-            await api.post(endpoint, datosRestaurar);
+            await api.post(`/historial/${selectedLog.id}/restaurar`);
             toast.success(`${selectedLog.entidad} restaurado correctamente`);
             setDetailOpen(false);
             fetchLogs();
@@ -324,6 +300,7 @@ export default function HistorialPage() {
                             <SelectItem value="CREAR">Crear</SelectItem>
                             <SelectItem value="EDITAR">Editar</SelectItem>
                             <SelectItem value="ELIMINAR">Eliminar</SelectItem>
+                            <SelectItem value="RESTAURAR">Restaurar</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -480,34 +457,81 @@ export default function HistorialPage() {
                                     <span className="text-slate-500">Fecha:</span>
                                     <p className="font-medium">{formatDate(selectedLog.created_at)}</p>
                                 </div>
-                                <div className="col-span-2">
-                                    <span className="text-slate-500">ID del registro:</span>
-                                    <p className="font-mono text-xs bg-slate-100 p-1 rounded mt-1">{selectedLog.entidad_id}</p>
-                                </div>
                             </div>
                             
-                            {/* Detalles */}
-                            {parseDetalles(selectedLog.detalles) && (
-                                <div>
-                                    <span className="text-slate-500 text-sm">Datos registrados:</span>
-                                    <div className="bg-slate-50 rounded-lg p-3 mt-2 max-h-48 overflow-y-auto">
-                                        <pre className="text-xs text-slate-600 whitespace-pre-wrap">
-                                            {JSON.stringify(parseDetalles(selectedLog.detalles), null, 2)}
-                                        </pre>
+                            {/* Detalles - user-friendly rendering */}
+                            {(() => {
+                                const detalles = parseDetalles(selectedLog.detalles);
+                                if (!detalles) return null;
+                                
+                                const datos = detalles.datos_completos;
+                                if (!datos) {
+                                    // Show raw details for non-delete actions
+                                    return (
+                                        <div>
+                                            <span className="text-slate-500 text-sm font-medium">Datos registrados:</span>
+                                            <div className="bg-slate-50 rounded-lg p-3 mt-2 max-h-48 overflow-y-auto">
+                                                <pre className="text-xs text-slate-600 whitespace-pre-wrap">
+                                                    {JSON.stringify(detalles, null, 2)}
+                                                </pre>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                // Field labels for display
+                                const fieldLabels = {
+                                    nombre: 'Nombre', descripcion: 'Descripción', activo: 'Activo',
+                                    n_muestra: 'N° Muestra', marca_id: 'Marca ID', tipo_producto_id: 'Tipo Producto ID',
+                                    entalle_id: 'Entalle ID', tela_id: 'Tela ID', consumo_tela: 'Consumo Tela',
+                                    costo_estimado: 'Costo Estimado', precio_estimado: 'Precio Estimado',
+                                    rentabilidad_esperada: 'Rentabilidad', aprobado: 'Aprobado',
+                                    gramaje: 'Gramaje', elasticidad: 'Elasticidad', proveedor: 'Proveedor',
+                                    ancho: 'Ancho', color: 'Color', precio: 'Precio', clasificacion: 'Clasificación',
+                                    muestra_base_id: 'Muestra Base ID', base_id: 'Base ID', hilo_id: 'Hilo ID',
+                                    curva: 'Curva', archivo_costos: 'Archivo Costos', patron_archivo: 'Patrón',
+                                    archivo_tizado: 'Archivo Tizado',
+                                };
+                                const skipFields = ['id', 'orden', 'created_at', 'updated_at', 'fichas_archivos', 'fichas_nombres', 'tizados_archivos', 'tizados_nombres', 'estados_costura_ids', 'avios_costura_ids', 'bases_ids'];
+
+                                return (
+                                    <div>
+                                        <span className="text-slate-500 text-sm font-medium">Datos del elemento eliminado:</span>
+                                        <div className="bg-slate-50 rounded-lg mt-2 divide-y divide-slate-200 max-h-60 overflow-y-auto">
+                                            {Object.entries(datos)
+                                                .filter(([key]) => !skipFields.includes(key))
+                                                .map(([key, value]) => {
+                                                    let displayValue = value;
+                                                    if (value === null || value === undefined) displayValue = '-';
+                                                    else if (typeof value === 'boolean') displayValue = value ? 'Sí' : 'No';
+                                                    else if (typeof value === 'number') displayValue = value.toString();
+                                                    
+                                                    return (
+                                                        <div key={key} className="flex justify-between items-center px-3 py-2">
+                                                            <span className="text-xs text-slate-500 font-medium">{fieldLabels[key] || key}</span>
+                                                            <span className="text-sm text-slate-800 font-medium text-right max-w-[60%] truncate" title={String(displayValue)}>
+                                                                {displayValue}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                );
+                            })()}
                             
                             {/* Restore button for deletions */}
                             {selectedLog.accion === 'ELIMINAR' && parseDetalles(selectedLog.detalles)?.datos_completos && (
                                 <div className="border-t pt-4">
                                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
                                         <p className="text-sm text-amber-800">
-                                            <strong>¿Restaurar este elemento?</strong><br/>
-                                            Se creará un nuevo registro con los datos que tenía antes de ser eliminado.
+                                            <strong>Restaurar este elemento?</strong><br/>
+                                            Se creara un nuevo registro con los datos que tenia antes de ser eliminado.
+                                            Los archivos asociados no se restauraran.
                                         </p>
                                     </div>
                                     <Button 
+                                        data-testid="restore-button"
                                         onClick={handleRestore}
                                         disabled={restoring}
                                         className="w-full bg-amber-500 hover:bg-amber-600 text-white"
