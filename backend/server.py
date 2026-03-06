@@ -1523,7 +1523,7 @@ async def get_bases(search: str = "", activo: Optional[bool] = None):
         return response
 
 @api_router.post("/bases", response_model=BaseModel_)
-async def create_base(data: BaseCreate):
+async def create_base(data: BaseCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(func.coalesce(func.max(BaseDB.orden), 0)))
         max_orden = result.scalar()
@@ -1532,12 +1532,16 @@ async def create_base(data: BaseCreate):
         item_data['nombre'] = data.nombre or ''
         item = BaseDB(**item_data, orden=max_orden + 1)
         session.add(item)
+        
+        # Log audit
+        await log_audit(session, current_user, "CREAR", "Base", item.id, item.nombre, {"muestra_base_id": data.muestra_base_id})
+        
         await session.commit()
         await session.refresh(item)
         return BaseModel_.model_validate(item)
 
 @api_router.put("/bases/{item_id}", response_model=BaseModel_)
-async def update_base(item_id: str, data: BaseCreate):
+async def update_base(item_id: str, data: BaseCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(BaseDB).where(BaseDB.id == item_id))
         item = result.scalar_one_or_none()
