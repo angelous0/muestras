@@ -17,6 +17,7 @@ import FichasPage from "./pages/FichasPage";
 import TizadosPage from "./pages/TizadosPage";
 import LoginPage from "./pages/LoginPage";
 import UsuariosPage from "./pages/UsuariosPage";
+import HistorialPage from "./pages/HistorialPage";
 import { Loader2 } from "lucide-react";
 
 // Protected route wrapper
