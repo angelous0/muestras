@@ -104,6 +104,34 @@ function ModelosPage() {
     };
     const { columnWidths, updateWidth, resetWidths } = useResizableColumns('modelos', defaultColumnWidths);
     
+    // Drag and drop sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = async (event) => {
+        const { active, over } = event;
+        if (active.id !== over?.id) {
+            const oldIndex = data.findIndex(item => item.id === active.id);
+            const newIndex = data.findIndex(item => item.id === over.id);
+            const newData = arrayMove(data, oldIndex, newIndex);
+            setData(newData);
+            
+            const reorderItems = newData.map((item, index) => ({
+                id: item.id,
+                orden: index + 1
+            }));
+            
+            try {
+                await reorderModelos(reorderItems);
+            } catch (error) {
+                toast.error('Error al reordenar');
+                fetchData();
+            }
+        }
+    };
+    
     // Dialogs for viewing base's files
     const [baseFichasDialog, setBaseFichasDialog] = useState(false);
     const [baseTizadosDialog, setBaseTizadosDialog] = useState(false);
