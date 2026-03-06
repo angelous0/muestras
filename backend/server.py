@@ -1071,18 +1071,19 @@ async def get_entalles(search: str = "", activo: Optional[bool] = None):
         return [Entalle.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/entalles", response_model=Entalle)
-async def create_entalle(data: EntalleCreate):
+async def create_entalle(data: EntalleCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(func.coalesce(func.max(EntalloDB.orden), 0)))
         max_orden = result.scalar()
         item = EntalloDB(**data.model_dump(), orden=max_orden + 1)
         session.add(item)
+        await log_audit(session, current_user, "CREAR", "Entalle", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return Entalle.model_validate(item)
 
 @api_router.put("/entalles/{item_id}", response_model=Entalle)
-async def update_entalle(item_id: str, data: EntalleCreate):
+async def update_entalle(item_id: str, data: EntalleCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(EntalloDB).where(EntalloDB.id == item_id))
         item = result.scalar_one_or_none()
@@ -1091,17 +1092,19 @@ async def update_entalle(item_id: str, data: EntalleCreate):
         for key, value in data.model_dump().items():
             setattr(item, key, value)
         item.updated_at = datetime.now(timezone.utc)
+        await log_audit(session, current_user, "EDITAR", "Entalle", item.id, data.nombre)
         await session.commit()
         await session.refresh(item)
         return Entalle.model_validate(item)
 
 @api_router.delete("/entalles/{item_id}")
-async def delete_entalle(item_id: str):
+async def delete_entalle(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(EntalloDB).where(EntalloDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        await log_audit(session, current_user, "ELIMINAR", "Entalle", item.id, item.nombre)
         await session.delete(item)
         await session.commit()
         return {"message": "Eliminado correctamente"}
