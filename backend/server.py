@@ -1385,7 +1385,7 @@ async def get_muestras_base(search: str = "", activo: Optional[bool] = None):
         return [MuestraBase.model_validate(m) for m in result.scalars().all()]
 
 @api_router.post("/muestras-base", response_model=MuestraBase)
-async def create_muestra_base(data: MuestraBaseCreate):
+async def create_muestra_base(data: MuestraBaseCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         # Validar unicidad de n_muestra
         if data.n_muestra:
@@ -1401,12 +1401,16 @@ async def create_muestra_base(data: MuestraBaseCreate):
         max_orden = result.scalar()
         item = MuestraBaseDB(**data.model_dump(), nombre=nombre, rentabilidad_esperada=rentabilidad, orden=max_orden + 1)
         session.add(item)
+        
+        # Log audit
+        await log_audit(session, current_user, "CREAR", "Muestra Base", item.id, data.n_muestra or nombre)
+        
         await session.commit()
         await session.refresh(item)
         return MuestraBase.model_validate(item)
 
 @api_router.put("/muestras-base/{item_id}", response_model=MuestraBase)
-async def update_muestra_base(item_id: str, data: MuestraBaseCreate):
+async def update_muestra_base(item_id: str, data: MuestraBaseCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == item_id))
         item = result.scalar_one_or_none()
@@ -1431,17 +1435,24 @@ async def update_muestra_base(item_id: str, data: MuestraBaseCreate):
         item.nombre = nombre
         item.rentabilidad_esperada = rentabilidad
         item.updated_at = datetime.now(timezone.utc)
+        
+        # Log audit
+        await log_audit(session, current_user, "EDITAR", "Muestra Base", item.id, data.n_muestra or nombre)
+        
         await session.commit()
         await session.refresh(item)
         return MuestraBase.model_validate(item)
 
 @api_router.delete("/muestras-base/{item_id}")
-async def delete_muestra_base(item_id: str):
+async def delete_muestra_base(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(MuestraBaseDB).where(MuestraBaseDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Log audit before delete
+        await log_audit(session, current_user, "ELIMINAR", "Muestra Base", item.id, item.n_muestra or item.nombre)
         
         # Delete associated file from R2
         if item.archivo_costos:
