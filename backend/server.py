@@ -1965,6 +1965,19 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
         tizados_result = await session.execute(select(TizadoDB))
         all_tizados = tizados_result.scalars().all()
         
+        # Get catalogs for dynamic clasificacion
+        marcas_result = await session.execute(select(MarcaDB))
+        marcas_dict = {m.id: m.nombre for m in marcas_result.scalars().all()}
+        
+        tipos_result = await session.execute(select(TipoProductoDB))
+        tipos_dict = {t.id: t.nombre for t in tipos_result.scalars().all()}
+        
+        telas_result = await session.execute(select(TelaDB))
+        telas_dict = {t.id: t.nombre for t in telas_result.scalars().all()}
+        
+        entalles_result = await session.execute(select(EntalleDB))
+        entalles_dict = {e.id: e.nombre for e in entalles_result.scalars().all()}
+        
         response = []
         for m in modelos:
             modelo_dict = {
