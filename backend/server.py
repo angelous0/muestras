@@ -1975,7 +1975,7 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
         telas_result = await session.execute(select(TelaDB))
         telas_dict = {t.id: t.nombre for t in telas_result.scalars().all()}
         
-        entalles_result = await session.execute(select(EntalleDB))
+        entalles_result = await session.execute(select(EntalloDB))
         entalles_dict = {e.id: e.nombre for e in entalles_result.scalars().all()}
         
         response = []
