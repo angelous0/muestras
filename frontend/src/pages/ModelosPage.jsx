@@ -451,11 +451,20 @@ function ModelosPage() {
                     </DialogHeader>
                     <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
                         <div>
-                            <Label>Base (Modelo) *</Label>
-                            <Select value={formData.base_id || ''} onValueChange={(v) => setFormData({...formData, base_id: v})}>
-                                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                                <SelectContent className="max-h-[300px]">{bases.filter(b => b.aprobado).map(b => <SelectItem key={b.id} value={b.id}>{b.nombre}</SelectItem>)}</SelectContent>
-                            </Select>
+                            <Label>Base (Modelo) * <span className="text-slate-400 text-xs">(solo aprobadas)</span></Label>
+                            <div 
+                                onClick={() => setBaseModalOpen(true)}
+                                className="w-full min-h-[44px] px-3 py-2 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between"
+                            >
+                                {formData.base_id ? (
+                                    <span className="text-sm text-slate-700 leading-tight">
+                                        {getBaseName(formData.base_id)}
+                                    </span>
+                                ) : (
+                                    <span className="text-slate-400 text-sm">Clic para seleccionar base...</span>
+                                )}
+                                <Search className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" />
+                            </div>
                         </div>
                         
                         {/* Panel informativo de la base seleccionada */}
