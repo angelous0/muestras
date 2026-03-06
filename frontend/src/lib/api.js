@@ -208,6 +208,7 @@ export const uploadTizadosBase = (id, files, nombres = []) => {
     });
 };
 export const deleteTizadoBase = (id, fileIndex) => api.delete(`/bases/${id}/tizados/${fileIndex}`);
+export const reorderBases = (items) => api.put('/reorder/bases', items);
 
 // Modelos
 export const getModelos = (params) => api.get('/modelos', { params });
@@ -216,6 +217,7 @@ export const getModelo = (id) => api.get(`/modelos/${id}`);
 export const createModelo = (data) => api.post('/modelos', data);
 export const updateModelo = (id, data) => api.put(`/modelos/${id}`, data);
 export const deleteModelo = (id) => api.delete(`/modelos/${id}`);
+export const reorderModelos = (items) => api.put('/reorder/modelos', items);
 export const uploadFichaModelo = (id, files, nombres = []) => {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
