@@ -2179,6 +2179,17 @@ async def delete_ficha_modelo(modelo_id: str, file_index: int):
         await session.commit()
         return {"message": "Eliminado"}
 
+@api_router.put("/reorder/modelos")
+async def reorder_modelos(items: List[dict]):
+    async with async_session() as session:
+        for item in items:
+            result = await session.execute(select(ModeloDB).where(ModeloDB.id == item['id']))
+            db_item = result.scalar_one_or_none()
+            if db_item:
+                db_item.orden = item['orden']
+        await session.commit()
+        return {"message": "Orden actualizado"}
+
 # ============ FICHAS ROUTES ============
 
 @api_router.get("/fichas")
