@@ -528,6 +528,109 @@ function ModelosPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+            
+            {/* Base Selector Modal */}
+            <Dialog open={baseModalOpen} onOpenChange={setBaseModalOpen}>
+                <DialogContent className="sm:max-w-2xl bg-white max-h-[80vh] overflow-hidden flex flex-col">
+                    <DialogHeader className="border-b border-slate-200 pb-4">
+                        <DialogTitle className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Manrope' }}>
+                            Seleccionar Base
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-slate-500 mt-1">
+                            Solo se muestran bases aprobadas
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col">
+                        {/* Buscador */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input 
+                                placeholder="Buscar por nombre de base..."
+                                value={baseSearch}
+                                onChange={(e) => setBaseSearch(e.target.value)}
+                                className="pl-10 bg-white"
+                                autoFocus
+                            />
+                        </div>
+                        
+                        {/* Lista de bases */}
+                        <div className="flex-1 overflow-y-auto border border-slate-200 rounded-lg">
+                            {bases
+                                .filter(b => b.aprobado)
+                                .filter(b => {
+                                    if (!baseSearch) return true;
+                                    const searchLower = baseSearch.toLowerCase();
+                                    const nombre = (b.nombre || '').toLowerCase();
+                                    return nombre.includes(searchLower);
+                                })
+                                .map(b => {
+                                    // Get muestra base info
+                                    const muestra = muestrasBase.find(m => m.id === b.muestra_base_id);
+                                    const marca = muestra ? marcas.find(m => m.id === muestra.marca_id)?.nombre : '';
+                                    const tipo = muestra ? tiposProducto.find(t => t.id === muestra.tipo_producto_id)?.nombre : '';
+                                    const tela = muestra ? telas.find(t => t.id === muestra.tela_id)?.nombre : '';
+                                    
+                                    return (
+                                        <div
+                                            key={b.id}
+                                            onClick={() => {
+                                                setFormData({...formData, base_id: b.id});
+                                                setBaseModalOpen(false);
+                                                setBaseSearch('');
+                                            }}
+                                            className={`p-3 border-b border-slate-100 last:border-0 cursor-pointer transition-colors ${
+                                                formData.base_id === b.id 
+                                                    ? 'bg-emerald-50 hover:bg-emerald-100' 
+                                                    : 'hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                                                    formData.base_id === b.id 
+                                                        ? 'border-emerald-500 bg-emerald-500' 
+                                                        : 'border-slate-300'
+                                                }`}>
+                                                    {formData.base_id === b.id && (
+                                                        <Check className="w-3 h-3 text-white" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-slate-800 text-sm">
+                                                        {b.nombre}
+                                                    </div>
+                                                    {(marca || tipo || tela) && (
+                                                        <div className="text-slate-500 text-xs mt-0.5">
+                                                            {[marca, tipo, tela].filter(Boolean).join(' • ')}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            }
+                            {bases.filter(b => b.aprobado).filter(b => {
+                                if (!baseSearch) return true;
+                                const searchLower = baseSearch.toLowerCase();
+                                const nombre = (b.nombre || '').toLowerCase();
+                                return nombre.includes(searchLower);
+                            }).length === 0 && (
+                                <div className="p-8 text-center text-slate-400">
+                                    No se encontraron bases aprobadas
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="border-t border-slate-200 pt-4 flex justify-end">
+                        <Button variant="outline" onClick={() => {
+                            setBaseModalOpen(false);
+                            setBaseSearch('');
+                        }}>
+                            Cancelar
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={fichasDialogOpen} onOpenChange={setFichasDialogOpen}>
                 <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-hidden flex flex-col">
