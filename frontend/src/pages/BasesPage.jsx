@@ -996,87 +996,95 @@ export default function BasesPage() {
                     </Button>
                 </div>
                 <div className="overflow-x-auto">
-                    <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '1000px' }}>
-                        <TableHeader>
-                            <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                <ResizableTableHead columnKey="muestraBase" width={columnWidths.muestraBase} onResize={updateWidth}>Muestra Base</ResizableTableHead>
-                                <ResizableTableHead columnKey="nombre" width={columnWidths.nombre} onResize={updateWidth}>Nombre</ResizableTableHead>
-                                <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
-                                <ResizableTableHead columnKey="fichas_generales" width={columnWidths.fichas_generales} onResize={updateWidth}>Fichas Gen.</ResizableTableHead>
-                                <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
-                                <ResizableTableHead columnKey="estadosCostura" width={columnWidths.estadosCostura} onResize={updateWidth}>Est. Costura</ResizableTableHead>
-                                <ResizableTableHead columnKey="aviosCostura" width={columnWidths.aviosCostura} onResize={updateWidth}>Avíos Cost.</ResizableTableHead>
-                                <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
-                                <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
-                            ) : data.length === 0 ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
-                            ) : (
-                                data.map((item) => (
-                                    <TableRow key={item.id} className="table-row-hover border-b border-slate-100">
-                                        <ResizableTableCell width={columnWidths.muestraBase}>
-                                            {getMuestraBaseName(item.muestra_base_id)}
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.nombre}>
-                                            {item.nombre || '-'}
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.patron}>
-                                            <input type="file" ref={el => patronInputRefs.current[item.id] = el} onChange={(e) => handlePatronUpload(item.id, e)} accept=".xlsx,.xls,.pdf" className="hidden" />
-                                            {item.patron_archivo ? (
-                                                <div className="flex items-center gap-1">
-                                                    <a href={getFileUrl(item.patron_archivo)} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                                        <FileSpreadsheet className="w-4 h-4" /><Download className="w-3 h-3" />
-                                                    </a>
-                                                    <Button variant="ghost" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
-                                                </div>
-                                            ) : (
-                                                <Button variant="outline" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-7 text-xs">
-                                                    <Upload className="w-3 h-3 mr-1" />Subir
-                                                </Button>
-                                            )}
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.fichas_generales}>
-                                            <Button variant="outline" size="sm" onClick={() => openFichasDialog(item)} className="h-7 text-xs">
-                                                <FolderOpen className="w-3 h-3 mr-1" />
-                                                {(item.fichas_archivos?.length || 0)} archivo(s)
-                                            </Button>
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.tizados}>
-                                            <Button variant="outline" size="sm" onClick={() => openTizadosDialog(item)} className="h-7 text-xs">
-                                                <Link2 className="w-3 h-3 mr-1" />
-                                                {(item.tizados_relacionados?.length || 0)} tizado(s)
-                                            </Button>
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.estadosCostura}>
-                                            <Button variant="outline" size="sm" onClick={() => openEstadosCosturaDialog(item)} className="h-7 text-xs text-purple-600 border-purple-200 hover:bg-purple-50">
-                                                <CheckSquare className="w-3 h-3 mr-1" />
-                                                {(item.estados_costura_ids?.length || 0)}
-                                            </Button>
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.aviosCostura}>
-                                            <Button variant="outline" size="sm" onClick={() => openAviosCosturaDialog(item)} className="h-7 text-xs text-amber-600 border-amber-200 hover:bg-amber-50">
-                                                <Sparkles className="w-3 h-3 mr-1" />
-                                                {(item.avios_costura_ids?.length || 0)}
-                                            </Button>
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.estado}>
-                                            <ApprovalBadge aprobado={item.aprobado} />
-                                        </ResizableTableCell>
-                                        <ResizableTableCell width={columnWidths.acciones}>
-                                            <div className="flex gap-1">
-                                                <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"><Pencil className="h-4 w-4" /></Button>
-                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
-                                            </div>
-                                        </ResizableTableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
+                        <GripVertical className="w-3 h-3" /> Arrastra las filas para reordenar
+                    </p>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <Table style={{ tableLayout: 'fixed', width: '100%', minWidth: '1050px' }}>
+                            <TableHeader>
+                                <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                    <TableHead className="w-10"></TableHead>
+                                    <ResizableTableHead columnKey="muestraBase" width={columnWidths.muestraBase} onResize={updateWidth}>Muestra Base</ResizableTableHead>
+                                    <ResizableTableHead columnKey="nombre" width={columnWidths.nombre} onResize={updateWidth}>Nombre</ResizableTableHead>
+                                    <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
+                                    <ResizableTableHead columnKey="fichas_generales" width={columnWidths.fichas_generales} onResize={updateWidth}>Fichas Gen.</ResizableTableHead>
+                                    <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
+                                    <ResizableTableHead columnKey="estadosCostura" width={columnWidths.estadosCostura} onResize={updateWidth}>Est. Costura</ResizableTableHead>
+                                    <ResizableTableHead columnKey="aviosCostura" width={columnWidths.aviosCostura} onResize={updateWidth}>Avíos Cost.</ResizableTableHead>
+                                    <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
+                                    <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <SortableContext items={data.map(d => d.id)} strategy={verticalListSortingStrategy}>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow><TableCell colSpan={10} className="text-center py-8 text-slate-500">Cargando...</TableCell></TableRow>
+                                    ) : data.length === 0 ? (
+                                        <TableRow><TableCell colSpan={10} className="text-center py-8 text-slate-500">No hay bases registradas</TableCell></TableRow>
+                                    ) : (
+                                        data.map((item) => (
+                                            <SortableBaseRow key={item.id} item={item}>
+                                                <ResizableTableCell width={columnWidths.muestraBase}>
+                                                    {getMuestraBaseName(item.muestra_base_id)}
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.nombre}>
+                                                    {item.nombre || '-'}
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.patron}>
+                                                    <input type="file" ref={el => patronInputRefs.current[item.id] = el} onChange={(e) => handlePatronUpload(item.id, e)} accept=".xlsx,.xls,.pdf" className="hidden" />
+                                                    {item.patron_archivo ? (
+                                                        <div className="flex items-center gap-1">
+                                                            <a href={getFileUrl(item.patron_archivo)} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                                                <FileSpreadsheet className="w-4 h-4" /><Download className="w-3 h-3" />
+                                                            </a>
+                                                            <Button variant="ghost" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-6 px-1"><Upload className="w-3 h-3" /></Button>
+                                                        </div>
+                                                    ) : (
+                                                        <Button variant="outline" size="sm" onClick={() => patronInputRefs.current[item.id]?.click()} className="h-7 text-xs">
+                                                            <Upload className="w-3 h-3 mr-1" />Subir
+                                                        </Button>
+                                                    )}
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.fichas_generales}>
+                                                    <Button variant="outline" size="sm" onClick={() => openFichasDialog(item)} className="h-7 text-xs">
+                                                        <FolderOpen className="w-3 h-3 mr-1" />
+                                                        {(item.fichas_archivos?.length || 0)} archivo(s)
+                                                    </Button>
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.tizados}>
+                                                    <Button variant="outline" size="sm" onClick={() => openTizadosDialog(item)} className="h-7 text-xs">
+                                                        <Link2 className="w-3 h-3 mr-1" />
+                                                        {(item.tizados_relacionados?.length || 0)} tizado(s)
+                                                    </Button>
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.estadosCostura}>
+                                                    <Button variant="outline" size="sm" onClick={() => openEstadosCosturaDialog(item)} className="h-7 text-xs text-purple-600 border-purple-200 hover:bg-purple-50">
+                                                        <CheckSquare className="w-3 h-3 mr-1" />
+                                                        {(item.estados_costura_ids?.length || 0)}
+                                                    </Button>
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.aviosCostura}>
+                                                    <Button variant="outline" size="sm" onClick={() => openAviosCosturaDialog(item)} className="h-7 text-xs text-amber-600 border-amber-200 hover:bg-amber-50">
+                                                        <Sparkles className="w-3 h-3 mr-1" />
+                                                        {(item.avios_costura_ids?.length || 0)}
+                                                    </Button>
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.estado}>
+                                                    <ApprovalBadge aprobado={item.aprobado} />
+                                                </ResizableTableCell>
+                                                <ResizableTableCell width={columnWidths.acciones}>
+                                                    <div className="flex gap-1">
+                                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 px-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100"><Pencil className="h-4 w-4" /></Button>
+                                                        <Button variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+                                                    </div>
+                                                </ResizableTableCell>
+                                            </SortableBaseRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </SortableContext>
+                        </Table>
+                    </DndContext>
                 </div>
             </div>
 
