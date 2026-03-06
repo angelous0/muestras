@@ -1,101 +1,58 @@
-# PRD - Módulo Muestras v3.2
+# Módulo de Muestras Textiles - PRD
 
 ## Problema Original
-Crear un módulo de muestras textil con diseño minimalista y corporativo para gestionar catálogos base, muestras y bases con sus archivos asociados.
+Aplicación full-stack para gestionar muestras textiles con CRUD para catálogos (Marcas, Tipos Producto, Entalles, Telas, Hilos, Muestras Base, Bases, Modelos), arrastrar y soltar para reordenar, subida de archivos a Cloudflare R2, generación de PDF, y sistema de historial de auditoría.
 
-## Arquitectura
-- **Backend**: FastAPI + PostgreSQL (SQLAlchemy + asyncpg)
-- **Frontend**: React + Tailwind CSS + Shadcn/UI
-- **Base de datos**: PostgreSQL con schema `muestra`
-- **Almacenamiento**: Cloudflare R2 (S3-compatible)
-- **Autenticación**: JWT con bcrypt para hash de contraseñas
-- **PDF Generation**: ReportLab (server-side)
+## Stack Técnico
+- **Frontend:** React + Tailwind + shadcn/ui
+- **Backend:** FastAPI (Python) + SQLAlchemy async
+- **DB:** PostgreSQL (schema: muestra)
+- **Almacenamiento:** Cloudflare R2 (boto3)
+- **Auth:** JWT (passlib + python-jose)
+- **DnD:** @dnd-kit/core + @dnd-kit/sortable
 
-## Integración Cloudflare R2
-- **Bucket**: muestras
-- **Características**:
-  - Subida automática de archivos a R2
-  - URLs presigned para descarga segura
-  - Eliminación en cascada de archivos al eliminar registros
-  - Nombres de archivo personalizables o usando nombre original
+## Funcionalidades Implementadas
 
-## Sistema de Autenticación (v3.0)
-- **Login**: Usuario y contraseña con JWT
-- **Usuarios**: username, password_hash, nombre_completo, rol, activo
-- **Roles**: 
-  - `admin`: Acceso completo + gestión de usuarios
-  - `usuario`: Acceso a todas las funcionalidades excepto gestión de usuarios
-- **Usuario por defecto**: admin / admin123
+### Autenticación
+- Login JWT, roles admin/usuario
 
-## Tablas Implementadas
+### CRUDs Completos
+- Marcas, Tipos Producto, Entalles, Telas, Hilos, Estados Costura, Avios Costura
+- Muestras Base (con N° autoincremental, archivo costos)
+- Bases (con patrón, fichas, tizados, estados/avios costura)
+- Modelos (con fichas, referencia a Base)
+- Tizados (con archivo, vinculación a Bases)
 
-### Usuarios
-| Campo | Tipo |
-|-------|------|
-| username | String (único) |
-| password_hash | String |
-| nombre_completo | String |
-| rol | String (admin/usuario) |
-| activo | Boolean |
+### Funcionalidades Avanzadas
+- Drag & Drop para reordenar en todas las tablas
+- Subida de archivos a R2 con eliminación en cascada
+- Selectores con buscador (Muestra Base en Bases, Base en Modelos)
+- Panel informativo dinámico en Modelos
+- Clasificación dinámica en Modelos
+- Generación de PDF (checklist)
+- Sidebar colapsable
 
-### Catálogo Base (7 tablas con drag-and-drop)
-| Tabla | Campos |
-|-------|--------|
-| Marcas | nombre, descripcion, activo, orden |
-| Tipo Producto | nombre, descripcion, activo, orden |
-| Entalles | nombre, descripcion, activo, orden |
-| Telas | nombre, gramaje, elasticidad, proveedor, ancho, color, precio, clasificacion, activo, orden |
-| Hilos | nombre, activo, orden |
-| Estados Costura | nombre, activo, orden |
-| Avios Costura | nombre, activo, orden |
+### Historial de Auditoría (COMPLETO - 2025-03-06)
+- Registro de CREAR, EDITAR, ELIMINAR para todas las entidades principales
+- **Eliminaciones guardan datos_completos del objeto** para restauración
+- **Endpoint de restauración:** `POST /api/historial/{log_id}/restaurar`
+- **Acción RESTAURAR** registrada en el historial
+- **UI:** Página /historial con filtros, stats, modal de detalles legible y botón restaurar
+- Badge "Restaurable" en registros de eliminación
 
-### Gestión de Muestras
-| Tabla | Campos |
-|-------|--------|
-| Muestras Base | nombre, marca_id, tipo_producto_id, hilos, activo, orden |
-| Bases | nombre, muestra_base_id, patron_archivo, fichas_archivos, fichas_nombres, tizados_archivos, tizados_nombres, estados_costura_ids, avios_costura_ids, aprobado, activo, orden |
-| Fichas | base_id, nombre, archivo, tipo |
-| Tizados | ancho, curva, archivo, bases_ids (many-to-many) |
-| Modelos | base_id, clasificacion, activo, orden |
+## Backlog Priorizado
 
-## Funcionalidades Completadas
+### P1
+- Autocompletado para campo "Clasificación" en Telas (endpoint + Combobox)
+- Completar auditoría para operaciones menores (Tizados vinculación, Fichas, reordenamiento)
 
-### v3.2 (Febrero 2026)
-- **Generación de PDF Checklist**: Se implementó la generación de PDFs en formato A6 desde el backend usando ReportLab
-- **Nuevo endpoint**: `POST /api/bases/{base_id}/generate-checklist` genera y guarda PDFs de checklist
-- **Integración en Bases**: Modal para seleccionar Estados/Avíos Costura con botón para generar PDF
-- **Actualización automática**: Si el PDF ya existe, se reemplaza automáticamente
+### P2
+- Unificar diseño visual de todas las páginas de catálogo
+- Columnas redimensionables en tablas restantes
 
-### v3.1
-- Columnas redimensionables en Modelos
-- Refactor de UI en página Modelos (nuevas columnas, nombres)
-- Eliminación de funcionalidad de Imagen en Bases
-- Nuevas entidades: Estados Costura y Avíos Costura
+### P3 (Futuro)
+- Exportación/importación Excel
+- Refactorización de server.py (2500+ líneas) en módulos (routes/, models/, services/)
 
-## Tareas Pendientes
-
-### P1 - Alta Prioridad
-- Campo "Clasificación" en Telas con historial/autocompletado
-- Aplicar columnas redimensionables a tablas restantes
-
-### P2 - Media Prioridad
-- Unificar diseño de la aplicación
-- Refactorizar BasesPage.jsx (>1500 líneas)
-
-### Backlog
-- Exportación/importación de datos con Excel
-
-## Endpoints API
-
-### Nuevo (v3.2)
-- `POST /api/bases/{base_id}/generate-checklist` - Genera PDF checklist
-  - Body: `{ items: string[], title: string }`
-  - Response: `{ file_path, nombre, updated }`
-
-### Estados/Avíos Costura
-- CRUD completo en `/api/estados-costura` y `/api/avios-costura`
-- Reordenamiento: `PUT /api/reorder/estados-costura` y `PUT /api/reorder/avios-costura`
-
-## Credenciales de Prueba
-- **Usuario**: admin
-- **Contraseña**: admin123
+## Credenciales
+- Usuario: admin / admin123
