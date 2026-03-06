@@ -276,6 +276,20 @@ class UsuarioDB(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+class AuditLogDB(Base):
+    __tablename__ = "audit_logs"
+    __table_args__ = {"schema": DB_SCHEMA}
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    usuario_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    usuario_nombre: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    accion: Mapped[str] = mapped_column(String(50), nullable=False)  # CREAR, EDITAR, ELIMINAR
+    entidad: Mapped[str] = mapped_column(String(100), nullable=False)  # Marca, Base, Modelo, etc.
+    entidad_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    entidad_nombre: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    detalles: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON con cambios
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
 # ============ Pydantic Schemas ============
 
 class MarcaCreate(BaseModel):
