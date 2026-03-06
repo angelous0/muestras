@@ -2376,5 +2376,126 @@ async def upload_tizado_archivo(item_id: str, file: UploadFile = File(...)):
         await session.commit()
         return {"file_path": file_path}
 
+# ============ AUDIT LOG ROUTES ============
+
+@api_router.get("/audit-logs")
+async def get_audit_logs(
+    page: int = 1,
+    limit: int = 50,
+    entidad: Optional[str] = None,
+    accion: Optional[str] = None,
+    usuario_id: Optional[str] = None,
+    fecha_desde: Optional[str] = None,
+    fecha_hasta: Optional[str] = None,
+    current_user: UsuarioDB = Depends(get_current_user)
+):
+    """Get audit logs with filters"""
+    async with async_session() as session:
+        query = select(AuditLogDB)
+        
+        if entidad:
+            query = query.where(AuditLogDB.entidad == entidad)
+        if accion:
+            query = query.where(AuditLogDB.accion == accion)
+        if usuario_id:
+            query = query.where(AuditLogDB.usuario_id == usuario_id)
+        if fecha_desde:
+            try:
+                desde = datetime.fromisoformat(fecha_desde.replace('Z', '+00:00'))
+                query = query.where(AuditLogDB.created_at >= desde)
+            except:
+                pass
+        if fecha_hasta:
+            try:
+                hasta = datetime.fromisoformat(fecha_hasta.replace('Z', '+00:00'))
+                query = query.where(AuditLogDB.created_at <= hasta)
+            except:
+                pass
+        
+        # Order by most recent first
+        query = query.order_by(AuditLogDB.created_at.desc())
+        
+        # Pagination
+        offset = (page - 1) * limit
+        query = query.offset(offset).limit(limit)
+        
+        result = await session.execute(query)
+        logs = result.scalars().all()
+        
+        # Count total
+        count_query = select(func.count()).select_from(AuditLogDB)
+        if entidad:
+            count_query = count_query.where(AuditLogDB.entidad == entidad)
+        if accion:
+            count_query = count_query.where(AuditLogDB.accion == accion)
+        if usuario_id:
+            count_query = count_query.where(AuditLogDB.usuario_id == usuario_id)
+        
+        count_result = await session.execute(count_query)
+        total = count_result.scalar()
+        
+        return {
+            "data": [
+                {
+                    "id": log.id,
+                    "usuario_id": log.usuario_id,
+                    "usuario_nombre": log.usuario_nombre,
+                    "accion": log.accion,
+                    "entidad": log.entidad,
+                    "entidad_id": log.entidad_id,
+                    "entidad_nombre": log.entidad_nombre,
+                    "detalles": log.detalles,
+                    "created_at": log.created_at.isoformat() if log.created_at else None
+                }
+                for log in logs
+            ],
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit if total else 0
+        }
+
+@api_router.get("/audit-logs/entities")
+async def get_audit_entities(current_user: UsuarioDB = Depends(get_current_user)):
+    """Get list of unique entities in audit logs"""
+    async with async_session() as session:
+        result = await session.execute(
+            select(AuditLogDB.entidad).distinct()
+        )
+        entities = [row[0] for row in result.fetchall()]
+        return entities
+
+@api_router.get("/audit-logs/stats")
+async def get_audit_stats(current_user: UsuarioDB = Depends(get_current_user)):
+    """Get audit statistics"""
+    async with async_session() as session:
+        # Total by action
+        result = await session.execute(
+            select(AuditLogDB.accion, func.count(AuditLogDB.id))
+            .group_by(AuditLogDB.accion)
+        )
+        by_action = {row[0]: row[1] for row in result.fetchall()}
+        
+        # Total by entity
+        result = await session.execute(
+            select(AuditLogDB.entidad, func.count(AuditLogDB.id))
+            .group_by(AuditLogDB.entidad)
+        )
+        by_entity = {row[0]: row[1] for row in result.fetchall()}
+        
+        # Recent activity (last 7 days)
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        result = await session.execute(
+            select(func.count(AuditLogDB.id))
+            .where(AuditLogDB.created_at >= seven_days_ago)
+        )
+        recent_count = result.scalar()
+        
+        return {
+            "by_action": by_action,
+            "by_entity": by_entity,
+            "recent_7_days": recent_count
+        }
+
 # Include router
 app.include_router(api_router)
