@@ -93,6 +93,11 @@ function AppRoutes() {
                         <UsuariosPage />
                     </ProtectedRoute>
                 } />
+                <Route path="historial" element={
+                    <ProtectedRoute adminOnly>
+                        <HistorialPage />
+                    </ProtectedRoute>
+                } />
             </Route>
         </Routes>
     );
