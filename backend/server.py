@@ -2100,7 +2100,7 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
         return response
 
 @api_router.post("/modelos", response_model=Modelo)
-async def create_modelo(data: ModeloCreate):
+async def create_modelo(data: ModeloCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(func.coalesce(func.max(ModeloDB.orden), 0)))
         max_orden = result.scalar()
@@ -2118,12 +2118,16 @@ async def create_modelo(data: ModeloCreate):
         model_data = data.model_dump(exclude={'nombre'})
         item = ModeloDB(**model_data, nombre=nombre, orden=max_orden + 1)
         session.add(item)
+        
+        # Log audit
+        await log_audit(session, current_user, "CREAR", "Modelo", item.id, nombre, {"base_id": data.base_id})
+        
         await session.commit()
         await session.refresh(item)
         return Modelo.model_validate(item)
 
 @api_router.put("/modelos/{item_id}", response_model=Modelo)
-async def update_modelo(item_id: str, data: ModeloCreate):
+async def update_modelo(item_id: str, data: ModeloCreate, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(ModeloDB).where(ModeloDB.id == item_id))
         item = result.scalar_one_or_none()
@@ -2144,17 +2148,24 @@ async def update_modelo(item_id: str, data: ModeloCreate):
             setattr(item, key, value)
         item.nombre = nombre
         item.updated_at = datetime.now(timezone.utc)
+        
+        # Log audit
+        await log_audit(session, current_user, "EDITAR", "Modelo", item.id, nombre)
+        
         await session.commit()
         await session.refresh(item)
         return Modelo.model_validate(item)
 
 @api_router.delete("/modelos/{item_id}")
-async def delete_modelo(item_id: str):
+async def delete_modelo(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(ModeloDB).where(ModeloDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Log audit before delete
+        await log_audit(session, current_user, "ELIMINAR", "Modelo", item.id, item.nombre)
         
         # Delete associated files from R2
         if item.fichas_archivos:
