@@ -90,6 +90,10 @@ function ModelosPage() {
     const [showNewFichaForm, setShowNewFichaForm] = useState(false);
     const [fichaSearch, setFichaSearch] = useState('');
     
+    // Base selector modal
+    const [baseModalOpen, setBaseModalOpen] = useState(false);
+    const [baseSearch, setBaseSearch] = useState('');
+    
     // Columnas redimensionables
     const defaultColumnWidths = {
         modelo: 150,
