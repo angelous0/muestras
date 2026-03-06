@@ -200,6 +200,35 @@ export default function BasesPage() {
     };
     const { columnWidths, updateWidth, resetWidths } = useResizableColumns('bases', defaultColumnWidths);
 
+    // Drag and drop sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = async (event) => {
+        const { active, over } = event;
+        if (active.id !== over?.id) {
+            const oldIndex = data.findIndex(item => item.id === active.id);
+            const newIndex = data.findIndex(item => item.id === over.id);
+            const newData = arrayMove(data, oldIndex, newIndex);
+            setData(newData);
+            
+            // Build reorder items
+            const reorderItems = newData.map((item, index) => ({
+                id: item.id,
+                orden: index + 1
+            }));
+            
+            try {
+                await reorderBases(reorderItems);
+            } catch (error) {
+                toast.error('Error al reordenar');
+                fetchData();
+            }
+        }
+    };
+
     const fetchCatalogs = async () => {
         try {
             const [muestrasRes, marcasRes, tiposRes, entallesRes, telasRes, tizadosRes, estadosRes, aviosRes] = await Promise.all([
