@@ -199,23 +199,23 @@ export default function HistorialPage() {
                             className="pl-10"
                         />
                     </div>
-                    <Select value={filterEntidad} onValueChange={setFilterEntidad}>
+                    <Select value={filterEntidad || "all"} onValueChange={(v) => setFilterEntidad(v === "all" ? "" : v)}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Todas las entidades" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Todas las entidades</SelectItem>
+                            <SelectItem value="all">Todas las entidades</SelectItem>
                             {entities.map(e => (
                                 <SelectItem key={e} value={e}>{e}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select value={filterAccion} onValueChange={setFilterAccion}>
+                    <Select value={filterAccion || "all"} onValueChange={(v) => setFilterAccion(v === "all" ? "" : v)}>
                         <SelectTrigger className="w-[150px]">
                             <SelectValue placeholder="Todas las acciones" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Todas las acciones</SelectItem>
+                            <SelectItem value="all">Todas las acciones</SelectItem>
                             <SelectItem value="CREAR">Crear</SelectItem>
                             <SelectItem value="EDITAR">Editar</SelectItem>
                             <SelectItem value="ELIMINAR">Eliminar</SelectItem>
