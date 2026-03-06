@@ -344,90 +344,98 @@ function ModelosPage() {
                     </Button>
                 </div>
                 <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-slate-50">
-                                <ResizableTableHead columnKey="modelo" width={columnWidths.modelo} onResize={updateWidth}>Modelo</ResizableTableHead>
-                                <ResizableTableHead columnKey="clasificacion" width={columnWidths.clasificacion} onResize={updateWidth}>Clasificación</ResizableTableHead>
-                                <ResizableTableHead columnKey="hilo" width={columnWidths.hilo} onResize={updateWidth}>Hilo</ResizableTableHead>
-                                <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
-                                <ResizableTableHead columnKey="fichasGenerales" width={columnWidths.fichasGenerales} onResize={updateWidth}>Fichas Generales</ResizableTableHead>
-                                <ResizableTableHead columnKey="fichasModelo" width={columnWidths.fichasModelo} onResize={updateWidth}>Fichas Modelo</ResizableTableHead>
-                                <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
-                                <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
-                                <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-8">Cargando...</TableCell></TableRow>
-                            ) : data.length === 0 ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-8">No hay modelos</TableCell></TableRow>
-                            ) : data.map((item) => (
-                                <TableRow key={item.id} className="hover:bg-slate-50">
-                                    <ResizableTableCell width={columnWidths.modelo}>
-                                        <span className="font-medium">{getBaseName(item.base_id)}</span>
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.clasificacion}>
-                                        <span className="text-slate-600">{item.muestra_base_nombre || '-'}</span>
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.hilo}>
-                                        {getHiloName(item.hilo_id)}
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.patron}>
-                                        {item.base_patron_archivo ? (
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                onClick={() => window.open(getFileUrl(item.base_patron_archivo), '_blank')}
-                                                className="text-blue-600 hover:text-blue-800 h-7 text-xs"
-                                            >
-                                                <Download className="w-3 h-3 mr-1" />Ver
-                                            </Button>
-                                        ) : (
-                                            <span className="text-slate-400">-</span>
-                                        )}
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.fichasGenerales}>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            onClick={() => { setViewingModelo(item); setBaseFichasDialog(true); }} 
-                                            className="text-purple-600 hover:text-purple-800 h-7 text-xs"
-                                        >
-                                            <FolderOpen className="w-3 h-3 mr-1" />{item.base_fichas_archivos?.length || 0}
-                                        </Button>
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.fichasModelo}>
-                                        <Button variant="ghost" size="sm" onClick={() => openFichasDialog(item)} className="text-blue-600 h-7 text-xs">
-                                            <FileText className="w-3 h-3 mr-1" />{item.fichas_archivos?.length || 0}
-                                        </Button>
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.tizados}>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            onClick={() => { setViewingModelo(item); setBaseTizadosDialog(true); }} 
-                                            className="text-orange-600 hover:text-orange-800 h-7 text-xs"
-                                        >
-                                            <Scissors className="w-3 h-3 mr-1" />{item.base_tizados?.length || 0}
-                                        </Button>
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.estado}>
-                                        <Badge className={item.aprobado ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-                                            {item.aprobado ? 'Aprobado' : 'Pendiente'}
-                                        </Badge>
-                                    </ResizableTableCell>
-                                    <ResizableTableCell width={columnWidths.acciones}>
-                                        <div className="flex justify-end">
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="sm" onClick={() => { setSelectedItem(item); setDeleteOpen(true); }} className="text-red-600"><Trash2 className="h-4 w-4" /></Button>
-                                        </div>
-                                    </ResizableTableCell>
+                    <p className="text-xs text-slate-500 mb-2 ml-4 flex items-center gap-1">
+                        <GripVertical className="w-3 h-3" /> Arrastra las filas para reordenar
+                    </p>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-slate-50">
+                                    <TableHead className="w-10"></TableHead>
+                                    <ResizableTableHead columnKey="modelo" width={columnWidths.modelo} onResize={updateWidth}>Modelo</ResizableTableHead>
+                                    <ResizableTableHead columnKey="clasificacion" width={columnWidths.clasificacion} onResize={updateWidth}>Clasificación</ResizableTableHead>
+                                    <ResizableTableHead columnKey="hilo" width={columnWidths.hilo} onResize={updateWidth}>Hilo</ResizableTableHead>
+                                    <ResizableTableHead columnKey="patron" width={columnWidths.patron} onResize={updateWidth}>Patrón</ResizableTableHead>
+                                    <ResizableTableHead columnKey="fichasGenerales" width={columnWidths.fichasGenerales} onResize={updateWidth}>Fichas Generales</ResizableTableHead>
+                                    <ResizableTableHead columnKey="fichasModelo" width={columnWidths.fichasModelo} onResize={updateWidth}>Fichas Modelo</ResizableTableHead>
+                                    <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
+                                    <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
+                                    <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <SortableContext items={data.map(d => d.id)} strategy={verticalListSortingStrategy}>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow><TableCell colSpan={10} className="text-center py-8">Cargando...</TableCell></TableRow>
+                                    ) : data.length === 0 ? (
+                                        <TableRow><TableCell colSpan={10} className="text-center py-8">No hay modelos</TableCell></TableRow>
+                                    ) : data.map((item) => (
+                                        <SortableModeloRow key={item.id} item={item}>
+                                            <ResizableTableCell width={columnWidths.modelo}>
+                                                <span className="font-medium">{getBaseName(item.base_id)}</span>
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.clasificacion}>
+                                                <span className="text-slate-600">{item.clasificacion || item.muestra_base_nombre || '-'}</span>
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.hilo}>
+                                                {getHiloName(item.hilo_id)}
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.patron}>
+                                                {item.base_patron_archivo ? (
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        onClick={() => window.open(getFileUrl(item.base_patron_archivo), '_blank')}
+                                                        className="text-blue-600 hover:text-blue-800 h-7 text-xs"
+                                                    >
+                                                        <Download className="w-3 h-3 mr-1" />Ver
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-slate-400">-</span>
+                                                )}
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.fichasGenerales}>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    onClick={() => { setViewingModelo(item); setBaseFichasDialog(true); }} 
+                                                    className="text-purple-600 hover:text-purple-800 h-7 text-xs"
+                                                >
+                                                    <FolderOpen className="w-3 h-3 mr-1" />{item.base_fichas_archivos?.length || 0}
+                                                </Button>
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.fichasModelo}>
+                                                <Button variant="ghost" size="sm" onClick={() => openFichasDialog(item)} className="text-blue-600 h-7 text-xs">
+                                                    <FileText className="w-3 h-3 mr-1" />{item.fichas_archivos?.length || 0}
+                                                </Button>
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.tizados}>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    onClick={() => { setViewingModelo(item); setBaseTizadosDialog(true); }} 
+                                                    className="text-orange-600 hover:text-orange-800 h-7 text-xs"
+                                                >
+                                                    <Scissors className="w-3 h-3 mr-1" />{item.base_tizados?.length || 0}
+                                                </Button>
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.estado}>
+                                                <Badge className={item.aprobado ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+                                                    {item.aprobado ? 'Aprobado' : 'Pendiente'}
+                                                </Badge>
+                                            </ResizableTableCell>
+                                            <ResizableTableCell width={columnWidths.acciones}>
+                                                <div className="flex justify-end">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => { setSelectedItem(item); setDeleteOpen(true); }} className="text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                                                </div>
+                                            </ResizableTableCell>
+                                        </SortableModeloRow>
+                                    ))}
+                                </TableBody>
+                            </SortableContext>
+                        </Table>
+                    </DndContext>
                 </div>
             </div>
 
