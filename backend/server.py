@@ -1552,17 +1552,24 @@ async def update_base(item_id: str, data: BaseCreate, current_user: UsuarioDB = 
         # Usar nombre proporcionado o dejar vacío
         item.nombre = data.nombre or ''
         item.updated_at = datetime.now(timezone.utc)
+        
+        # Log audit
+        await log_audit(session, current_user, "EDITAR", "Base", item.id, item.nombre)
+        
         await session.commit()
         await session.refresh(item)
         return BaseModel_.model_validate(item)
 
 @api_router.delete("/bases/{item_id}")
-async def delete_base(item_id: str):
+async def delete_base(item_id: str, current_user: UsuarioDB = Depends(get_current_user)):
     async with async_session() as session:
         result = await session.execute(select(BaseDB).where(BaseDB.id == item_id))
         item = result.scalar_one_or_none()
         if not item:
             raise HTTPException(status_code=404, detail="No encontrado")
+        
+        # Log audit before delete
+        await log_audit(session, current_user, "ELIMINAR", "Base", item.id, item.nombre)
         
         # Delete all associated files from R2
         if item.patron_archivo:
