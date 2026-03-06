@@ -17,7 +17,8 @@ import {
     LogOut,
     User,
     CheckSquare,
-    Sparkles
+    Sparkles,
+    History
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -30,6 +31,7 @@ const navItemsBase = [
 
 const navItemsAdmin = [
     { to: '/usuarios', icon: Users, label: 'Usuarios' },
+    { to: '/historial', icon: History, label: 'Historial' },
 ];
 
 const navItemsCatalogo = [
