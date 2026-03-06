@@ -739,6 +739,28 @@ def delete_multiple_r2_files(file_paths: List[str]) -> bool:
 
 # ============ Helper Functions ============
 
+async def log_audit(
+    session: AsyncSession,
+    usuario: Optional[UsuarioDB],
+    accion: str,
+    entidad: str,
+    entidad_id: Optional[str] = None,
+    entidad_nombre: Optional[str] = None,
+    detalles: Optional[dict] = None
+):
+    """Register an audit log entry"""
+    import json
+    audit = AuditLogDB(
+        usuario_id=usuario.id if usuario else None,
+        usuario_nombre=usuario.nombre_completo if usuario else "Sistema",
+        accion=accion,
+        entidad=entidad,
+        entidad_id=entidad_id,
+        entidad_nombre=entidad_nombre,
+        detalles=json.dumps(detalles, ensure_ascii=False, default=str) if detalles else None
+    )
+    session.add(audit)
+
 def calculate_rentabilidad(costo: float, precio: float) -> float:
     """Calculate profitability percentage"""
     if costo and precio and costo > 0:
