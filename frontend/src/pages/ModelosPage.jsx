@@ -103,8 +103,7 @@ function ModelosPage() {
         fichasGenerales: 120,
         fichasModelo: 120,
         tizados: 100,
-        estado: 100,
-        acciones: 140
+        estado: 100
     };
     const { columnWidths, updateWidth, resetWidths } = useResizableColumns('modelos', defaultColumnWidths);
     
@@ -369,7 +368,7 @@ function ModelosPage() {
                                     <ResizableTableHead columnKey="fichasModelo" width={columnWidths.fichasModelo} onResize={updateWidth}>Fichas Modelo</ResizableTableHead>
                                     <ResizableTableHead columnKey="tizados" width={columnWidths.tizados} onResize={updateWidth}>Tizados</ResizableTableHead>
                                     <ResizableTableHead columnKey="estado" width={columnWidths.estado} onResize={updateWidth}>Estado</ResizableTableHead>
-                                    <ResizableTableHead columnKey="acciones" width={columnWidths.acciones} onResize={updateWidth}>Acciones</ResizableTableHead>
+                                    <TableHead className="text-slate-500 uppercase text-xs tracking-wider font-semibold py-3 px-4 sticky right-0 bg-slate-50 z-10" style={{ minWidth: '130px' }}>Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <SortableContext items={data.map(d => d.id)} strategy={verticalListSortingStrategy}>
@@ -433,13 +432,13 @@ function ModelosPage() {
                                                     {item.aprobado ? 'Aprobado' : 'Pendiente'}
                                                 </Badge>
                                             </ResizableTableCell>
-                                            <ResizableTableCell width={columnWidths.acciones}>
-                                                <div className="flex justify-end">
+                                            <TableCell className="py-3 px-4 sticky right-0 bg-white z-10" style={{ minWidth: '130px' }}>
+                                                <div className="flex items-center gap-1">
                                                     <Button variant="ghost" size="sm" onClick={() => handleDownloadAll(item)} title="Descargar archivos" data-testid={`download-modelo-${item.id}`}><FolderDown className="h-4 w-4 text-emerald-600" /></Button>
                                                     <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
                                                     <Button variant="ghost" size="sm" onClick={() => { setSelectedItem(item); setDeleteOpen(true); }} className="text-red-600"><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
-                                            </ResizableTableCell>
+                                            </TableCell>
                                         </SortableModeloRow>
                                     ))}
                                 </TableBody>
