@@ -32,6 +32,7 @@ Aplicación full-stack para gestionar muestras textiles con CRUD para catálogos
 - Generación de PDF (checklist)
 - Sidebar colapsable
 - **Descarga ZIP de Modelos:** Botón para descargar todos los archivos de un modelo (patrón, fichas generales, fichas modelo) en un ZIP organizado por carpetas
+- **Regenerar PDFs masivo:** Botón en Bases que regenera todos los PDFs de Estados Costura y Avios Costura de todas las bases a la vez
 
 ### Historial de Auditoría (COMPLETO - 2025-03-06)
 - Registro de CREAR, EDITAR, ELIMINAR para todas las entidades principales

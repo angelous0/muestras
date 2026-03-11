@@ -104,7 +104,7 @@ function ModelosPage() {
         fichasModelo: 120,
         tizados: 100,
         estado: 100,
-        acciones: 100
+        acciones: 140
     };
     const { columnWidths, updateWidth, resetWidths } = useResizableColumns('modelos', defaultColumnWidths);
     

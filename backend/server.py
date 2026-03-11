@@ -1965,6 +1965,163 @@ async def save_file_from_bytes(content: bytes, folder: str, filename: str) -> st
     logging.info(f"Saved locally: {file_path}")
     return str(file_path)
 
+@api_router.post("/bases/regenerar-pdfs")
+async def regenerar_todos_pdfs(current_user: UsuarioDB = Depends(get_current_user)):
+    """Regenerate all Estados Costura and Avios Costura PDFs for all bases"""
+    from reportlab.lib.pagesizes import A4
+    import zipfile
+    
+    async with async_session() as session:
+        result = await session.execute(select(BaseDB))
+        all_bases = result.scalars().all()
+        
+        # Get all estados and avios for name lookup
+        estados_result = await session.execute(select(EstadoCosturaDB))
+        all_estados = {e.id: e.nombre for e in estados_result.scalars().all()}
+        avios_result = await session.execute(select(AvioCosturaDB))
+        all_avios = {a.id: a.nombre for a in avios_result.scalars().all()}
+        
+        generated = 0
+        errors = []
+        
+        for base in all_bases:
+            for pdf_type, ids_field, lookup in [
+                ("ESTADOS COSTURA", base.estados_costura_ids, all_estados),
+                ("AVIOS COSTURA", base.avios_costura_ids, all_avios),
+            ]:
+                ids_list = ids_field or []
+                if not ids_list:
+                    continue
+                
+                item_names = [lookup[eid] for eid in ids_list if eid in lookup]
+                if not item_names:
+                    continue
+                
+                try:
+                    is_avios = "AVIOS" in pdf_type
+                    base_name = base.nombre or "Base"
+                    
+                    buf = BytesIO()
+                    page_width_a4 = A4[0]
+                    page_height_a4 = A4[1]
+                    c = canvas.Canvas(buf, pagesize=A4)
+                    a6_width = 105 * mm
+                    a6_height = 148 * mm
+                    left_margin = 5 * mm
+                    top_start = page_height_a4 - 8 * mm
+                    
+                    c.setFont("Helvetica-Bold", 12)
+                    c.drawCentredString(a6_width / 2, top_start, pdf_type)
+                    c.setFont("Helvetica", 8)
+                    c.drawString(left_margin, top_start - 8 * mm, f"Modelo: {base_name}")
+                    
+                    if is_avios:
+                        c.drawString(left_margin, top_start - 14 * mm, "Cantidad: ____________________")
+                        y = top_start - 24 * mm
+                        c.setFont("Helvetica-Bold", 8)
+                        c.drawString(left_margin, y, "AVIOS")
+                        c.drawString(70 * mm, y, "CHECK")
+                        c.setStrokeColorRGB(0.4, 0.4, 0.4)
+                        c.setLineWidth(0.5)
+                        c.line(left_margin, y - 2 * mm, a6_width - 5 * mm, y - 2 * mm)
+                        y -= 7 * mm
+                        a6_bottom = page_height_a4 - a6_height
+                        footer_y = a6_bottom + 20 * mm
+                        for item_name in item_names:
+                            if y < footer_y + 15 * mm:
+                                c.showPage()
+                                y = page_height_a4 - 15 * mm
+                            c.setFont("Helvetica-Bold", 8)
+                            c.setFillColorRGB(0, 0, 0)
+                            c.drawString(left_margin, y, item_name[:35])
+                            c.setStrokeColorRGB(0, 0, 0)
+                            c.setLineWidth(0.5)
+                            c.rect(71 * mm, y - 1.5 * mm, 3.5 * mm, 3.5 * mm)
+                            c.setStrokeColorRGB(0.75, 0.75, 0.75)
+                            c.setLineWidth(0.3)
+                            c.line(left_margin, y - 4.5 * mm, a6_width - 5 * mm, y - 4.5 * mm)
+                            y -= 8 * mm
+                        c.setFont("Helvetica", 7)
+                        c.setFillColorRGB(0, 0, 0)
+                        c.drawString(left_margin, footer_y, "Recibido por:")
+                        c.setDash(1, 1)
+                        c.setStrokeColorRGB(0, 0, 0)
+                        c.line(22 * mm, footer_y - 1 * mm, 55 * mm, footer_y - 1 * mm)
+                        c.setDash()
+                        c.drawString(left_margin, footer_y - 10 * mm, "Fecha: ___/___/____")
+                        c.drawString(50 * mm, footer_y - 10 * mm, "Firma:")
+                        c.setDash(1, 1)
+                        c.line(62 * mm, footer_y - 11 * mm, a6_width - 5 * mm, footer_y - 11 * mm)
+                    else:
+                        y = top_start - 14 * mm
+                        c.setFont("Helvetica-Bold", 7)
+                        c.drawString(left_margin, y, "ITEM")
+                        c.drawString(35 * mm, y, "CHECK")
+                        c.drawString(45 * mm, y, "FECHA")
+                        c.drawString(65 * mm, y, "ENTREGADO POR")
+                        c.drawString(90 * mm, y, "FIRMA")
+                        c.setStrokeColorRGB(0.4, 0.4, 0.4)
+                        c.setLineWidth(0.5)
+                        c.line(left_margin, y - 2 * mm, a6_width - 5 * mm, y - 2 * mm)
+                        y -= 7 * mm
+                        a6_bottom = page_height_a4 - a6_height
+                        for item_name in item_names:
+                            if y < a6_bottom + 5 * mm:
+                                c.showPage()
+                                y = page_height_a4 - 15 * mm
+                            c.setFont("Helvetica-Bold", 8)
+                            c.setFillColorRGB(0, 0, 0)
+                            c.drawString(left_margin, y, item_name[:18])
+                            c.setStrokeColorRGB(0, 0, 0)
+                            c.setLineWidth(0.5)
+                            c.rect(36 * mm, y - 1.5 * mm, 3 * mm, 3 * mm)
+                            c.setFont("Helvetica", 7)
+                            c.drawString(45 * mm, y, "___/___/____")
+                            c.setDash(1, 1)
+                            c.line(65 * mm, y - 1 * mm, 85 * mm, y - 1 * mm)
+                            c.line(90 * mm, y - 1 * mm, a6_width - 5 * mm, y - 1 * mm)
+                            c.setDash()
+                            c.setStrokeColorRGB(0.75, 0.75, 0.75)
+                            c.setLineWidth(0.3)
+                            c.line(left_margin, y - 4.5 * mm, a6_width - 5 * mm, y - 4.5 * mm)
+                            y -= 8 * mm
+                    
+                    c.save()
+                    buf.seek(0)
+                    file_name = f"{pdf_type}.pdf"
+                    file_path = await save_file_from_bytes(buf.read(), "fichas_bases", file_name)
+                    
+                    fichas = list(base.fichas_archivos or [])
+                    nombres = list(base.fichas_nombres or [])
+                    existing_index = None
+                    for i, n in enumerate(nombres):
+                        if n == pdf_type:
+                            existing_index = i
+                            break
+                    
+                    if existing_index is not None:
+                        old_file = fichas[existing_index]
+                        delete_r2_file(old_file)
+                        fichas[existing_index] = file_path
+                        base.fichas_archivos = fichas
+                    else:
+                        base.fichas_archivos = fichas + [file_path]
+                        base.fichas_nombres = nombres + [pdf_type]
+                    
+                    base.updated_at = datetime.now(timezone.utc)
+                    generated += 1
+                except Exception as e:
+                    errors.append(f"{base.nombre} - {pdf_type}: {str(e)}")
+                    logging.error(f"Error generating PDF for base {base.id} ({pdf_type}): {e}")
+        
+        await session.commit()
+        
+        return {
+            "message": f"Se regeneraron {generated} PDFs",
+            "generated": generated,
+            "errors": errors
+        }
+
 @api_router.post("/bases/{base_id}/tizados")
 async def upload_tizados(base_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
     async with async_session() as session:

@@ -8,7 +8,7 @@ import {
     getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas,
     getTizados, updateTizado, createTizado, uploadArchivoTizado,
     getEstadosCostura, getAviosCostura, generateChecklistPdf,
-    reorderBases
+    reorderBases, regenerarTodosPdfs
 } from '../lib/api';
 import {
     DndContext,
@@ -977,6 +977,26 @@ export default function BasesPage() {
                     </DropdownMenu>
                     <Button onClick={handleAdd} className="bg-slate-800 hover:bg-slate-700 text-white">
                         <Plus className="h-4 w-4 mr-2" />Nueva Base
+                    </Button>
+                    <Button 
+                        onClick={async () => {
+                            toast.info('Regenerando PDFs...');
+                            try {
+                                const res = await regenerarTodosPdfs();
+                                toast.success(res.data.message);
+                                if (res.data.errors?.length) {
+                                    res.data.errors.forEach(e => toast.error(e));
+                                }
+                                fetchData();
+                            } catch (err) {
+                                toast.error('Error al regenerar PDFs');
+                            }
+                        }}
+                        variant="outline"
+                        className="bg-white text-slate-700 border-slate-300"
+                        data-testid="regenerar-pdfs-btn"
+                    >
+                        <FileText className="h-4 w-4 mr-2" />Regenerar PDFs
                     </Button>
                 </div>
             </div>
