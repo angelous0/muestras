@@ -1533,8 +1533,6 @@ async def delete_archivo_costos(item_id: str):
 async def get_bases(search: str = "", activo: Optional[bool] = None):
     async with async_session() as session:
         query = select(BaseDB)
-        if search:
-            query = query.where(BaseDB.nombre.ilike(f"%{search}%"))
         if activo is not None:
             query = query.where(BaseDB.activo == activo)
         query = query.order_by(BaseDB.orden)
@@ -1545,17 +1543,49 @@ async def get_bases(search: str = "", activo: Optional[bool] = None):
         tizados_result = await session.execute(select(TizadoDB))
         all_tizados = tizados_result.scalars().all()
         
+        # Load catalogs for search
+        muestras_result = await session.execute(select(MuestraBaseDB))
+        muestras_dict = {m.id: m for m in muestras_result.scalars().all()}
+        marcas_result = await session.execute(select(MarcaDB))
+        marcas_dict = {m.id: m.nombre for m in marcas_result.scalars().all()}
+        tipos_result = await session.execute(select(TipoProductoDB))
+        tipos_dict = {t.id: t.nombre for t in tipos_result.scalars().all()}
+        telas_result = await session.execute(select(TelaDB))
+        telas_dict = {t.id: t.nombre for t in telas_result.scalars().all()}
+        entalles_result = await session.execute(select(EntalloDB))
+        entalles_dict = {e.id: e.nombre for e in entalles_result.scalars().all()}
+        
         # Build response with tizados_relacionados
         response = []
         for base in bases:
             base_dict = BaseModel_.model_validate(base).model_dump()
-            # Find tizados that have this base in their bases_ids
             tizados_rel = [
                 {"id": t.id, "nombre": t.nombre}
                 for t in all_tizados 
                 if base.id in (t.bases_ids or [])
             ]
             base_dict["tizados_relacionados"] = tizados_rel
+            
+            # Apply search filter across nombre + marca + tipo + entalle + tela
+            if search:
+                search_lower = search.lower()
+                searchable = [base.nombre or ""]
+                muestra = muestras_dict.get(base.muestra_base_id)
+                if muestra:
+                    if muestra.marca_id and muestra.marca_id in marcas_dict:
+                        searchable.append(marcas_dict[muestra.marca_id])
+                    if muestra.tipo_producto_id and muestra.tipo_producto_id in tipos_dict:
+                        searchable.append(tipos_dict[muestra.tipo_producto_id])
+                    if muestra.tela_id and muestra.tela_id in telas_dict:
+                        searchable.append(telas_dict[muestra.tela_id])
+                    if muestra.entalle_id and muestra.entalle_id in entalles_dict:
+                        searchable.append(entalles_dict[muestra.entalle_id])
+                    if muestra.nombre:
+                        searchable.append(muestra.nombre)
+                combined = " ".join(searchable).lower()
+                if search_lower not in combined:
+                    continue
+            
             response.append(base_dict)
         
         return response
@@ -2198,8 +2228,6 @@ async def reorder_bases(items: List[dict]):
 async def get_modelos(search: str = "", activo: Optional[bool] = None):
     async with async_session() as session:
         query = select(ModeloDB)
-        if search:
-            query = query.where(ModeloDB.nombre.ilike(f"%{search}%"))
         if activo is not None:
             query = query.where(ModeloDB.activo == activo)
         query = query.order_by(ModeloDB.orden)
@@ -2289,6 +2317,22 @@ async def get_modelos(search: str = "", activo: Optional[bool] = None):
                             "bases_ids": t.bases_ids or []
                         })
                 modelo_dict["base_tizados"] = related_tizados
+            
+            # Apply search filter across nombre + clasificacion + marca + tipo + entalle + tela
+            if search:
+                search_lower = search.lower()
+                searchable = [m.nombre or ""]
+                if modelo_dict.get("clasificacion"):
+                    searchable.append(modelo_dict["clasificacion"])
+                if m.base_id and m.base_id in bases_dict:
+                    base = bases_dict[m.base_id]
+                    searchable.append(base.nombre or "")
+                    muestra = muestras_dict.get(base.muestra_base_id)
+                    if muestra and muestra.nombre:
+                        searchable.append(muestra.nombre)
+                combined = " ".join(searchable).lower()
+                if search_lower not in combined:
+                    continue
             
             response.append(modelo_dict)
         
