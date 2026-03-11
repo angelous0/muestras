@@ -2219,6 +2219,101 @@ async def count_modelos():
         result = await session.execute(select(func.count(ModeloDB.id)))
         return {"total": result.scalar()}
 
+@api_router.get("/modelos/{item_id}/descargar")
+async def download_modelo_files(item_id: str, token: Optional[str] = None, credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))):
+    """Download all model files as ZIP: patron, fichas generales (base), fichas modelo"""
+    import zipfile
+    from fastapi.responses import StreamingResponse
+    
+    # Accept token from query param or Authorization header
+    auth_token = token
+    if not auth_token and credentials:
+        auth_token = credentials.credentials
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Token requerido")
+    
+    try:
+        payload = jwt.decode(auth_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Token inválido")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    
+    async with async_session() as session:
+        result = await session.execute(select(ModeloDB).where(ModeloDB.id == item_id))
+        modelo = result.scalar_one_or_none()
+        if not modelo:
+            raise HTTPException(status_code=404, detail="Modelo no encontrado")
+        
+        base = None
+        if modelo.base_id:
+            result = await session.execute(select(BaseDB).where(BaseDB.id == modelo.base_id))
+            base = result.scalar_one_or_none()
+        
+        # Build folder name from modelo nombre
+        folder_name = modelo.nombre or f"Modelo_{item_id[:8]}"
+        safe_folder = "".join(c for c in folder_name if c.isalnum() or c in (' ', '-', '_', '.')).strip()
+        if not safe_folder:
+            safe_folder = f"Modelo_{item_id[:8]}"
+        
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            files_added = 0
+            
+            def download_and_add(file_path, zip_path):
+                nonlocal files_added
+                if not file_path:
+                    return
+                try:
+                    key = file_path
+                    if key.startswith("r2://"):
+                        key = key[5:]
+                    if r2_client:
+                        response = r2_client.get_object(Bucket=R2_BUCKET_NAME, Key=key)
+                        file_bytes = response['Body'].read()
+                    else:
+                        local_path = UPLOADS_DIR / key
+                        if not local_path.exists():
+                            return
+                        file_bytes = local_path.read_bytes()
+                    zf.writestr(zip_path, file_bytes)
+                    files_added += 1
+                except Exception as e:
+                    logging.error(f"Error downloading file {file_path}: {e}")
+            
+            # 1. Patron (from Base)
+            if base and base.patron_archivo:
+                ext = base.patron_archivo.split('.')[-1] if '.' in base.patron_archivo else ''
+                patron_name = f"patron.{ext}" if ext else "patron"
+                download_and_add(base.patron_archivo, f"{safe_folder}/Patron/{patron_name}")
+            
+            # 2. Fichas Generales (from Base)
+            if base and base.fichas_archivos:
+                for i, archivo in enumerate(base.fichas_archivos):
+                    nombre = base.fichas_nombres[i] if i < len(base.fichas_nombres or []) else f"ficha_{i+1}"
+                    ext = archivo.split('.')[-1] if '.' in archivo else ''
+                    filename = f"{nombre}.{ext}" if ext and not nombre.endswith(f".{ext}") else nombre
+                    download_and_add(archivo, f"{safe_folder}/Fichas_Generales/{filename}")
+            
+            # 3. Fichas Modelo
+            if modelo.fichas_archivos:
+                for i, archivo in enumerate(modelo.fichas_archivos):
+                    nombre = modelo.fichas_nombres[i] if i < len(modelo.fichas_nombres or []) else f"ficha_{i+1}"
+                    ext = archivo.split('.')[-1] if '.' in archivo else ''
+                    filename = f"{nombre}.{ext}" if ext and not nombre.endswith(f".{ext}") else nombre
+                    download_and_add(archivo, f"{safe_folder}/Fichas_Modelo/{filename}")
+            
+            if files_added == 0:
+                raise HTTPException(status_code=404, detail="No hay archivos para descargar en este modelo")
+        
+        buffer.seek(0)
+        return StreamingResponse(
+            buffer,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{safe_folder}.zip"'}
+        )
+
 @api_router.post("/modelos/{modelo_id}/fichas")
 async def upload_fichas_modelo(modelo_id: str, files: List[UploadFile] = File(...), nombres: List[str] = Form(default=[])):
     async with async_session() as session:

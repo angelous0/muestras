@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getModelos, createModelo, updateModelo, deleteModelo, getBases, getHilos, uploadFichaModelo, deleteFichaModelo, getFileUrl, getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas, reorderModelos } from '../lib/api';
+import { getModelos, createModelo, updateModelo, deleteModelo, getBases, getHilos, uploadFichaModelo, deleteFichaModelo, getFileUrl, getMuestrasBase, getMarcas, getTiposProducto, getEntalles, getTelas, reorderModelos, downloadModeloFiles } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { Search, Plus, Pencil, Trash2, Upload, Download, FileText, X, FolderOpen, Scissors, RotateCcw, Info, GripVertical, Check } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Upload, Download, FileText, X, FolderOpen, Scissors, RotateCcw, Info, GripVertical, Check, FolderDown } from 'lucide-react';
 import { ResizableTableHead, ResizableTableCell, useResizableColumns } from '../components/ResizableTable';
 import {
     DndContext,
@@ -324,6 +324,11 @@ function ModelosPage() {
         }
     };
 
+    const handleDownloadAll = (modelo) => {
+        const url = downloadModeloFiles(modelo.id);
+        window.open(url, '_blank');
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -430,6 +435,7 @@ function ModelosPage() {
                                             </ResizableTableCell>
                                             <ResizableTableCell width={columnWidths.acciones}>
                                                 <div className="flex justify-end">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDownloadAll(item)} title="Descargar archivos" data-testid={`download-modelo-${item.id}`}><FolderDown className="h-4 w-4 text-emerald-600" /></Button>
                                                     <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
                                                     <Button variant="ghost" size="sm" onClick={() => { setSelectedItem(item); setDeleteOpen(true); }} className="text-red-600"><Trash2 className="h-4 w-4" /></Button>
                                                 </div>

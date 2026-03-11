@@ -228,6 +228,11 @@ export const uploadFichaModelo = (id, files, nombres = []) => {
 };
 export const deleteFichaModelo = (id, fileIndex) => api.delete(`/modelos/${id}/fichas/${fileIndex}`);
 
+export const downloadModeloFiles = (id) => {
+    const token = localStorage.getItem('token');
+    return `${API_BASE}/modelos/${id}/descargar?token=${encodeURIComponent(token)}`;
+};
+
 // File download URL helper - handles both local and R2 paths
 export const getFileUrl = (filePath) => {
     if (!filePath) return '';

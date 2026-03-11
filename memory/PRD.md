@@ -31,6 +31,7 @@ Aplicación full-stack para gestionar muestras textiles con CRUD para catálogos
 - Clasificación dinámica en Modelos
 - Generación de PDF (checklist)
 - Sidebar colapsable
+- **Descarga ZIP de Modelos:** Botón para descargar todos los archivos de un modelo (patrón, fichas generales, fichas modelo) en un ZIP organizado por carpetas
 
 ### Historial de Auditoría (COMPLETO - 2025-03-06)
 - Registro de CREAR, EDITAR, ELIMINAR para todas las entidades principales
